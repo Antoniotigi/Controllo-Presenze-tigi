@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "timeRecord": {
+      "title": "Time Record",
+      "description": "Daily employee clock-in and clock-out timestamps with 4 time slots",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "employeeId": { "type": "string", "maxLength": 50 },
+        "date": { "type": "string", "maxLength": 10 },
+        "clockInMorning": { "type": "string", "maxLength": 10 },
+        "clockOutMorning": { "type": "string", "maxLength": 10 },
+        "clockInAfternoon": { "type": "string", "maxLength": 10 },
+        "clockOutAfternoon": { "type": "string", "maxLength": 10 },
+        "clockIn": { "type": "string", "maxLength": 10 },
+        "clockOut": { "type": "string", "maxLength": 10 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "leaveType": { "type": "string", "maxLength": 20, "enum": ["none", "ferie", "permesso", "malattia"] },
+        "leaveHours": { "type": "number" },
+        "permessoHours": { "type": "number" },
+        "permessoMinutes": { "type": "number" },
+        "permessoStart": { "type": "string", "maxLength": 10 },
+        "permessoEnd": { "type": "string", "maxLength": 10 },
+        "exitDuringTurnStart": { "type": "string", "maxLength": 10 },
+        "exitDuringTurnEnd": { "type": "string", "maxLength": 10 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "employeeId", "date", "updatedAt"]
+    },
+    "leaveRequest": {
+      "title": "Leave Request",
+      "description": "Ferie, permessi, and illness requests",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "employeeId": { "type": "string", "maxLength": 50 },
+        "type": { "type": "string", "maxLength": 20, "enum": ["ferie", "permesso", "malattia", "congedo"] },
+        "startDate": { "type": "string", "maxLength": 10 },
+        "endDate": { "type": "string", "maxLength": 10 },
+        "hoursPerDay": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "maxLength": 20, "enum": ["approvato", "in_attesa", "rifiutato"] },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "employeeId", "type", "startDate", "endDate", "hoursPerDay", "status", "createdAt"]
+    },
+    "employee": {
+      "title": "Employee",
+      "description": "Employee profile and work parameters",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 50 },
+        "name": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "maxLength": 100 },
+        "color": { "type": "string", "maxLength": 50 },
+        "avatarBg": { "type": "string", "maxLength": 50 },
+        "standardHoursPerDay": { "type": "number" },
+        "ferieSpettanti": { "type": "number" },
+        "permessiSpettanti": { "type": "number" }
+      },
+      "required": ["id", "name"]
+    }
+  },
+  "firestore": {
+    "/time_records/{recordId}": {
+      "schema": "timeRecord",
+      "description": "Daily employee attendance timestamps"
+    },
+    "/leave_requests/{requestId}": {
+      "schema": "leaveRequest",
+      "description": "Employee leave and vacation requests"
+    },
+    "/employees/{employeeId}": {
+      "schema": "employee",
+      "description": "Employee profiles"
+    }
+  }
+}
