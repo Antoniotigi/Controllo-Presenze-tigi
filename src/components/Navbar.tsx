@@ -12,6 +12,7 @@ import {
   Users,
   Cloud,
   Eraser,
+  LogOut,
 } from 'lucide-react';
 import { formatDateIT, getTodayDateString } from '../utils/timeUtils';
 
@@ -26,6 +27,7 @@ interface NavbarProps {
   activeView: 'cards' | 'report' | 'leaves';
   setActiveView: (view: 'cards' | 'report' | 'leaves') => void;
   isCloudConnected?: boolean;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -39,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeView,
   setActiveView,
   isCloudConnected = true,
+  onLogout,
 }) => {
   const [systemTime, setSystemTime] = useState<string>('');
   const [systemSeconds, setSystemSeconds] = useState<string>('');
@@ -119,6 +122,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               <FileText className="w-4 h-4" />
               <span>Resoconto Mensile</span>
             </button>
+
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="bg-white border border-slate-200 text-slate-700 hover:text-rose-600 hover:bg-rose-50 px-3.5 py-2 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors shadow-2xs cursor-pointer"
+                title="Disconnetti sessione"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Esci</span>
+              </button>
+            )}
           </div>
         </div>
 

@@ -71,6 +71,26 @@ export default function App() {
   const [preselectedLeaveEmployee, setPreselectedLeaveEmployee] = useState<string | undefined>();
   const [isCloudConnected, setIsCloudConnected] = useState<boolean>(false);
 
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('tigi_auth_session');
+      if (!stored) return false;
+      const { timestamp } = JSON.parse(stored);
+      const now = Date.now();
+      // Expiration set to 2 hours
+      if (now - timestamp < 2 * 60 * 60 * 1000) {
+        return true;
+      }
+    } catch {
+      // Ignore
+    }
+    return false;
+  });
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+
   // Live system time updated every second for real-time calculation
   const [systemTimeHHMM, setSystemTimeHHMM] = useState<string>(getCurrentTimeHHMM());
 
@@ -80,6 +100,57 @@ export default function App() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Periodic session validation every 30 seconds and on window focus
+  useEffect(() => {
+    const verifySession = () => {
+      try {
+        const stored = localStorage.getItem('tigi_auth_session');
+        if (!stored) {
+          setIsAuthenticated(false);
+          return;
+        }
+        const { timestamp } = JSON.parse(stored);
+        const now = Date.now();
+        // 2 hours session window
+        if (now - timestamp >= 2 * 60 * 60 * 1000) {
+          setIsAuthenticated(false);
+          localStorage.removeItem('tigi_auth_session');
+        }
+      } catch {
+        setIsAuthenticated(false);
+      }
+    };
+
+    const interval = setInterval(verifySession, 30000);
+    window.addEventListener('focus', verifySession);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', verifySession);
+    };
+  }, []);
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginUsername === 'tigicongress' && loginPassword === 'Mappescio2026@') {
+      localStorage.setItem(
+        'tigi_auth_session',
+        JSON.stringify({ timestamp: Date.now() })
+      );
+      setIsAuthenticated(true);
+      setLoginError('');
+    } else {
+      setLoginError('Credenziali non corrette. Riprova.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('tigi_auth_session');
+    setIsAuthenticated(false);
+    setLoginUsername('');
+    setLoginPassword('');
+  };
 
   // Synchronize with Firebase Firestore in real time across devices
   useEffect(() => {
@@ -328,6 +399,80 @@ export default function App() {
   const countCompleted = dailySummary.filter((d) => d.calc.status === 'completato').length;
   const countLeaves = dailySummary.filter((d) => d.calc.status === 'ferie' || d.calc.status === 'permesso').length;
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 font-sans antialiased">
+        <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-xl shadow-slate-100 p-8 space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-flex w-12 h-12 bg-slate-900 text-white rounded-2xl items-center justify-center font-bold shadow-md shadow-slate-200">
+              <Users className="w-6 h-6 text-emerald-400" />
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              TigiBadge Accesso
+            </h1>
+            <p className="text-sm text-slate-500">
+              Inserisci le credenziali per accedere al pannello presenze
+            </p>
+          </div>
+
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            {loginError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{loginError}</span>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label htmlFor="login-username" className="text-[10px] font-bold text-slate-500 uppercase ml-1">
+                Nome Utente
+              </label>
+              <input
+                id="login-username"
+                type="text"
+                autoComplete="username"
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                placeholder="es. tigicongress"
+                required
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-slate-900 focus:bg-white focus:border-transparent outline-none transition-all shadow-2xs"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="login-password" className="text-[10px] font-bold text-slate-500 uppercase ml-1">
+                Password di Sicurezza
+              </label>
+              <input
+                id="login-password"
+                type="password"
+                autoComplete="current-password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="••••••••••••"
+                required
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-mono font-bold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-slate-900 focus:bg-white focus:border-transparent outline-none transition-all shadow-2xs"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold shadow-md shadow-slate-200 transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>Accedi al Sistema</span>
+            </button>
+          </form>
+
+          <div className="text-center">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              TigiBadge • Sistema di Monitoraggio Presenze
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased">
       {/* Global Navbar */}
@@ -342,6 +487,7 @@ export default function App() {
         activeView={activeView}
         setActiveView={setActiveView}
         isCloudConnected={isCloudConnected}
+        onLogout={handleLogout}
       />
 
       {/* Floating Notification Toast */}
