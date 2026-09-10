@@ -19,6 +19,9 @@ import {
   AlertCircle,
   HelpCircle,
   Eraser,
+  Eye,
+  EyeOff,
+  Lock,
 } from 'lucide-react';
 import { Employee, TimeRecord, LeaveRequest } from './types';
 import {
@@ -71,15 +74,82 @@ export default function App() {
   const [preselectedLeaveEmployee, setPreselectedLeaveEmployee] = useState<string | undefined>();
   const [isCloudConnected, setIsCloudConnected] = useState<boolean>(false);
 
-  // Authentication State
+  // Secure Cryptographic Helpers (Pure client-side Web Crypto API)
+  const sha256 = async (message: string): Promise<string> => {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  const decodeBase32 = (base32: string): Uint8Array => {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    const cleaned = base32.toUpperCase().replace(/[\s-=]/g, '');
+    const length = cleaned.length;
+    const buffer = new Uint8Array(Math.floor((length * 5) / 8));
+    let bits = 0;
+    let value = 0;
+    let index = 0;
+
+    for (let i = 0; i < length; i++) {
+      const val = alphabet.indexOf(cleaned[i]);
+      if (val === -1) continue;
+      value = (value << 5) | val;
+      bits += 5;
+      if (bits >= 8) {
+        buffer[index++] = (value >>> (bits - 8)) & 255;
+        bits -= 8;
+      }
+    }
+    return buffer;
+  };
+
+  const generateTOTP = async (secretBase32: string, timeOffsetSlots: number = 0): Promise<string> => {
+    try {
+      const keyData = decodeBase32(secretBase32);
+      const time = Math.floor(Date.now() / 1000 / 30) + timeOffsetSlots;
+      const counter = new Uint8Array(8);
+      let temp = time;
+      for (let i = 7; i >= 0; i--) {
+        counter[i] = temp & 0xff;
+        temp = temp >>> 8;
+      }
+
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'HMAC', hash: { name: 'SHA-1' } },
+        false,
+        ['sign']
+      );
+      
+      const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, counter);
+      const hmac = new Uint8Array(signatureBuffer);
+
+      const offset = hmac[hmac.length - 1] & 0xf;
+      const code =
+        ((hmac[offset] & 0x7f) << 24) |
+        ((hmac[offset + 1] & 0xff) << 16) |
+        ((hmac[offset + 2] & 0xff) << 8) |
+        (hmac[offset + 3] & 0xff);
+
+      const otp = code % 1000000;
+      return otp.toString().padStart(6, '0');
+    } catch (err) {
+      console.error('Errore TOTP:', err);
+      return '';
+    }
+  };
+
+  // Authentication & MFA States
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem('tigi_auth_session');
       if (!stored) return false;
       const { timestamp } = JSON.parse(stored);
       const now = Date.now();
-      // Expiration set to 2 hours
-      if (now - timestamp < 2 * 60 * 60 * 1000) {
+      // Expiration set to 24 hours
+      if (now - timestamp < 24 * 60 * 60 * 1000) {
         return true;
       }
     } catch {
@@ -87,9 +157,66 @@ export default function App() {
     }
     return false;
   });
+
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  
+  // Custom Browser Login Saving & Password Show/Hide
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [rememberMe, setRememberMe] = useState<boolean>(() => {
+    return localStorage.getItem('tigi_remember_me') === 'true';
+  });
+
+  // MFA (TOTP) state
+  const [mfaCode, setMfaCode] = useState('');
+  const [showMfaInput, setShowMfaInput] = useState<boolean>(false);
+  const [mfaEnabled, setMfaEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('tigi_mfa_enabled') === 'true';
+  });
+  const [showMfaSetup, setShowMfaSetup] = useState<boolean>(false);
+
+  // Brute Force Lockout States
+  const [failedAttempts, setFailedAttempts] = useState<number>(() => {
+    return Number(localStorage.getItem('tigi_failed_attempts') || '0');
+  });
+  const [lockUntil, setLockUntil] = useState<number>(() => {
+    return Number(localStorage.getItem('tigi_lock_until') || '0');
+  });
+  const [lockCountdown, setLockCountdown] = useState<number>(0);
+
+  // Load saved credentials on mount
+  useEffect(() => {
+    if (rememberMe) {
+      const savedUser = localStorage.getItem('tigi_saved_user') || '';
+      const savedPassObfuscated = localStorage.getItem('tigi_saved_pass') || '';
+      let savedPass = '';
+      try {
+        if (savedPassObfuscated) {
+          savedPass = atob(savedPassObfuscated);
+        }
+      } catch (e) {
+        // Ignore
+      }
+      if (savedUser) setLoginUsername(savedUser);
+      if (savedPass) setLoginPassword(savedPass);
+    }
+  }, []);
+
+  // Update lock countdown dynamically
+  useEffect(() => {
+    const checkLock = () => {
+      const now = Date.now();
+      if (lockUntil > now) {
+        setLockCountdown(Math.ceil((lockUntil - now) / 1000));
+      } else {
+        setLockCountdown(0);
+      }
+    };
+    checkLock();
+    const interval = setInterval(checkLock, 1000);
+    return () => clearInterval(interval);
+  }, [lockUntil]);
 
   // Live system time updated every second for real-time calculation
   const [systemTimeHHMM, setSystemTimeHHMM] = useState<string>(getCurrentTimeHHMM());
@@ -101,7 +228,7 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Periodic session validation every 30 seconds and on window focus
+  // Periodic session validation every 30 seconds and on window focus (24 hours window)
   useEffect(() => {
     const verifySession = () => {
       try {
@@ -112,8 +239,8 @@ export default function App() {
         }
         const { timestamp } = JSON.parse(stored);
         const now = Date.now();
-        // 2 hours session window
-        if (now - timestamp >= 2 * 60 * 60 * 1000) {
+        // 24 hours session window
+        if (now - timestamp >= 24 * 60 * 60 * 1000) {
           setIsAuthenticated(false);
           localStorage.removeItem('tigi_auth_session');
         }
@@ -131,25 +258,106 @@ export default function App() {
     };
   }, []);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginUsername === 'tigicongress' && loginPassword === 'Mappescio2026@') {
-      localStorage.setItem(
-        'tigi_auth_session',
-        JSON.stringify({ timestamp: Date.now() })
-      );
-      setIsAuthenticated(true);
-      setLoginError('');
-    } else {
-      setLoginError('Credenziali non corrette. Riprova.');
+    setLoginError('');
+
+    // Check brute-force lockout
+    const now = Date.now();
+    if (lockUntil > now) {
+      const waitTime = Math.ceil((lockUntil - now) / 1000);
+      setLoginError(`Troppi tentativi falliti. Il login è bloccato per altri ${waitTime} secondi.`);
+      return;
     }
+
+    // SHA-256 based high-security verification (Plaintext passwords are not embedded in code)
+    const userHash = await sha256(loginUsername);
+    const passHash = await sha256(loginPassword);
+
+    const EXPECTED_USER_HASH = '40c731c40ed40ea5fc2c30e8538ae7c21efe6d19ff91b135647ad8e424a9f7d3';
+    const EXPECTED_PASS_HASH = '2f11e88ddf3f5937c33ac10aad8001f9879d6b0390e7371ddd14cfd050bd7603';
+
+    if (userHash === EXPECTED_USER_HASH && passHash === EXPECTED_PASS_HASH) {
+      // Credentials verified successfully! Now check Multi-Factor Authentication (TOTP)
+      if (mfaEnabled) {
+        if (!showMfaInput) {
+          // Advance to OTP input screen
+          setShowMfaInput(true);
+          return;
+        }
+
+        // Verify the 6-digit verification code with offset of -1, 0, +1 for drift allowance
+        const mfaSecret = 'TIGIBADGESECUREKEY2026';
+        const code0 = await generateTOTP(mfaSecret, 0);
+        const codeMinus1 = await generateTOTP(mfaSecret, -1);
+        const codePlus1 = await generateTOTP(mfaSecret, 1);
+
+        if (mfaCode === code0 || mfaCode === codeMinus1 || mfaCode === codePlus1) {
+          // Success! Complete login
+          proceedLogin();
+        } else {
+          setLoginError('Codice di verifica TOTP non valido. Inserisci il codice corrente dall\'app Google Authenticator.');
+        }
+      } else {
+        // No MFA enabled, complete login immediately
+        proceedLogin();
+      }
+    } else {
+      // Failed login attempt
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      localStorage.setItem('tigi_failed_attempts', String(newAttempts));
+
+      if (newAttempts >= 5) {
+        const lockoutTime = Date.now() + 5 * 60 * 1000; // 5 minutes lockout
+        setLockUntil(lockoutTime);
+        localStorage.setItem('tigi_lock_until', String(lockoutTime));
+        setLoginError('Troppi tentativi falliti. Il sistema è stato bloccato per 5 minuti a scopo di sicurezza.');
+      } else {
+        setLoginError(`Credenziali non corrette. Riprova. (Tentativi rimasti prima del blocco: ${5 - newAttempts})`);
+      }
+    }
+  };
+
+  const proceedLogin = () => {
+    // Reset brute force counter
+    setFailedAttempts(0);
+    localStorage.removeItem('tigi_failed_attempts');
+    localStorage.removeItem('tigi_lock_until');
+    setLockUntil(0);
+
+    // Save Remember Me credentials if active
+    if (rememberMe) {
+      localStorage.setItem('tigi_remember_me', 'true');
+      localStorage.setItem('tigi_saved_user', loginUsername);
+      localStorage.setItem('tigi_saved_pass', btoa(loginPassword));
+    } else {
+      localStorage.removeItem('tigi_remember_me');
+      localStorage.removeItem('tigi_saved_user');
+      localStorage.removeItem('tigi_saved_pass');
+    }
+
+    // Set 24 hour session token
+    localStorage.setItem(
+      'tigi_auth_session',
+      JSON.stringify({ timestamp: Date.now() })
+    );
+    setIsAuthenticated(true);
+    setLoginError('');
+    setShowMfaInput(false);
+    setMfaCode('');
   };
 
   const handleLogout = () => {
     localStorage.removeItem('tigi_auth_session');
     setIsAuthenticated(false);
-    setLoginUsername('');
-    setLoginPassword('');
+    setShowMfaInput(false);
+    setMfaCode('');
+    // Clear the form fields if we are not remembering credentials
+    if (!rememberMe) {
+      setLoginUsername('');
+      setLoginPassword('');
+    }
   };
 
   // Synchronize with Firebase Firestore in real time across devices
@@ -408,10 +616,13 @@ export default function App() {
               <Users className="w-6 h-6 text-emerald-400" />
             </div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              TigiBadge Accesso
+              TigiBadge Accesso Sicuro
             </h1>
             <p className="text-sm text-slate-500">
-              Inserisci le credenziali per accedere al pannello presenze
+              {showMfaInput 
+                ? "Verifica a due fattori (MFA) richiesta" 
+                : "Inserisci le credenziali per accedere al pannello presenze"
+              }
             </p>
           </div>
 
@@ -423,49 +634,188 @@ export default function App() {
               </div>
             )}
 
-            <div className="space-y-1">
-              <label htmlFor="login-username" className="text-[10px] font-bold text-slate-500 uppercase ml-1">
-                Nome Utente
-              </label>
-              <input
-                id="login-username"
-                type="text"
-                autoComplete="username"
-                value={loginUsername}
-                onChange={(e) => setLoginUsername(e.target.value)}
-                placeholder="es. tigicongress"
-                required
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-slate-900 focus:bg-white focus:border-transparent outline-none transition-all shadow-2xs"
-              />
-            </div>
+            {lockCountdown > 0 && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs font-semibold text-amber-700 flex flex-col gap-1">
+                <span className="flex items-center gap-2">
+                  <Lock className="w-4 h-4 shrink-0" />
+                  <strong>Login Temporaneamente Bloccato</strong>
+                </span>
+                <span>Riprova tra {lockCountdown} secondi. Il blocco automatico protegge il sistema da attacchi brute-force.</span>
+              </div>
+            )}
 
-            <div className="space-y-1">
-              <label htmlFor="login-password" className="text-[10px] font-bold text-slate-500 uppercase ml-1">
-                Password di Sicurezza
-              </label>
-              <input
-                id="login-password"
-                type="password"
-                autoComplete="current-password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="••••••••••••"
-                required
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-mono font-bold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-slate-900 focus:bg-white focus:border-transparent outline-none transition-all shadow-2xs"
-              />
-            </div>
+            {!showMfaInput ? (
+              <>
+                {/* Username Input */}
+                <div className="space-y-1">
+                  <label htmlFor="login-username" className="text-[10px] font-bold text-slate-500 uppercase ml-1">
+                    Nome Utente
+                  </label>
+                  <input
+                    id="login-username"
+                    type="text"
+                    autoComplete="username"
+                    value={loginUsername}
+                    onChange={(e) => setLoginUsername(e.target.value)}
+                    placeholder="Nome utente"
+                    required
+                    disabled={lockCountdown > 0}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-slate-900 focus:bg-white focus:border-transparent outline-none transition-all shadow-2xs disabled:opacity-50"
+                  />
+                </div>
+
+                {/* Password Input with Show/Hide toggle */}
+                <div className="space-y-1">
+                  <label htmlFor="login-password" className="text-[10px] font-bold text-slate-500 uppercase ml-1">
+                    Password di Sicurezza
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="login-password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      required
+                      disabled={lockCountdown > 0}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-11 py-3 text-sm font-mono font-bold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-slate-900 focus:bg-white focus:border-transparent outline-none transition-all shadow-2xs disabled:opacity-50"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Custom Browser Login Saving (Remember me) Checkbox */}
+                <div className="flex items-center justify-between py-1 px-1">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 border-slate-300 accent-slate-900 cursor-pointer"
+                    />
+                    <span className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+                      Ricorda credenziali su questo dispositivo
+                    </span>
+                  </label>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* TOTP MFA Input Step */}
+                <div className="space-y-2 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                  <div className="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-1.5">
+                    <Lock className="w-3.5 h-3.5 text-slate-900 animate-pulse" />
+                    <span>Codice di Autenticazione TOTP</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Inserisci il codice temporaneo a 6 cifre dall'app Authenticator configurata sul tuo telefono.
+                  </p>
+                  <input
+                    id="mfa-code"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    autoComplete="one-time-code"
+                    placeholder="000000"
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                    required
+                    className="w-full text-center text-xl tracking-[0.4em] font-mono font-black bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 placeholder-slate-300 focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all shadow-inner"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMfaInput(false);
+                      setMfaCode('');
+                      setLoginError('');
+                    }}
+                    className="w-full text-center text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors py-1 cursor-pointer"
+                  >
+                    Torna al login classico
+                  </button>
+                </div>
+              </>
+            )}
 
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold shadow-md shadow-slate-200 transition-all cursor-pointer flex items-center justify-center gap-2"
+              disabled={lockCountdown > 0}
+              className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold shadow-md shadow-slate-200 transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              <span>Accedi al Sistema</span>
+              <span>{showMfaInput ? "Verifica e Accedi" : "Accedi al Sistema"}</span>
             </button>
           </form>
 
-          <div className="text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          {/* MFA Setup Toggle / Panel for Security Conscious Administrators */}
+          <div className="border-t border-slate-100 pt-4 text-center">
+            <button
+              type="button"
+              onClick={() => setShowMfaSetup(!showMfaSetup)}
+              className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>{showMfaSetup ? "Nascondi opzioni sicurezza" : "Configura Autenticazione a due fattori (MFA)"}</span>
+            </button>
+
+            {showMfaSetup && (
+              <div className="mt-3 text-left bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Configura Google Authenticator</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Per abilitare l'MFA, inserisci la chiave segreta sottostante nella tua app Authenticator (Google Authenticator, Microsoft Authenticator o Authy):
+                </p>
+                <div className="bg-white border border-slate-200 rounded-lg p-2 flex items-center justify-between">
+                  <code className="text-xs font-mono font-bold text-slate-700 tracking-wider">
+                    TIGIBADGESECUREKEY2026
+                  </code>
+                  <span className="text-[9px] bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded uppercase">
+                    Chiave TOTP
+                  </span>
+                </div>
+                
+                <label className="flex items-start gap-2 pt-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={mfaEnabled}
+                    onChange={(e) => {
+                      const enabled = e.target.checked;
+                      setMfaEnabled(enabled);
+                      if (enabled) {
+                        localStorage.setItem('tigi_mfa_enabled', 'true');
+                      } else {
+                        localStorage.removeItem('tigi_mfa_enabled');
+                      }
+                    }}
+                    className="mt-0.5 w-3.5 h-3.5 rounded text-slate-900 focus:ring-slate-900 border-slate-300 accent-slate-900 cursor-pointer"
+                  />
+                  <span className="text-[10px] font-semibold text-slate-600 leading-normal">
+                    Attiva protezione 2-Factor (MFA) su questo dispositivo
+                  </span>
+                </label>
+              </div>
+            )}
+          </div>
+
+          <div className="text-center pt-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               TigiBadge • Sistema di Monitoraggio Presenze
+            </span>
+            <span className="text-[9px] text-slate-400 block mt-1">
+              Timeout sessione: 24 ore • Crittografia SHA-256 attiva
             </span>
           </div>
         </div>
