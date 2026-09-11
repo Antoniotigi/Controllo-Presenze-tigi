@@ -1,20 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Clock,
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  FileSpreadsheet,
-  FileText,
-  Palmtree,
-  CheckCircle2,
-  RotateCcw,
-  Users,
   Cloud,
-  Eraser,
+  ChevronDown,
   LogOut,
+  RotateCcw,
+  Eraser,
 } from 'lucide-react';
-import { formatDateIT, getTodayDateString } from '../utils/timeUtils';
 
 interface NavbarProps {
   currentDate: string;
@@ -44,15 +35,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
 }) => {
   const [systemTime, setSystemTime] = useState<string>('');
-  const [systemSeconds, setSystemSeconds] = useState<string>('');
-  const today = getTodayDateString();
-  const isToday = currentDate === today;
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Update clock every second, formatted as HH:MM to match the image
   useEffect(() => {
     const update = () => {
       const now = new Date();
       setSystemTime(
-        now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
       );
     };
     update();
@@ -60,189 +51,163 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  const handlePrevDay = () => {
-    const d = new Date(currentDate);
-    d.setDate(d.getDate() - 1);
-    const y = d.getFullYear();
-    const m = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
-    onDateChange(`${y}-${m}-${day}`);
-  };
-
-  const handleNextDay = () => {
-    const d = new Date(currentDate);
-    d.setDate(d.getDate() + 1);
-    const y = d.getFullYear();
-    const m = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
-    onDateChange(`${y}-${m}-${day}`);
-  };
+  // Close dropdown if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top bar: Sleek Interface Brand & Actions */}
-        <div className="py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100">
-          <div className="flex flex-col">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                TigiBadge
-              </h1>
-              <span className="px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-700 rounded-full border border-slate-200">
-                4 Dipendenti • 8h Std
-              </span>
-            </div>
-            <p className="text-slate-500 text-sm mt-0.5">
-              Gestione Presenze & Straordinari • Rilevazione Cartellino
-            </p>
+    <header className="bg-white border-b border-[#E2E8F0] sticky top-0 z-30 h-[72px] flex items-center shadow-xs">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full">
+        {/* Left Section: Logo & Name */}
+        <div className="flex items-center gap-2.5">
+          <div 
+            id="app-logo-badge"
+            className="w-8 h-8 rounded-lg bg-[#00A77B] flex items-center justify-center text-white font-extrabold text-lg select-none"
+          >
+            T
           </div>
-
-          {/* Real-time System Clock & Quick Actions */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="bg-slate-900 text-white px-4 py-2 rounded-xl flex items-center gap-3 shadow-md shadow-slate-200 border border-slate-800">
-              <div className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">
-                  Tempo Reale
-                </span>
-                <span className="font-mono text-sm font-bold tracking-wider text-emerald-300">
-                  {systemTime || '--:--:--'}
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={onOpenReport}
-              className="bg-emerald-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 text-xs sm:text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-100 cursor-pointer"
-              title="Apri il resoconto mensile ed esporta in PDF"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Resoconto Mensile</span>
-            </button>
-
-            {onLogout && (
-              <button
-                onClick={onLogout}
-                className="bg-white border border-slate-200 text-slate-700 hover:text-rose-600 hover:bg-rose-50 px-3.5 py-2 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors shadow-2xs cursor-pointer"
-                title="Disconnetti sessione"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Esci</span>
-              </button>
-            )}
-          </div>
+          <span className="text-xl font-bold text-[#101B32] tracking-tight">
+            TigiBadge
+          </span>
         </div>
 
-        {/* Navigation & Action Controls */}
-        <div className="py-3 flex flex-wrap items-center justify-between gap-3">
-          {/* Date Selector */}
-          <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-            <button
-              onClick={handlePrevDay}
-              className="p-1.5 hover:bg-white text-slate-600 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
-              title="Giorno precedente"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => onDateChange(today)}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                isToday
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'text-slate-700 hover:bg-white'
-              }`}
-            >
-              Oggi
-            </button>
-
-            <div className="flex items-center gap-2 px-2">
-              <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
-              <input
-                type="date"
-                value={currentDate}
-                onChange={(e) => e.target.value && onDateChange(e.target.value)}
-                className="text-xs font-semibold text-slate-800 bg-transparent border-none focus:outline-hidden cursor-pointer"
-              />
-            </div>
-
-            <button
-              onClick={handleNextDay}
-              className="p-1.5 hover:bg-white text-slate-600 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
-              title="Giorno successivo"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="text-xs font-medium text-slate-500 hidden lg:block">
-            {formatDateIT(currentDate)}
-            {isToday && (
-              <span className="ml-2 text-emerald-600 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 uppercase tracking-wider text-[10px]">
-                In Servizio
-              </span>
+        {/* Center Section: Navigation Links */}
+        <nav className="flex items-center h-full space-x-8">
+          <button
+            id="nav-presenze"
+            onClick={() => setActiveView('cards')}
+            className={`relative flex items-center justify-center h-[72px] px-1 text-sm font-semibold transition-colors cursor-pointer ${
+              activeView === 'cards' ? 'text-[#00A77B]' : 'text-[#64748B] hover:text-[#101B32]'
+            }`}
+          >
+            <span>Presenze</span>
+            {activeView === 'cards' && (
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#00A77B] rounded-t-full" />
             )}
+          </button>
+
+          <button
+            id="nav-leaves"
+            onClick={() => {
+              onOpenLeaves();
+              setActiveView('leaves');
+            }}
+            className={`relative flex items-center justify-center h-[72px] px-1 text-sm font-semibold transition-colors cursor-pointer ${
+              activeView === 'leaves' ? 'text-[#00A77B]' : 'text-[#64748B] hover:text-[#101B32]'
+            }`}
+          >
+            <span>Ferie e permessi</span>
+            {activeView === 'leaves' && (
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#00A77B] rounded-t-full" />
+            )}
+          </button>
+
+          <button
+            id="nav-report"
+            onClick={() => {
+              onOpenReport();
+              setActiveView('report');
+            }}
+            className={`relative flex items-center justify-center h-[72px] px-1 text-sm font-semibold transition-colors cursor-pointer ${
+              activeView === 'report' ? 'text-[#00A77B]' : 'text-[#64748B] hover:text-[#101B32]'
+            }`}
+          >
+            <span>Report</span>
+            {activeView === 'report' && (
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#00A77B] rounded-t-full" />
+            )}
+          </button>
+        </nav>
+
+        {/* Right Section: Sync, Time, Profile */}
+        <div className="flex items-center gap-5">
+          {/* Real-time Cloud Sync state */}
+          <div
+            id="cloud-sync-badge"
+            className="flex items-center gap-2 text-xs font-semibold text-[#64748B] select-none"
+            title={
+              isCloudConnected
+                ? 'Sincronizzazione cloud attiva: dati in tempo reale'
+                : 'Connessione al database cloud...'
+            }
+          >
+            <span className={`w-2 h-2 rounded-full ${isCloudConnected ? 'bg-[#00A77B]' : 'bg-amber-500 animate-pulse'}`} />
+            <span>{isCloudConnected ? 'Sincronizzato' : 'Connessione...'}</span>
           </div>
 
-          {/* View tabs and Save Actions */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
-              <button
-                onClick={() => setActiveView('cards')}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                  activeView === 'cards'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Users className="w-3.5 h-3.5" />
-                <span>4 Dipendenti</span>
-              </button>
+          {/* Clock: HH:MM format */}
+          <div className="text-sm font-mono font-semibold text-[#101B32] select-none">
+            {systemTime || '--:--'}
+          </div>
 
-              <button
-                onClick={() => setActiveView('leaves')}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                  activeView === 'leaves'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Palmtree className="w-3.5 h-3.5 text-amber-500" />
-                <span>Ferie & Permessi</span>
-              </button>
-
-              <button
-                onClick={() => setActiveView('report')}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                  activeView === 'report'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Riepilogo Mese</span>
-              </button>
-            </div>
-
-            <div
-              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                isCloudConnected
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80 shadow-2xs'
-                  : 'bg-amber-50 text-amber-800 border-amber-200/80'
-              }`}
-              title={
-                isCloudConnected
-                  ? 'Database Cloud attivo: ogni timbratura è sincronizzata in tempo reale su tutti i dispositivi'
-                  : 'Connessione al database cloud in corso...'
-              }
+          {/* User Profile menu */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              id="user-menu-btn"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-1 hover:opacity-85 transition-opacity cursor-pointer focus:outline-hidden"
             >
-              <Cloud className={`w-3.5 h-3.5 ${isCloudConnected ? 'text-emerald-600' : 'text-amber-600'}`} />
-              <span className={`w-2 h-2 rounded-full ${isCloudConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
-              <span>{isCloudConnected ? 'Cloud Sincronizzato' : 'Connessione Cloud...'}</span>
-            </div>
+              <div className="w-8 h-8 rounded-full bg-[#E2E8F0] border border-slate-300 flex items-center justify-center text-xs font-bold text-[#101B32]">
+                TG
+              </div>
+              <ChevronDown className="w-4 h-4 text-[#64748B]" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E2E8F0] rounded-2xl shadow-lg py-2 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-4 py-2 border-b border-[#E2E8F0] mb-1">
+                  <p className="font-bold text-[#101B32]">Amministratore</p>
+                  <p className="text-[10px] text-[#64748B] truncate">TigiBadge System</p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    onResetData();
+                  }}
+                  className="w-full text-left px-4 py-2 text-slate-700 hover:bg-[#F4F7FA] flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Ripristina dati demo</span>
+                </button>
+
+                {onClearAll && (
+                  <button
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      onClearAll();
+                    }}
+                    className="w-full text-left px-4 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <Eraser className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Svuota cartellini</span>
+                  </button>
+                )}
+
+                <div className="border-t border-[#E2E8F0] my-1" />
+
+                {onLogout && (
+                  <button
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      onLogout();
+                    }}
+                    className="w-full text-left px-4 py-2 text-[#101B32] hover:bg-[#F4F7FA] font-bold flex items-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Esci</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

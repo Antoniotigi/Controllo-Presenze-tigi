@@ -24,6 +24,7 @@ export interface MonthlyStatsPerEmployee {
   netBalanceMinutes: number;
   ferieDays: number;
   permessiHours: number;
+  permessiMinutes: number;
 }
 
 export function computeMonthlyStats(
@@ -43,6 +44,7 @@ export function computeMonthlyStats(
     let totalDeficitMinutes = 0;
     let ferieDays = 0;
     let permessiHours = 0;
+    let permessiMinutes = 0;
 
     empRecords.forEach((r) => {
       const calc = calculateRecord(r, undefined, false, emp);
@@ -72,6 +74,8 @@ export function computeMonthlyStats(
           ferieDays += 1;
         } else if (r.leaveType === 'permesso') {
           const permMins = getPermessoMinutes(r);
+          const mins = permMins || Math.round((r.leaveHours || 8) * 60);
+          permessiMinutes += mins;
           permessiHours += permMins > 0 ? Number((permMins / 60).toFixed(2)) : (r.leaveHours || 8);
         }
         
@@ -96,6 +100,7 @@ export function computeMonthlyStats(
       netBalanceMinutes,
       ferieDays,
       permessiHours,
+      permessiMinutes,
     };
   });
 }
@@ -124,7 +129,7 @@ export function exportToExcel(
     'Recupero Ore (-)': formatMinutesToHM(s.totalDeficitMinutes),
     'Saldo Netto': (s.netBalanceMinutes >= 0 ? '+' : '') + formatMinutesToHM(s.netBalanceMinutes),
     'Ferie Fruite (gg)': s.ferieDays,
-    'Permessi Fruiti (h)': s.permessiHours,
+    'Permessi Fruiti': s.permessiMinutes > 0 ? formatMinutesToHM(s.permessiMinutes) : '—',
   }));
 
   // Create workbook
@@ -222,7 +227,7 @@ export function exportToPDF(
     s.totalDeficitMinutes > 0 ? `-${formatMinutesToHM(s.totalDeficitMinutes)}` : '0h 00m',
     (s.netBalanceMinutes >= 0 ? '+' : '') + formatMinutesToHM(s.netBalanceMinutes),
     `${s.ferieDays} gg`,
-    `${s.permessiHours} h`,
+    s.permessiMinutes > 0 ? formatMinutesToHM(s.permessiMinutes) : '—',
   ]);
 
   autoTable(doc, {

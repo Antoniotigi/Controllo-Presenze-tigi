@@ -369,8 +369,8 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                     )}
                   </td>
                   <td className="py-3 px-3 text-center text-slate-700">
-                    {s.permessiHours > 0 ? (
-                      <span className="font-semibold text-purple-800">{s.permessiHours} h</span>
+                    {s.permessiMinutes > 0 ? (
+                      <span className="font-semibold text-purple-800">{formatMinutesToHM(s.permessiMinutes)}</span>
                     ) : (
                       '—'
                     )}

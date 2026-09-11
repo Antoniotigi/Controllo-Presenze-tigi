@@ -824,7 +824,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased">
+    <div className="min-h-screen bg-[#F4F7FA] text-[#101B32] flex flex-col font-sans antialiased">
       {/* Global Navbar */}
       <Navbar
         currentDate={currentDate}
@@ -842,8 +842,8 @@ export default function App() {
 
       {/* Floating Notification Toast */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2.5 border border-slate-700 animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="fixed bottom-5 right-5 z-50 bg-[#101B32] text-white px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2.5 border border-[#E2E8F0]/10 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-[#00A77B]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -853,66 +853,67 @@ export default function App() {
         {activeView === 'cards' && (
           <div className="space-y-6 flex-1">
             {/* Day Header Banner & Status Bar */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-bold shadow-md shadow-slate-200">
-                  <Users className="w-6 h-6 text-emerald-400" />
+                <div className="w-12 h-12 bg-[#101B32] text-white rounded-xl flex items-center justify-center font-bold">
+                  <Users className="w-6 h-6 text-[#00A77B]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2.5">
-                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                      Pannello Timbrature
+                    <h2 className="text-xl font-bold text-[#101B32] tracking-tight">
+                      Presenze di oggi
                     </h2>
                     {isToday ? (
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
-                        In Servizio Oggi
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F7F3] text-[#00A77B] uppercase tracking-wider">
+                        In Servizio
                       </span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-[#64748B] border border-[#E2E8F0]">
                         {currentDate}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-[#64748B] mt-0.5">
                     {formatDateIT(currentDate)} • Orario standard 8 ore giornaliere
                   </p>
                 </div>
               </div>
 
-              {/* Status Counters */}
+              {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-2">
-                <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-xs flex items-center gap-2 text-emerald-900 font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                  <span>
-                    <strong>{countActiveNow}</strong> in servizio
-                  </span>
-                </div>
-
-                <div className="px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs flex items-center gap-2 text-slate-800 font-semibold">
-                  <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                  <span>
-                    <strong>{countCompleted}</strong> uscite registrate
-                  </span>
-                </div>
-
-                {countLeaves > 0 && (
-                  <div className="px-3.5 py-2 bg-rose-50 border border-rose-200 rounded-xl text-xs flex items-center gap-2 text-rose-900 font-semibold">
-                    <Palmtree className="w-4 h-4 text-rose-600" />
-                    <span>
-                      <strong>{countLeaves}</strong> ferie/permesso
-                    </span>
-                  </div>
-                )}
-
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(true)}
-                  className="px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer border border-slate-200 bg-white"
-                  title="Modifica nominativi dei 4 dipendenti"
+                  className="px-3.5 py-2 text-xs font-bold text-[#101B32] bg-white hover:bg-[#F4F7FA] rounded-lg border border-[#E2E8F0] transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
                 >
-                  <Settings2 className="w-4 h-4 text-slate-500" />
-                  <span>Modifica Dipendenti</span>
+                  <Settings2 className="w-4 h-4 text-[#64748B]" />
+                  <span>Gestisci dipendenti</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveView('report')}
+                  className="px-3.5 py-2 text-xs font-bold text-white bg-[#00A77B] hover:bg-[#00946d] rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Report mensile</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Synthesis / Summary Panel */}
+            <div className="grid grid-cols-3 gap-4 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+              <div className="flex flex-col justify-between">
+                <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">In servizio</span>
+                <span className="text-3xl font-black text-[#00A77B] mt-1">{countActiveNow}</span>
+              </div>
+              <div className="flex flex-col justify-between border-l border-[#E2E8F0] pl-4">
+                <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">In pausa</span>
+                <span className="text-3xl font-black text-amber-500 mt-1">{countActiveNow > 0 ? dailySummary.filter((d) => d.calc.status === 'pausa').length : 0}</span>
+              </div>
+              <div className="flex flex-col justify-between border-l border-[#E2E8F0] pl-4">
+                <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Assenti</span>
+                <span className="text-3xl font-black text-[#101B32] mt-1">{dailySummary.filter((d) => d.calc.status === 'non_timbrato' || d.calc.status === 'ferie' || d.calc.status === 'permesso').length}</span>
               </div>
             </div>
 
@@ -940,9 +941,9 @@ export default function App() {
             </div>
 
             {/* Sleek Interface Informational Banner */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 text-xs text-slate-600 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 text-xs text-[#64748B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-center gap-2.5">
-                <HelpCircle className="w-4 h-4 text-slate-400 shrink-0" />
+                <HelpCircle className="w-4 h-4 text-[#64748B] shrink-0" />
                 <span>
                   <strong>Regola Standard:</strong> 8 ore al giorno. Le ore oltre le 8h sono calcolate come <strong>Straordinario (+)</strong>, quelle inferiori come <strong>Recupero Ore (-)</strong>.
                 </span>
@@ -950,7 +951,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setActiveView('report')}
-                className="text-xs font-bold text-slate-900 hover:text-slate-700 underline whitespace-nowrap self-end sm:self-center cursor-pointer"
+                className="text-xs font-bold text-[#101B32] hover:text-[#00A77B] underline whitespace-nowrap self-end sm:self-center cursor-pointer"
               >
                 Visualizza Riepilogo Mese ed Esporta →
               </button>
@@ -981,29 +982,29 @@ export default function App() {
         )}
 
         {/* Sleek Interface Footer */}
-        <footer className="mt-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-slate-200">
+        <footer className="mt-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-[#E2E8F0]">
           <div className="flex items-center gap-8">
             <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              <span className="text-[10px] uppercase font-bold text-[#64748B] tracking-wider">
                 Totale Straordinari Mese
               </span>
-              <span className="text-sm font-bold text-emerald-600 font-mono">
+              <span className="text-sm font-bold text-[#00A77B] font-mono">
                 +{formatMinutesToHM(totalMonthOvertimeMins)}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              <span className="text-[10px] uppercase font-bold text-[#64748B] tracking-wider">
                 Totale Recuperi Mese
               </span>
-              <span className="text-sm font-bold text-amber-600 font-mono">
+              <span className="text-sm font-bold text-amber-500 font-mono">
                 -{formatMinutesToHM(totalMonthDeficitMins)}
               </span>
             </div>
           </div>
-          <div className="text-xs sm:text-sm text-slate-500 font-medium flex items-center gap-2">
+          <div className="text-xs sm:text-sm text-[#64748B] font-semibold flex items-center gap-2">
             <span>{formatDateIT(currentDate)}</span>
             <span>•</span>
-            <span className="font-mono text-slate-700 font-semibold">{systemTimeHHMM}</span>
+            <span className="font-mono text-[#101B32] font-extrabold">{systemTimeHHMM}</span>
           </div>
         </footer>
       </main>

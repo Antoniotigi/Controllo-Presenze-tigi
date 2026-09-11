@@ -12,6 +12,9 @@ import {
   ChevronUp,
   LogOut,
   LogIn,
+  Coffee,
+  ChevronRight,
+  Calendar,
 } from 'lucide-react';
 import { Employee, TimeRecord, DayCalculation } from '../types';
 import {
@@ -483,13 +486,13 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
           setIsExpanded(true);
         }
       }}
-      className={`bg-white rounded-3xl border transition-all duration-200 shadow-sm relative overflow-hidden flex flex-col ${
+      className={`bg-white rounded-2xl border border-[#E2E8F0] transition-all duration-200 shadow-xs relative overflow-hidden flex flex-col ${
         isExpanded
-          ? 'border-slate-200 p-6 ring-1 ring-slate-100'
-          : 'border-slate-200 hover:border-slate-300/80 p-5 cursor-pointer hover:shadow-md bg-slate-50/10'
+          ? 'p-6 ring-1 ring-[#00A77B]/10'
+          : 'p-5 cursor-pointer hover:border-slate-300/80 hover:shadow-sm'
       }`}
     >
-      {/* Top Section: Avatar, Name, Status, Live Ticker */}
+      {/* Top Section: Avatar, Name, Status, Hours Worked, Chevron Toggle */}
       <div
         onClick={(e) => {
           if (isExpanded) {
@@ -498,165 +501,203 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
           }
         }}
         className={`flex items-start justify-between ${
-          isExpanded ? 'mb-5 cursor-pointer hover:opacity-80 transition-opacity' : ''
+          isExpanded ? 'mb-5 cursor-pointer hover:opacity-90 transition-opacity' : ''
         }`}
       >
         <div className="flex items-center gap-3.5">
           <div
-            className={`w-13 h-13 ${avatarStyle} rounded-2xl flex items-center justify-center font-bold text-lg shadow-xs`}
+            className={`w-11 h-11 ${avatarStyle} rounded-full flex items-center justify-center font-bold text-sm tracking-tight`}
           >
             {getInitials(employee.name)}
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-lg leading-tight text-slate-900">
-                {employee.name}
-              </h3>
-              {!isExpanded && (
-                <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 font-bold rounded-md uppercase">
-                  {employee.scheduleType === 'six_days' ? 'Su 6gg' : employee.scheduleType === 'standard_9h' ? '9h' : '8h'}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2 mt-1">
+            <h3 className="font-bold text-base leading-tight text-[#101B32] font-sans">
+              {employee.name}
+            </h3>
+            <div className="flex items-center gap-1.5 mt-1">
               {calculation.status === 'al_lavoro' && (
-                <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                  In Servizio
+                <span className="text-xs font-semibold text-[#00A77B] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#00A77B] animate-pulse"></span>
+                  In servizio
                 </span>
               )}
               {calculation.status === 'pausa' && (
-                <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-amber-500 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                  Pausa Pranzo
+                  In pausa
                 </span>
               )}
               {calculation.status === 'completato' && (
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Fine Turno
+                <span className="text-xs font-semibold text-[#64748B] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#64748B]"></span>
+                  Fine turno
                 </span>
               )}
               {calculation.status === 'ferie' && (
-                <span className="text-xs font-semibold text-rose-500 uppercase tracking-wider">
-                  In Ferie
+                <span className="text-xs font-semibold text-rose-500 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                  In ferie
                 </span>
               )}
               {calculation.status === 'permesso' && (
-                <span className="text-xs font-semibold text-purple-600 uppercase tracking-wider">
-                  In Permesso ({formatMinutesToHM(currentPermessoMinutes || (leaveHours * 60))})
+                <span className="text-xs font-semibold text-purple-600 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                  In permesso ({formatMinutesToHM(currentPermessoMinutes || (leaveHours * 60))})
                 </span>
               )}
               {calculation.status === 'non_timbrato' && (
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Non Timbrato
+                <span className="text-xs font-semibold text-[#64748B] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                  Assente
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Big Top-Right Stat Counter & Expand/Collapse Icon */}
-        <div className="flex items-center gap-4">
+        {/* Worked Hours and Expand/Collapse arrow */}
+        <div className="flex items-center gap-2.5">
           <div className="text-right">
-            <div
-              className={`text-2xl font-mono font-bold ${
-                calculation.status === 'ferie' || calculation.status === 'non_timbrato'
-                  ? 'text-slate-300'
-                  : 'text-slate-800'
-              }`}
-            >
+            <div className="text-2xl font-bold text-[#101B32] font-sans">
               {calculation.status === 'ferie'
-                ? '08h 00m'
+                ? '8h 00m'
                 : calculation.status === 'non_timbrato'
-                ? '--:--'
+                ? '0h 00m'
                 : calculation.hoursWorkedFormatted}
             </div>
-            <div className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">
-              {calculation.status === 'al_lavoro'
-                ? 'Tempo Reale'
-                : calculation.status === 'pausa'
-                ? 'Marr. Conclusa'
-                : calculation.status === 'completato'
-                ? 'Totale Giorno'
-                : calculation.status === 'ferie'
-                ? 'Ferie Retr.'
-                : calculation.status === 'permesso'
-                ? 'Permesso Retr.'
-                : 'In Attesa'}
-            </div>
           </div>
-          <div className="p-1 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors shrink-0">
+          <div className="p-1 text-[#64748B] hover:text-[#101B32] transition-colors shrink-0">
             {isExpanded ? (
-              <ChevronUp className="w-5 h-5" />
+              <ChevronUp className="w-4 h-4" />
             ) : (
-              <ChevronDown className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4" />
             )}
           </div>
         </div>
       </div>
 
-      {/* Synthetic View (when collapsed) */}
-      {!isExpanded && (
-        <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col">
-              <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Inquadramento</span>
-              <span className="font-semibold text-slate-700 mt-0.5">
-                {employee.scheduleType === 'six_days' 
-                  ? '7h 12m (Lun-Ven) / 4h (Sab)' 
-                  : employee.scheduleType === 'standard_9h' 
-                    ? '9h (Lun-Ven)' 
-                    : '8h (Lun-Ven)'}
-              </span>
+      {/* Progress & Target Section */}
+      {(() => {
+        const progressPct =
+          standardMinutesToday > 0
+            ? Math.min(100, Math.round((calculation.minutesWorked / standardMinutesToday) * 100))
+            : calculation.minutesWorked > 0
+            ? 100
+            : 0;
+
+        const formatMinutesLeft = (mins: number) => {
+          const absMins = Math.abs(mins);
+          const h = Math.floor(absMins / 60);
+          const m = absMins % 60;
+          if (h > 0) {
+            return `${h}h${m > 0 ? ' ' + m + 'm' : ''}`;
+          }
+          return `${m} min`;
+        };
+
+        const minutesLeft = standardMinutesToday - calculation.minutesWorked;
+
+        return (
+          <div className="space-y-1.5 my-3">
+            {/* Target & Pct row */}
+            <div className="flex items-center justify-between text-xs font-medium text-[#64748B]">
+              <span>Su {formatMinutesToHM(standardMinutesToday)} previste</span>
+              <span className="text-[#101B32] font-bold">{progressPct}%</span>
             </div>
-            
-            <div className="flex flex-col border-l border-slate-200 pl-4">
-              <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Timbrature</span>
-              <span className="font-semibold text-slate-600 mt-0.5 font-mono">
-                {hasAnyStamps ? (
-                  <span className="flex gap-1">
-                    {clockInMorning && <span>{clockInMorning}</span>}
-                    {clockOutMorning && <span className="text-slate-300">|</span>}
-                    {clockOutMorning && <span>{clockOutMorning}</span>}
-                    {clockInAfternoon && <span className="text-slate-300">|</span>}
-                    {clockInAfternoon && <span>{clockInAfternoon}</span>}
-                    {clockOutAfternoon && <span className="text-slate-300">|</span>}
-                    {clockOutAfternoon && <span>{clockOutAfternoon}</span>}
+
+            {/* Progress bar */}
+            <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
+              <div
+                className="bg-[#00A77B] h-full rounded-full transition-all duration-300"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+
+            {/* Time deficit or surplus */}
+            <div className="flex items-center justify-between h-5 pt-0.5">
+              <div>
+                {standardMinutesToday > 0 ? (
+                  minutesLeft > 0 ? (
+                    isToday ? (
+                      <span className="text-xs font-semibold text-[#64748B]">
+                        Mancano {formatMinutesLeft(minutesLeft)}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-amber-600">
+                        Deficit: {formatMinutesLeft(minutesLeft)}
+                      </span>
+                    )
+                  ) : minutesLeft < 0 ? (
+                    <span className="px-2 py-0.5 bg-[#E6F7F3] text-[#00A77B] rounded-md text-[10px] font-bold">
+                      + {formatMinutesLeft(minutesLeft)} straordinario
+                    </span>
+                  ) : (
+                    <span className="text-xs font-semibold text-[#00A77B]">
+                      Completato
+                    </span>
+                  )
+                ) : calculation.minutesWorked > 0 ? (
+                  <span className="px-2 py-0.5 bg-[#E6F7F3] text-[#00A77B] rounded-md text-[10px] font-bold">
+                    + {formatMinutesLeft(calculation.minutesWorked)} straordinario
                   </span>
-                ) : leaveType === 'ferie' ? (
-                  <span className="text-rose-600 font-sans font-semibold">Ferie</span>
-                ) : leaveType === 'permesso' ? (
-                  <span className="text-purple-600 font-sans font-semibold">Permesso</span>
                 ) : (
-                  <span className="text-slate-400 font-sans">Nessuna timbratura</span>
+                  <span className="text-xs font-semibold text-[#64748B]">
+                    Nessun orario previsto
+                  </span>
                 )}
-              </span>
+              </div>
             </div>
           </div>
+        );
+      })()}
 
-          <div className="flex items-center">
-            {calculation.isOvertime ? (
-              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 font-bold rounded-md font-mono text-[11px]">
-                {calculation.overtimeFormatted} (Str.)
-              </span>
-            ) : calculation.isDeficit ? (
-              <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 font-bold rounded-md font-mono text-[11px]">
-                {calculation.deficitFormatted} (Rec.)
-              </span>
-            ) : (
-              <span className="px-2 py-0.5 bg-slate-50 text-slate-500 border border-slate-100 font-bold rounded-md font-mono text-[11px]">
-                00h 00m
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Dividere e Timbrature (Visible by default) */}
+      <div className="border-t border-[#E2E8F0] mt-3.5 pt-3.5">
+        {(() => {
+          const stampsList = [
+            { label: 'Ingresso', value: clockInMorning, icon: LogIn, iconColor: 'text-[#00A77B]' },
+            { label: 'Pausa', value: clockOutMorning, icon: Coffee, iconColor: 'text-amber-500' },
+            { label: 'Rientro', value: clockInAfternoon, icon: LogIn, iconColor: 'text-blue-500' },
+            { label: 'Uscita', value: clockOutAfternoon, icon: LogOut, iconColor: 'text-slate-500' },
+          ].filter((s) => s.value);
 
-      {/* Expanded Main Content Area */}
+          if (stampsList.length === 0) {
+            return (
+              <span className="text-xs text-[#64748B] italic">
+                {leaveType === 'ferie'
+                  ? 'Ferie registrate per la giornata'
+                  : leaveType === 'permesso'
+                  ? 'Permesso registrato per la giornata'
+                  : 'Nessuna timbratura registrata oggi'}
+              </span>
+            );
+          }
+
+          return (
+            <div className="flex flex-wrap items-center gap-y-2 text-xs text-[#64748B]">
+              {stampsList.map((stamp, sIdx) => (
+                <React.Fragment key={stamp.label}>
+                  {sIdx > 0 && <div className="w-[1px] bg-[#E2E8F0] h-3.5 mx-3" />}
+                  <div className="flex items-center gap-1.5">
+                    <stamp.icon className={`w-3.5 h-3.5 ${stamp.iconColor}`} />
+                    <span className="font-semibold text-[#64748B]">{stamp.label}</span>
+                    <span className="font-mono font-bold text-[#101B32]">{stamp.value}</span>
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* Expanded Interactive Control Area */}
       {isExpanded && (
-        <div className="mt-4 space-y-4 flex-1 flex flex-col justify-between">
+        <div 
+          onClick={(e) => e.stopPropagation()} 
+          className="mt-5 pt-5 border-t border-[#E2E8F0] space-y-4 animate-in fade-in slide-in-from-top-2 duration-150"
+        >
           {leaveType === 'ferie' ? (
-            <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5 my-2 flex-1 flex flex-col justify-center items-center text-center">
+            <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex flex-col items-center text-center">
               <Palmtree className="w-7 h-7 text-rose-500 mb-1" />
               <p className="text-rose-700 font-bold text-sm">Dipendente in FERIE</p>
               <p className="text-rose-600 text-xs mt-1">
@@ -680,204 +721,177 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 }}
                 className="mt-3 text-xs font-bold underline text-rose-800 hover:text-rose-900 cursor-pointer"
               >
-                Modifica Stato o Timbra
+                Annulla Ferie e ripristina timbrature standard
               </button>
             </div>
           ) : (
-            <div className="space-y-3.5 mb-4">
-              {/* Sezione 1: Mattina (2 entrate/uscite) */}
-              <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sun className="w-3.5 h-3.5 text-amber-500" />
-                    Mattina
-                  </span>
-                  {clockInMorning && clockOutMorning && (
-                    <span className="text-[11px] font-mono font-medium text-slate-500">
-                      {formatMinutesToHM(
-                        Math.max(
-                          0,
-                          (clockOutMorning.split(':').reduce((h, m) => Number(h) * 60 + Number(m), 0)) -
-                          (clockInMorning.split(':').reduce((h, m) => Number(h) * 60 + Number(m), 0))
-                        )
-                      )}
-                    </span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Entrata Mattina */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between ml-1">
-                      <label
-                        htmlFor={`in-morn-${employee.id}`}
-                        className="text-[10px] font-bold text-slate-500 uppercase"
-                      >
-                        1ª Entrata
-                      </label>
-                      {isToday && (
-                        <button
-                          type="button"
-                          onClick={setInMorningNow}
-                          className="text-[10px] font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
-                        >
-                          Adesso
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      id={`in-morn-${employee.id}`}
-                      type="time"
-                      value={clockInMorning}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setClockInMorning(val);
-                        persistChanges({ clockInMorning: val });
-                      }}
-                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono font-semibold text-slate-800 focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all shadow-2xs"
-                    />
-                  </div>
-
-                  {/* Uscita Mattina */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between ml-1">
-                      <label
-                        htmlFor={`out-morn-${employee.id}`}
-                        className="text-[10px] font-bold text-slate-500 uppercase"
-                      >
-                        1ª Uscita
-                      </label>
-                      {isToday && (
-                        <button
-                          type="button"
-                          onClick={setOutMorningNow}
-                          className="text-[10px] font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
-                        >
-                          Adesso
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      id={`out-morn-${employee.id}`}
-                      type="time"
-                      value={clockOutMorning}
-                      placeholder="--:--"
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setClockOutMorning(val);
-                        persistChanges({ clockOutMorning: val });
-                      }}
-                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono font-semibold text-slate-800 focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all shadow-2xs"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Sezione 2: Pomeriggio (2 entrate/uscite) */}
-              <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sunset className="w-3.5 h-3.5 text-indigo-500" />
-                    Pomeriggio
-                  </span>
-                  {clockInAfternoon && clockOutAfternoon && (
-                    <span className="text-[11px] font-mono font-medium text-slate-500">
-                      {formatMinutesToHM(
-                        Math.max(
-                          0,
-                          (clockOutAfternoon.split(':').reduce((h, m) => Number(h) * 60 + Number(m), 0)) -
-                          (clockInAfternoon.split(':').reduce((h, m) => Number(h) * 60 + Number(m), 0))
-                        )
-                      )}
-                    </span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Entrata Pomeriggio */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between ml-1">
-                      <label
-                        htmlFor={`in-aft-${employee.id}`}
-                        className="text-[10px] font-bold text-slate-500 uppercase"
-                      >
-                        2ª Entrata
-                      </label>
-                      {isToday && (
-                        <button
-                          type="button"
-                          onClick={setInAfternoonNow}
-                          className="text-[10px] font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
-                        >
-                          Adesso
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      id={`in-aft-${employee.id}`}
-                      type="time"
-                      value={clockInAfternoon}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setClockInAfternoon(val);
-                        persistChanges({ clockInAfternoon: val });
-                      }}
-                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono font-semibold text-slate-800 focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all shadow-2xs"
-                    />
-                  </div>
-
-                  {/* Uscita Pomeriggio */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between ml-1">
-                      <label
-                        htmlFor={`out-aft-${employee.id}`}
-                        className="text-[10px] font-bold text-slate-500 uppercase"
-                      >
-                        2ª Uscita
-                      </label>
-                      {isToday && (
-                        <button
-                          type="button"
-                          onClick={setOutAfternoonNow}
-                          className="text-[10px] font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
-                        >
-                          Adesso
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      id={`out-aft-${employee.id}`}
-                      type="time"
-                      value={clockOutAfternoon}
-                      placeholder="--:--"
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setClockOutAfternoon(val);
-                        persistChanges({ clockOutAfternoon: val });
-                      }}
-                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono font-semibold text-slate-800 focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all shadow-2xs"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Uscita Temporanea durante il turno di lavoro - mostrato SOLO se abilitato dal tasto */}
-              {leaveType !== 'ferie' && showExitDuringTurn && (
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-3 transition-all">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <LogOut className="w-3.5 h-3.5 text-slate-500" />
-                      Uscita temporanea durante il turno
+            <div className="space-y-4">
+              {/* Timestamps inputs Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Mattina Block */}
+                <div className="bg-slate-50/50 border border-[#E2E8F0] rounded-xl p-3.5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sun className="w-3.5 h-3.5 text-amber-500" />
+                      Turno Mattina
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    {/* Uscita durante Turno */}
+                    {/* Entrata Mattina */}
                     <div className="flex flex-col gap-1">
-                      <label
-                        htmlFor={`exit-start-${employee.id}`}
-                        className="text-[10px] font-bold text-slate-500 uppercase ml-1"
-                      >
+                      <div className="flex items-center justify-between ml-1">
+                        <label
+                          htmlFor={`in-morn-${employee.id}`}
+                          className="text-[10px] font-bold text-[#64748B] uppercase"
+                        >
+                          1ª Entrata
+                        </label>
+                        {isToday && (
+                          <button
+                            type="button"
+                            onClick={setInMorningNow}
+                            className="text-[10px] font-semibold text-[#00A77B] hover:underline cursor-pointer"
+                          >
+                            Ora
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        id={`in-morn-${employee.id}`}
+                        type="time"
+                        value={clockInMorning}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setClockInMorning(val);
+                          persistChanges({ clockInMorning: val });
+                        }}
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#00A77B] focus:border-transparent outline-none transition-all shadow-2xs"
+                      />
+                    </div>
+
+                    {/* Uscita Mattina */}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between ml-1">
+                        <label
+                          htmlFor={`out-morn-${employee.id}`}
+                          className="text-[10px] font-bold text-[#64748B] uppercase"
+                        >
+                          1ª Uscita
+                        </label>
+                        {isToday && (
+                          <button
+                            type="button"
+                            onClick={setOutMorningNow}
+                            className="text-[10px] font-semibold text-[#00A77B] hover:underline cursor-pointer"
+                          >
+                            Ora
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        id={`out-morn-${employee.id}`}
+                        type="time"
+                        value={clockOutMorning}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setClockOutMorning(val);
+                          persistChanges({ clockOutMorning: val });
+                        }}
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#00A77B] focus:border-transparent outline-none transition-all shadow-2xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pomeriggio Block */}
+                <div className="bg-slate-50/50 border border-[#E2E8F0] rounded-xl p-3.5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sunset className="w-3.5 h-3.5 text-indigo-500" />
+                      Turno Pomeriggio
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Entrata Pomeriggio */}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between ml-1">
+                        <label
+                          htmlFor={`in-aft-${employee.id}`}
+                          className="text-[10px] font-bold text-[#64748B] uppercase"
+                        >
+                          2ª Entrata
+                        </label>
+                        {isToday && (
+                          <button
+                            type="button"
+                            onClick={setInAfternoonNow}
+                            className="text-[10px] font-semibold text-[#00A77B] hover:underline cursor-pointer"
+                          >
+                            Ora
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        id={`in-aft-${employee.id}`}
+                        type="time"
+                        value={clockInAfternoon}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setClockInAfternoon(val);
+                          persistChanges({ clockInAfternoon: val });
+                        }}
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#00A77B] focus:border-transparent outline-none transition-all shadow-2xs"
+                      />
+                    </div>
+
+                    {/* Uscita Pomeriggio */}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between ml-1">
+                        <label
+                          htmlFor={`out-aft-${employee.id}`}
+                          className="text-[10px] font-bold text-[#64748B] uppercase"
+                        >
+                          2ª Uscita
+                        </label>
+                        {isToday && (
+                          <button
+                            type="button"
+                            onClick={setOutAfternoonNow}
+                            className="text-[10px] font-semibold text-[#00A77B] hover:underline cursor-pointer"
+                          >
+                            Ora
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        id={`out-aft-${employee.id}`}
+                        type="time"
+                        value={clockOutAfternoon}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setClockOutAfternoon(val);
+                          persistChanges({ clockOutAfternoon: val });
+                        }}
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#00A77B] focus:border-transparent outline-none transition-all shadow-2xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Exit During Turn (if enabled) */}
+              {showExitDuringTurn && (
+                <div className="bg-slate-50 border border-[#E2E8F0] rounded-xl p-3.5 space-y-3">
+                  <span className="text-[11px] font-bold text-[#101B32] uppercase tracking-wider flex items-center gap-1.5">
+                    <LogOut className="w-3.5 h-3.5 text-slate-500" />
+                    Uscita temporanea durante il turno
+                  </span>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label htmlFor={`exit-start-${employee.id}`} className="text-[10px] font-bold text-[#64748B] ml-1 uppercase">
                         Ora Uscita
                       </label>
                       <input
@@ -885,16 +899,12 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         type="time"
                         value={exitDuringTurnStart || ''}
                         onChange={(e) => handleExitDuringTurnStartChange(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono font-bold text-slate-800 focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all shadow-2xs"
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 outline-none shadow-2xs focus:ring-1 focus:ring-[#00A77B]"
                       />
                     </div>
 
-                    {/* Rientro durante Turno */}
                     <div className="flex flex-col gap-1">
-                      <label
-                        htmlFor={`exit-end-${employee.id}`}
-                        className="text-[10px] font-bold text-slate-500 uppercase ml-1"
-                      >
+                      <label htmlFor={`exit-end-${employee.id}`} className="text-[10px] font-bold text-[#64748B] ml-1 uppercase">
                         Ora Rientro
                       </label>
                       <input
@@ -902,41 +912,36 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         type="time"
                         value={exitDuringTurnEnd || ''}
                         onChange={(e) => handleExitDuringTurnEndChange(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono font-bold text-slate-800 focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all shadow-2xs"
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 outline-none shadow-2xs focus:ring-1 focus:ring-[#00A77B]"
                       />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Permesso compensativo in Ore e Minuti - mostrato SOLO se l'utente clicca su "Segna Permesso" */}
+              {/* Permesso Giustificativo Block */}
               {leaveType === 'permesso' && (
-                <div className="bg-purple-50/70 border border-purple-200/90 rounded-2xl p-3.5 space-y-2.5 transition-all">
+                <div className="bg-purple-50/40 border border-purple-100 rounded-xl p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-purple-800 uppercase tracking-wider flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                      Giustificativo Permesso (Ore / Minuti)
+                      <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                      Giustificativo Permesso (Ore e Minuti)
                     </span>
                     {currentPermessoMinutes > 0 ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200 font-mono">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700">
                         Applicato: +{formatMinutesToHM(currentPermessoMinutes)}
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 font-mono">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">
                         Mancano: -{formatMinutesToHM(missingMinutes)}
                       </span>
                     )}
                   </div>
 
-                  {/* Ore and Minuti input */}
                   <div className="grid grid-cols-2 gap-3">
-                    {/* Ore */}
                     <div className="flex flex-col gap-1">
-                      <label
-                        htmlFor={`perm-hours-${employee.id}`}
-                        className="text-[10px] font-bold text-purple-700 uppercase ml-1"
-                      >
-                        Ore Permesso
+                      <label htmlFor={`perm-hours-${employee.id}`} className="text-[10px] font-bold text-purple-700 uppercase ml-1">
+                        Ore
                       </label>
                       <input
                         id={`perm-hours-${employee.id}`}
@@ -945,17 +950,13 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         max="8"
                         value={permessoHours}
                         onChange={(e) => handlePermessoHoursChange(parseInt(e.target.value) || 0)}
-                        className="w-full bg-white border border-purple-200 rounded-xl px-3 py-2 text-sm font-mono font-bold text-purple-900 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all shadow-2xs"
+                        className="bg-white border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-purple-950 focus:ring-1 focus:ring-purple-500 outline-none"
                       />
                     </div>
 
-                    {/* Minuti */}
                     <div className="flex flex-col gap-1">
-                      <label
-                        htmlFor={`perm-mins-${employee.id}`}
-                        className="text-[10px] font-bold text-purple-700 uppercase ml-1"
-                      >
-                        Minuti Permesso
+                      <label htmlFor={`perm-mins-${employee.id}`} className="text-[10px] font-bold text-purple-700 uppercase ml-1">
+                        Minuti
                       </label>
                       <input
                         id={`perm-mins-${employee.id}`}
@@ -964,33 +965,29 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         max="59"
                         value={permessoMinutes}
                         onChange={(e) => handlePermessoMinutesChange(parseInt(e.target.value) || 0)}
-                        className="w-full bg-white border border-purple-200 rounded-xl px-3 py-2 text-sm font-mono font-bold text-purple-900 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all shadow-2xs"
+                        className="bg-white border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-purple-950 focus:ring-1 focus:ring-purple-500 outline-none"
                       />
                     </div>
                   </div>
 
-                  {/* Quick actions: Compensa deficit & Rimuovi */}
-                  <div className="flex items-center justify-between pt-0.5 text-xs">
+                  <div className="flex items-center justify-between text-xs pt-1">
                     {missingMinutes > 0 && currentPermessoMinutes < missingMinutes ? (
                       <button
                         type="button"
                         onClick={handleAutoCompensate}
-                        className="text-purple-700 hover:text-purple-900 font-semibold text-[11px] underline flex items-center gap-1 cursor-pointer"
-                        title="Imposta automaticamente le ore e minuti per pareggiare a 8 ore"
+                        className="text-purple-700 hover:text-purple-950 font-bold underline text-[11px] cursor-pointer"
                       >
                         Compensa saldo mancante ({formatMinutesToHM(missingMinutes)})
                       </button>
                     ) : (
-                      <span className="text-[11px] text-purple-600 font-medium">
-                        {currentPermessoMinutes > 0 ? 'Permesso applicato al calcolo' : ''}
-                      </span>
+                      <span />
                     )}
 
                     {currentPermessoMinutes > 0 && (
                       <button
                         type="button"
                         onClick={handleClearPermesso}
-                        className="text-slate-400 hover:text-rose-600 font-medium text-[11px] ml-auto cursor-pointer"
+                        className="text-[#64748B] hover:text-rose-600 font-bold cursor-pointer text-[11px]"
                       >
                         Rimuovi permesso
                       </button>
@@ -999,49 +996,58 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 </div>
               )}
 
-              {/* Note / Causale */}
+              {/* Note input */}
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
+                <label className="text-[10px] font-bold text-[#64748B] uppercase ml-1">
                   Nota / Causale (Opzionale)
                 </label>
                 <input
                   type="text"
-                  placeholder="es. Fuori sede, trasferta..."
+                  placeholder="es. Trasferta, Smart working..."
                   value={notes}
                   onChange={(e) => {
                     const val = e.target.value;
                     setNotes(val);
                     persistChanges({ notes: val });
                   }}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none"
+                  className="bg-slate-50 border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-[#64748B] focus:bg-white focus:ring-1 focus:ring-[#00A77B] outline-none"
                 />
               </div>
             </div>
           )}
 
-          {/* Action & Auto-save Status Bar: Salvataggio automatico + Ferie toggle */}
-          <div className="flex items-center justify-between gap-3 pt-2">
-            <div className="flex items-center gap-2 px-3.5 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-medium text-slate-600 shadow-2xs">
+          {/* Contractual Inquadramento Info Box (Shifted to expanded view as per prompt) */}
+          <div className="bg-[#F4F7FA] rounded-xl p-3.5 border border-[#E2E8F0] space-y-1 text-xs text-[#64748B]">
+            <p className="font-bold text-[#101B32] uppercase tracking-wide text-[10px]">Inquadramento contrattuale</p>
+            <p className="font-medium text-slate-700 mt-0.5">
+              {employee.scheduleType === 'six_days'
+                ? 'Orario: 7h 12m dal Lunedì al Venerdì, 4h il Sabato (36 ore settimanali)'
+                : employee.scheduleType === 'standard_9h'
+                ? 'Orario: 9h dal Lunedì al Venerdì (45 ore settimanali)'
+                : 'Orario: 8h dal Lunedì al Venerdì (40 ore settimanali)'}
+            </p>
+          </div>
+
+          {/* Action Footer: Auto-save feedback & triggers */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <div className="flex items-center gap-2 px-3 py-2 bg-[#F4F7FA] border border-[#E2E8F0] rounded-lg text-xs font-semibold text-[#64748B]">
               <CheckCircle2
-                className={`w-4 h-4 transition-all duration-200 ${
-                  isSavedFeedback ? 'text-emerald-500 scale-110' : 'text-emerald-600'
+                className={`w-3.5 h-3.5 transition-all duration-200 ${
+                  isSavedFeedback ? 'text-[#00A77B] scale-110' : 'text-[#64748B]'
                 }`}
               />
-              <span className="text-slate-700 font-medium">
-                {isSavedFeedback ? 'Salvato!' : 'Salvataggio automatico'}
-              </span>
+              <span>{isSavedFeedback ? 'Salvato!' : 'Sincronizzazione cloud'}</span>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={toggleExitDuringTurn}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs cursor-pointer ${
                   showExitDuringTurn
-                    ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA]'
                 }`}
-                title="Segna o annulla Uscita temporanea"
               >
                 {showExitDuringTurn ? 'In Uscita' : 'Uscita Turno'}
               </button>
@@ -1049,12 +1055,11 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <button
                 type="button"
                 onClick={togglePermesso}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs cursor-pointer ${
                   leaveType === 'permesso'
-                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                    ? 'bg-purple-50 text-purple-700 border-purple-200'
+                    : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA]'
                 }`}
-                title="Segna o annulla Permesso"
               >
                 {leaveType === 'permesso' ? 'In Permesso' : 'Segna Permesso'}
               </button>
@@ -1062,42 +1067,15 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <button
                 type="button"
                 onClick={toggleFerie}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs cursor-pointer ${
                   leaveType === 'ferie'
-                    ? 'bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-200'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA]'
                 }`}
-                title="Segna o annulla Ferie"
               >
                 {leaveType === 'ferie' ? 'In Ferie' : 'Segna Ferie'}
               </button>
             </div>
-          </div>
-
-          {/* Footer: Saldo Giornaliero (8h/9h Standard) */}
-          <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-            <span className="text-xs text-slate-500 font-medium animate-fade-in">
-              Saldo Giornaliero ({employee.scheduleType === 'six_days' ? '7h 12m/4h' : employee.scheduleType === 'standard_9h' ? '9h' : '8h'} Standard)
-            </span>
-            {calculation.isOvertime ? (
-              <span className="text-xs font-bold text-emerald-600 font-mono">
-                {calculation.overtimeFormatted} (Str.)
-              </span>
-            ) : calculation.isDeficit ? (
-              <span className="text-xs font-bold text-amber-600 font-mono">
-                {calculation.deficitFormatted} (Rec.)
-              </span>
-            ) : calculation.status === 'al_lavoro' ? (
-              <span className="text-xs font-bold text-slate-500 font-mono">
-                {diffFromStandard >= 0
-                  ? `+${formatMinutesToHM(diffFromStandard)} (Str.)`
-                  : `${formatMinutesToHM(diffFromStandard)} (in corso)`}
-              </span>
-            ) : (
-              <span className="text-xs font-bold text-slate-400 font-mono">
-                00h 00m
-              </span>
-            )}
           </div>
         </div>
       )}
