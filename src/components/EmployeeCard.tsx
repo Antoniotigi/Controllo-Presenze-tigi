@@ -727,7 +727,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
           ) : (
             <div className="space-y-4">
               {/* Timestamps inputs Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 {/* Mattina Block */}
                 <div className="bg-slate-50/50 border border-[#E2E8F0] rounded-xl p-3.5">
                   <div className="flex items-center justify-between mb-2">
