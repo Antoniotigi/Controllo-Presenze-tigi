@@ -22,6 +22,8 @@ import {
   Eye,
   EyeOff,
   Lock,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Employee, TimeRecord, LeaveRequest } from './types';
 import {
@@ -62,7 +64,8 @@ import {
 } from './firebase';
 
 export default function App() {
-  const today = getTodayDateString();
+  const [todayState, setTodayState] = useState<string>(getTodayDateString());
+  const today = todayState;
   const [currentDate, setCurrentDate] = useState<string>(today);
   const [employees, setEmployees] = useState<Employee[]>(getEmployees());
   const [records, setRecords] = useState<TimeRecord[]>(getTimeRecords());
@@ -227,6 +230,23 @@ export default function App() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Automatically update the page when a new day starts (or in the morning)
+  useEffect(() => {
+    const checkMidnightRollover = () => {
+      const actualToday = getTodayDateString();
+      if (actualToday !== todayState) {
+        setTodayState(actualToday);
+        setCurrentDate(actualToday);
+        setActiveView('cards');
+        showToast('Nuovo giorno rilevato! Il pannello è stato aggiornato ad oggi.');
+      }
+    };
+
+    // Check every 10 seconds to respond quickly if page is left open
+    const interval = setInterval(checkMidnightRollover, 10000);
+    return () => clearInterval(interval);
+  }, [todayState]);
 
   // Periodic session validation every 30 seconds and on window focus (24 hours window)
   useEffect(() => {
@@ -861,15 +881,15 @@ export default function App() {
                 <div>
                   <div className="flex items-center gap-2.5">
                     <h2 className="text-xl font-bold text-[#101B32] tracking-tight">
-                      Presenze di oggi
+                      {isToday ? 'Presenze di oggi' : 'Presenze passate'}
                     </h2>
                     {isToday ? (
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F7F3] text-[#00A77B] uppercase tracking-wider">
                         In Servizio
                       </span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-[#64748B] border border-[#E2E8F0]">
-                        {currentDate}
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">
+                        Storico
                       </span>
                     )}
                   </div>
@@ -879,8 +899,67 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-2">
+              {/* Action Buttons & Date Navigation merged */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Date Navigation Controls */}
+                <div className="flex items-center gap-1 border border-[#E2E8F0] rounded-lg p-1 bg-[#F4F7FA]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const prevDate = new Date(currentDate);
+                      prevDate.setDate(prevDate.getDate() - 1);
+                      const y = prevDate.getFullYear();
+                      const m = (prevDate.getMonth() + 1).toString().padStart(2, '0');
+                      const d = prevDate.getDate().toString().padStart(2, '0');
+                      setCurrentDate(`${y}-${m}-${d}`);
+                    }}
+                    className="p-1.5 text-[#64748B] hover:text-[#101B32] hover:bg-white rounded-md transition-colors cursor-pointer"
+                    title="Giorno Precedente"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <div className="relative flex items-center">
+                    <input
+                      type="date"
+                      value={currentDate}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setCurrentDate(e.target.value);
+                        }
+                      }}
+                      className="pl-7 pr-1.5 py-1 text-xs font-bold text-[#101B32] bg-transparent outline-none cursor-pointer w-[115px]"
+                    />
+                    <Calendar className="w-3.5 h-3.5 text-[#64748B] absolute left-1.5 pointer-events-none" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextDate = new Date(currentDate);
+                      nextDate.setDate(nextDate.getDate() + 1);
+                      const y = nextDate.getFullYear();
+                      const m = (nextDate.getMonth() + 1).toString().padStart(2, '0');
+                      const d = nextDate.getDate().toString().padStart(2, '0');
+                      setCurrentDate(`${y}-${m}-${d}`);
+                    }}
+                    className="p-1.5 text-[#64748B] hover:text-[#101B32] hover:bg-white rounded-md transition-colors cursor-pointer"
+                    title="Giorno Successivo"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {!isToday && (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentDate(today)}
+                    className="px-3.5 py-2 text-xs font-bold text-[#00A77B] bg-[#E6F7F3] hover:bg-[#d8f2ec] rounded-lg transition-colors cursor-pointer shadow-2xs"
+                  >
+                    Oggi
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(true)}
