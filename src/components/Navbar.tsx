@@ -3,8 +3,12 @@ import {
   Cloud,
   ChevronDown,
   LogOut,
-  RotateCcw,
   Eraser,
+  Menu,
+  X,
+  Users,
+  Palmtree,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -13,7 +17,6 @@ interface NavbarProps {
   onOpenLeaves: () => void;
   onOpenReport: () => void;
   onSaveAll: () => void;
-  onResetData: () => void;
   onClearAll?: () => void;
   activeView: 'cards' | 'report' | 'leaves';
   setActiveView: (view: 'cards' | 'report' | 'leaves') => void;
@@ -27,7 +30,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenLeaves,
   onOpenReport,
   onSaveAll,
-  onResetData,
   onClearAll,
   activeView,
   setActiveView,
@@ -36,7 +38,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [systemTime, setSystemTime] = useState<string>('');
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // Update clock every second, formatted as HH:MM to match the image
   useEffect(() => {
@@ -51,11 +55,18 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Close dropdown if clicked outside
+  // Close dropdown and mobile menu if clicked outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node) &&
+        !(event.target as HTMLElement).closest('#mobile-menu-toggle')
+      ) {
+        setIsMobileMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -63,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   return (
-    <header className="bg-white border-b border-[#E2E8F0] sticky top-0 z-30 h-[72px] flex items-center shadow-xs">
+    <header className="bg-white border-b border-[#E2E8F0] sticky top-0 z-30 h-[72px] flex items-center shadow-xs relative">
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full">
         {/* Left Section: Logo & Name */}
         <div className="flex items-center gap-2.5">
@@ -78,8 +89,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </span>
         </div>
 
-        {/* Center Section: Navigation Links */}
-        <nav className="flex items-center h-full space-x-8">
+        {/* Center Section: Navigation Links (Desktop Only) */}
+        <nav className="hidden md:flex items-center h-full space-x-8">
           <button
             id="nav-presenze"
             onClick={() => setActiveView('cards')}
@@ -126,8 +137,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </nav>
 
-        {/* Right Section: Sync, Time, Profile */}
-        <div className="flex items-center gap-5">
+        {/* Right Section: Sync, Time, Profile (Desktop Only) */}
+        <div className="hidden md:flex items-center gap-5">
           {/* Real-time Cloud Sync state */}
           <div
             id="cloud-sync-badge"
@@ -168,17 +179,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <p className="text-[10px] text-[#64748B] truncate">TigiBadge System</p>
                 </div>
 
-                <button
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    onResetData();
-                  }}
-                  className="w-full text-left px-4 py-2 text-slate-700 hover:bg-[#F4F7FA] flex items-center gap-2 transition-colors cursor-pointer"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Ripristina dati demo</span>
-                </button>
-
                 {onClearAll && (
                   <button
                     onClick={() => {
@@ -210,7 +210,147 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
         </div>
+
+        {/* Mobile Section: Sync, Clock & Hamburger (Mobile Only) */}
+        <div className="flex md:hidden items-center gap-3">
+          {/* Mini Sync dot with pulse */}
+          <div 
+            className={`w-2.5 h-2.5 rounded-full ${isCloudConnected ? 'bg-[#00A77B]' : 'bg-amber-500 animate-pulse'}`}
+            title={isCloudConnected ? 'Sincronizzato' : 'Connessione in corso...'}
+          />
+          
+          {/* Compact Clock */}
+          <div className="text-xs font-mono font-bold text-[#101B32] bg-[#F4F7FA] border border-[#E2E8F0] px-2 py-1 rounded-md select-none">
+            {systemTime || '--:--'}
+          </div>
+
+          {/* Hamburger button */}
+          <button
+            id="mobile-menu-toggle"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 -mr-1.5 text-[#64748B] hover:text-[#101B32] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer focus:outline-hidden"
+            aria-label="Toggle Menu"
+          >
+            {isMobileMenuOpen ? (
+              <X className="w-6 h-6 animate-in spin-in-180 duration-200" />
+            ) : (
+              <Menu className="w-6 h-6 animate-in fade-in duration-200" />
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Dropdown Menu Drawer (Full-width, slide-down overlay) */}
+      {isMobileMenuOpen && (
+        <div 
+          ref={mobileMenuRef}
+          className="absolute top-[72px] left-0 right-0 w-full bg-white border-b border-[#E2E8F0] shadow-xl py-4 px-4 z-40 md:hidden flex flex-col space-y-3 animate-in slide-in-from-top-4 duration-200 ease-out"
+        >
+          {/* Section: Menu Title */}
+          <div className="px-2 pb-1 border-b border-slate-100">
+            <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block">
+              Navigazione Sezioni
+            </span>
+          </div>
+
+          {/* Section: Links */}
+          <div className="flex flex-col space-y-1">
+            <button
+              onClick={() => {
+                setActiveView('cards');
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center justify-between p-3 rounded-xl font-bold transition-all text-sm cursor-pointer ${
+                activeView === 'cards'
+                  ? 'bg-[#E6F7F3] text-[#00A77B]'
+                  : 'text-[#64748B] hover:bg-[#F4F7FA] hover:text-[#101B32]'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5" />
+                <span>Presenze</span>
+              </div>
+              {activeView === 'cards' && <span className="w-2 h-2 rounded-full bg-[#00A77B]" />}
+            </button>
+
+            <button
+              onClick={() => {
+                onOpenLeaves();
+                setActiveView('leaves');
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center justify-between p-3 rounded-xl font-bold transition-all text-sm cursor-pointer ${
+                activeView === 'leaves'
+                  ? 'bg-[#E6F7F3] text-[#00A77B]'
+                  : 'text-[#64748B] hover:bg-[#F4F7FA] hover:text-[#101B32]'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Palmtree className="w-5 h-5" />
+                <span>Ferie e permessi</span>
+              </div>
+              {activeView === 'leaves' && <span className="w-2 h-2 rounded-full bg-[#00A77B]" />}
+            </button>
+
+            <button
+              onClick={() => {
+                onOpenReport();
+                setActiveView('report');
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center justify-between p-3 rounded-xl font-bold transition-all text-sm cursor-pointer ${
+                activeView === 'report'
+                  ? 'bg-[#E6F7F3] text-[#00A77B]'
+                  : 'text-[#64748B] hover:bg-[#F4F7FA] hover:text-[#101B32]'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <FileSpreadsheet className="w-5 h-5" />
+                <span>Report</span>
+              </div>
+              {activeView === 'report' && <span className="w-2 h-2 rounded-full bg-[#00A77B]" />}
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-[#E2E8F0] my-1" />
+
+          {/* Section: Admin Actions */}
+          <div className="px-2 py-1">
+            <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-2 select-none">
+              Azioni Amministratore
+            </p>
+            
+            <div className="flex flex-col space-y-1">
+              {onClearAll && (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onClearAll();
+                  }}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                >
+                  <Eraser className="w-4 h-4 text-rose-500" />
+                  <span>Svuota cartellini</span>
+                </button>
+              )}
+
+              {onLogout && (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onLogout();
+                  }}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-bold text-[#101B32] hover:bg-[#F4F7FA] transition-colors cursor-pointer border-t border-slate-100 mt-2 pt-2.5"
+                >
+                  <LogOut className="w-4 h-4 text-slate-500" />
+                  <span>Esci (Disconnetti)</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

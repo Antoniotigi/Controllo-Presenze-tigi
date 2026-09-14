@@ -33,7 +33,6 @@ import {
   saveTimeRecords,
   getLeaveRequests,
   saveLeaveRequests,
-  resetAllData,
   clearAllCartelliniTimes,
 } from './utils/storage';
 import {
@@ -567,20 +566,6 @@ export default function App() {
     showToast('Richiesta assenza rimossa.');
   };
 
-  const handleResetData = () => {
-    if (confirm('Vuoi ripristinare i dati dimostrativi iniziali? Tutti i dispositivi connessi si aggiorneranno automaticamente.')) {
-      const reset = resetAllData();
-      setEmployees(reset.employees);
-      setRecords(reset.records);
-      setLeaves(reset.leaves);
-      batchSaveRecordsToFirestore(reset.records).catch(console.error);
-      for (const emp of reset.employees) {
-        saveEmployeeToFirestore(emp).catch(console.error);
-      }
-      showToast('Dati ripristinati e sincronizzati sul Cloud.');
-    }
-  };
-
   const handleClearAllCartellini = () => {
     setIsClearModalOpen(true);
   };
@@ -852,7 +837,6 @@ export default function App() {
         onOpenLeaves={() => setActiveView('leaves')}
         onOpenReport={() => setActiveView('report')}
         onSaveAll={handleSaveAllToday}
-        onResetData={handleResetData}
         onClearAll={handleClearAllCartellini}
         activeView={activeView}
         setActiveView={setActiveView}
@@ -928,7 +912,7 @@ export default function App() {
                           setCurrentDate(e.target.value);
                         }
                       }}
-                      className="pl-7 pr-1.5 py-1 text-xs font-bold text-[#101B32] bg-transparent outline-none cursor-pointer w-[115px]"
+                      className="pl-7 pr-1 py-1 text-xs font-bold text-[#101B32] bg-transparent outline-none cursor-pointer w-[138px]"
                     />
                     <Calendar className="w-3.5 h-3.5 text-[#64748B] absolute left-1.5 pointer-events-none" />
                   </div>
