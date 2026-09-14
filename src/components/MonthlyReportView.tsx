@@ -5,9 +5,6 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
-  TrendingDown,
-  Clock,
   Download,
   Filter,
   Users,
@@ -60,12 +57,6 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
     records,
     leaves
   );
-
-  // Aggregated totals
-  const totalWorked = stats.reduce((acc, s) => acc + s.totalWorkedMinutes, 0);
-  const totalOvertime = stats.reduce((acc, s) => acc + s.totalOvertimeMinutes, 0);
-  const totalDeficit = stats.reduce((acc, s) => acc + s.totalDeficitMinutes, 0);
-  const netBalance = totalOvertime - totalDeficit;
 
   const handlePrevMonth = () => {
     const [y, m] = selectedMonth.split('-').map(Number);
@@ -228,69 +219,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
         </div>
       </div>
 
-      {/* KPI Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Worked */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Ore Lavorate Totali</span>
-            <Clock className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-slate-900">
-            {formatMinutesToHM(totalWorked)}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Complessivo 4 dipendenti nel mese
-          </p>
-        </div>
 
-        {/* Total Overtime */}
-        <div className="bg-white rounded-2xl border border-emerald-200 p-5 shadow-xs bg-emerald-50/40">
-          <div className="flex items-center justify-between text-emerald-700 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Straordinari Totali</span>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-emerald-800">
-            +{formatMinutesToHM(totalOvertime)}
-          </div>
-          <p className="text-[11px] text-emerald-700 mt-1">
-            Ore oltre lo standard delle 8h
-          </p>
-        </div>
-
-        {/* Total Deficit / Recovery */}
-        <div className="bg-white rounded-2xl border border-amber-200 p-5 shadow-xs bg-amber-50/40">
-          <div className="flex items-center justify-between text-amber-700 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Recupero Ore (Debito)</span>
-            <TrendingDown className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-amber-800">
-            -{formatMinutesToHM(totalDeficit)}
-          </div>
-          <p className="text-[11px] text-amber-700 mt-1">
-            Ore sotto lo standard delle 8h
-          </p>
-        </div>
-
-        {/* Net Balance */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Saldo Ore Netto</span>
-            <span className="text-xs font-bold text-slate-400">DIFF</span>
-          </div>
-          <div
-            className={`text-2xl font-bold font-mono ${
-              netBalance >= 0 ? 'text-emerald-700' : 'text-amber-700'
-            }`}
-          >
-            {netBalance >= 0 ? '+' : ''}
-            {formatMinutesToHM(netBalance)}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Straordinari meno recuperi
-          </p>
-        </div>
-      </div>
 
       {/* Summary Table: The 4 Employees */}
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs">

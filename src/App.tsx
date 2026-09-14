@@ -589,18 +589,6 @@ export default function App() {
 
   const isToday = currentDate === today;
 
-  // Monthly totals calculation for footer
-  const currentMonth = currentDate.substring(0, 7);
-  const monthRecords = records.filter((r) => r.date.startsWith(currentMonth));
-  let totalMonthOvertimeMins = 0;
-  let totalMonthDeficitMins = 0;
-  for (const r of monthRecords) {
-    const emp = employees.find((e) => e.id === r.employeeId);
-    const calc = calculateRecord(r, systemTimeHHMM, false, emp);
-    totalMonthOvertimeMins += calc.overtimeMinutes;
-    totalMonthDeficitMins += calc.deficitMinutes;
-  }
-
   // Daily status statistics for the 4 employees
   const dailySummary = employees.map((emp) => {
     const rec = records.find((r) => r.employeeId === emp.id && r.date === currentDate);
@@ -1046,23 +1034,8 @@ export default function App() {
 
         {/* Sleek Interface Footer */}
         <footer className="mt-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-[#E2E8F0]">
-          <div className="flex items-center gap-8">
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-[#64748B] tracking-wider">
-                Totale Straordinari Mese
-              </span>
-              <span className="text-sm font-bold text-[#00A77B] font-mono">
-                +{formatMinutesToHM(totalMonthOvertimeMins)}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-[#64748B] tracking-wider">
-                Totale Recuperi Mese
-              </span>
-              <span className="text-sm font-bold text-amber-500 font-mono">
-                -{formatMinutesToHM(totalMonthDeficitMins)}
-              </span>
-            </div>
+          <div className="text-xs text-[#64748B] font-semibold">
+            <span>TigiBadge • Pannello Rilevazione Presenze</span>
           </div>
           <div className="text-xs sm:text-sm text-[#64748B] font-semibold flex items-center gap-2">
             <span>{formatDateIT(currentDate)}</span>
