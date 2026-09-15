@@ -152,7 +152,7 @@ export function exportToExcel(
 
   XLSX.utils.book_append_sheet(wb, wsSummary, 'Riepilogo Mensile');
 
-  const fileName = `TigiBadge_${monthYear}_${monthTitle.replace(/\s+/g, '_')}.xlsx`;
+  const fileName = `TIGi_Presenze_${monthYear}_${monthTitle.replace(/\s+/g, '_')}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }
 
@@ -196,7 +196,7 @@ export function exportToPDF(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.setTextColor(30, 41, 59); // Slate 800
-  doc.text('TigiBadge • Riepilogo Presenze e Calcolo Straordinari / Recuperi', 14, 16);
+  doc.text('TIGi Presenze • Riepilogo Presenze e Calcolo Straordinari / Recuperi', 14, 16);
 
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
@@ -251,7 +251,7 @@ export function exportToPDF(
       0: { halign: 'left', fontStyle: 'bold', cellWidth: 50 },
       1: { cellWidth: 20 },
       2: { cellWidth: 32, fontStyle: 'bold' },
-      3: { cellWidth: 34, textColor: [16, 185, 129] }, // Emerald
+      3: { cellWidth: 34, textColor: [11, 92, 213] }, // Brand Blue
       4: { cellWidth: 34, textColor: [239, 68, 68] },  // Red/Amber
       5: { cellWidth: 30, fontStyle: 'bold' },
       6: { cellWidth: 24 },
@@ -383,7 +383,7 @@ export function exportToPDF(
         if (data.column.index === 8 && data.cell.raw) {
           const rawStr = data.cell.raw as string;
           if (rawStr.startsWith('+')) {
-            data.cell.styles.textColor = [16, 185, 129]; // Emerald
+            data.cell.styles.textColor = [11, 92, 213]; // Brand Blue
           } else if (rawStr.startsWith('-')) {
             data.cell.styles.textColor = [239, 68, 68]; // Red
           }
@@ -399,14 +399,14 @@ export function exportToPDF(
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      `TigiBadge • Generato il ${new Date().toLocaleDateString('it-IT')} alle ${new Date().toLocaleTimeString('it-IT')} - Pagina ${i} di ${pageCount}`,
+      `TIGi Presenze • Generato il ${new Date().toLocaleDateString('it-IT')} alle ${new Date().toLocaleTimeString('it-IT')} - Pagina ${i} di ${pageCount}`,
       14,
       doc.internal.pageSize.height - 8
     );
   }
 
   const exportLabel = selectedEmployeeId === 'all' ? 'Tutti_Dipendenti' : filteredEmployees[0]?.name.replace(/\s+/g, '_');
-  const fileName = `TigiBadge_Cartellino_${monthYear}_${exportLabel}.pdf`;
+  const fileName = `TIGi_Presenze_Cartellino_${monthYear}_${exportLabel}.pdf`;
   doc.save(fileName);
 }
 

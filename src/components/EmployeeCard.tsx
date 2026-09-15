@@ -488,7 +488,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
       }}
       className={`bg-white rounded-2xl border border-[#E2E8F0] transition-all duration-200 shadow-xs relative overflow-hidden flex flex-col ${
         isExpanded
-          ? 'p-6 ring-1 ring-[#00A77B]/10'
+          ? 'p-6 ring-1 ring-[#0b5cd5]/10'
           : 'p-5 cursor-pointer hover:border-slate-300/80 hover:shadow-sm'
       }`}
     >
@@ -516,8 +516,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             </h3>
             <div className="flex items-center gap-1.5 mt-1">
               {calculation.status === 'al_lavoro' && (
-                <span className="text-xs font-semibold text-[#00A77B] flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#00A77B] animate-pulse"></span>
+                <span className="text-xs font-semibold text-[#0b5cd5] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#0b5cd5] animate-pulse"></span>
                   In servizio
                 </span>
               )}
@@ -608,7 +608,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             {/* Progress bar */}
             <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
               <div
-                className="bg-[#00A77B] h-full rounded-full transition-all duration-300"
+                className="bg-[#0b5cd5] h-full rounded-full transition-all duration-300"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -628,16 +628,16 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                       </span>
                     )
                   ) : minutesLeft < 0 ? (
-                    <span className="px-2 py-0.5 bg-[#E6F7F3] text-[#00A77B] rounded-md text-[10px] font-bold">
+                    <span className="px-2 py-0.5 bg-[#e6f0fa] text-[#0b5cd5] rounded-md text-[10px] font-bold">
                       + {formatMinutesLeft(minutesLeft)} straordinario
                     </span>
                   ) : (
-                    <span className="text-xs font-semibold text-[#00A77B]">
+                    <span className="text-xs font-semibold text-[#0b5cd5]">
                       Completato
                     </span>
                   )
                 ) : calculation.minutesWorked > 0 ? (
-                  <span className="px-2 py-0.5 bg-[#E6F7F3] text-[#00A77B] rounded-md text-[10px] font-bold">
+                  <span className="px-2 py-0.5 bg-[#e6f0fa] text-[#0b5cd5] rounded-md text-[10px] font-bold">
                     + {formatMinutesLeft(calculation.minutesWorked)} straordinario
                   </span>
                 ) : (
@@ -655,7 +655,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
       <div className="border-t border-[#E2E8F0] mt-3.5 pt-3.5">
         {(() => {
           const stampsList = [
-            { label: 'Ingresso', value: clockInMorning, icon: LogIn, iconColor: 'text-[#00A77B]' },
+            { label: 'Ingresso', value: clockInMorning, icon: LogIn, iconColor: 'text-[#0b5cd5]' },
             { label: 'Pausa', value: clockOutMorning, icon: Coffee, iconColor: 'text-amber-500' },
             { label: 'Rientro', value: clockInAfternoon, icon: LogIn, iconColor: 'text-blue-500' },
             { label: 'Uscita', value: clockOutAfternoon, icon: LogOut, iconColor: 'text-slate-500' },
@@ -751,7 +751,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           <button
                             type="button"
                             onClick={setInMorningNow}
-                            className="text-[10px] font-semibold text-[#00A77B] hover:underline cursor-pointer"
+                            className="text-[10px] font-semibold text-[#0b5cd5] hover:underline cursor-pointer"
                           >
                             Ora
                           </button>
@@ -766,7 +766,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           setClockInMorning(val);
                           persistChanges({ clockInMorning: val });
                         }}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#00A77B] focus:border-transparent outline-none transition-all shadow-2xs"
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
                       />
                     </div>
 
@@ -783,7 +783,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           <button
                             type="button"
                             onClick={setOutMorningNow}
-                            className="text-[10px] font-semibold text-[#00A77B] hover:underline cursor-pointer"
+                            className="text-[10px] font-semibold text-[#0b5cd5] hover:underline cursor-pointer"
                           >
                             Ora
                           </button>
@@ -798,7 +798,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           setClockOutMorning(val);
                           persistChanges({ clockOutMorning: val });
                         }}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#00A77B] focus:border-transparent outline-none transition-all shadow-2xs"
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
                       />
                     </div>
                   </div>
@@ -827,7 +827,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           <button
                             type="button"
                             onClick={setInAfternoonNow}
-                            className="text-[10px] font-semibold text-[#00A77B] hover:underline cursor-pointer"
+                            className="text-[10px] font-semibold text-[#0b5cd5] hover:underline cursor-pointer"
                           >
                             Ora
                           </button>
@@ -842,7 +842,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           setClockInAfternoon(val);
                           persistChanges({ clockInAfternoon: val });
                         }}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#00A77B] focus:border-transparent outline-none transition-all shadow-2xs"
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
                       />
                     </div>
 
@@ -859,7 +859,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           <button
                             type="button"
                             onClick={setOutAfternoonNow}
-                            className="text-[10px] font-semibold text-[#00A77B] hover:underline cursor-pointer"
+                            className="text-[10px] font-semibold text-[#0b5cd5] hover:underline cursor-pointer"
                           >
                             Ora
                           </button>
@@ -874,7 +874,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           setClockOutAfternoon(val);
                           persistChanges({ clockOutAfternoon: val });
                         }}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#00A77B] focus:border-transparent outline-none transition-all shadow-2xs"
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
                       />
                     </div>
                   </div>
@@ -899,7 +899,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         type="time"
                         value={exitDuringTurnStart || ''}
                         onChange={(e) => handleExitDuringTurnStartChange(e.target.value)}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 outline-none shadow-2xs focus:ring-1 focus:ring-[#00A77B]"
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]"
                       />
                     </div>
 
@@ -912,7 +912,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         type="time"
                         value={exitDuringTurnEnd || ''}
                         onChange={(e) => handleExitDuringTurnEndChange(e.target.value)}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 outline-none shadow-2xs focus:ring-1 focus:ring-[#00A77B]"
+                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]"
                       />
                     </div>
                   </div>
@@ -1010,7 +1010,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                     setNotes(val);
                     persistChanges({ notes: val });
                   }}
-                  className="bg-slate-50 border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-[#64748B] focus:bg-white focus:ring-1 focus:ring-[#00A77B] outline-none"
+                  className="bg-slate-50 border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-[#64748B] focus:bg-white focus:ring-1 focus:ring-[#0b5cd5] outline-none"
                 />
               </div>
             </div>
@@ -1033,7 +1033,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             <div className="flex items-center gap-2 px-3 py-2 bg-[#F4F7FA] border border-[#E2E8F0] rounded-lg text-xs font-semibold text-[#64748B]">
               <CheckCircle2
                 className={`w-3.5 h-3.5 transition-all duration-200 ${
-                  isSavedFeedback ? 'text-[#00A77B] scale-110' : 'text-[#64748B]'
+                  isSavedFeedback ? 'text-[#0b5cd5] scale-110' : 'text-[#64748B]'
                 }`}
               />
               <span>{isSavedFeedback ? 'Salvato!' : 'Sincronizzazione cloud'}</span>

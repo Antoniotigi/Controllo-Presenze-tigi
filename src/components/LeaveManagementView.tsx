@@ -223,15 +223,15 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
         {/* Registration Form */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs h-fit">
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
-            <Plus className="w-4 h-4 text-emerald-600" />
+            <Plus className="w-4 h-4 text-[#0b5cd5]" />
             <h3 className="text-sm font-bold text-slate-900">
               Registra Assenza o Permesso
             </h3>
           </div>
 
           {successMessage && (
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-[#0b5cd5] text-xs rounded-xl flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#0b5cd5] shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
@@ -371,7 +371,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
               type="submit"
               className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold shadow-md shadow-slate-200 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
             >
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-blue-400" />
               <span>Registra Assenza nel Cartellino</span>
             </button>
           </form>

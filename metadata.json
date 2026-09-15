@@ -1,5 +1,5 @@
 {
-  "name": "TigiBadge",
+  "name": "TIGi Presenze",
   "description": "App per la gestione timbrature e presenze con calcolo automatico di ore lavorate, straordinari, recuperi, ferie e permessi, ed esportazione in Excel e PDF.",
   "requestFramePermissions": [],
   "majorCapabilities": [

@@ -10,6 +10,7 @@ import {
   Palmtree,
   FileSpreadsheet,
 } from 'lucide-react';
+import { Logo } from './Logo';
 
 interface NavbarProps {
   currentDate: string;
@@ -77,17 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="bg-white border-b border-[#E2E8F0] sticky top-0 z-30 h-[72px] flex items-center shadow-xs relative">
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full">
         {/* Left Section: Logo & Name */}
-        <div className="flex items-center gap-2.5">
-          <div 
-            id="app-logo-badge"
-            className="w-8 h-8 rounded-lg bg-[#00A77B] flex items-center justify-center text-white font-extrabold text-lg select-none"
-          >
-            T
-          </div>
-          <span className="text-xl font-bold text-[#101B32] tracking-tight">
-            TigiBadge
-          </span>
-        </div>
+        <Logo showText={true} size={32} />
 
         {/* Center Section: Navigation Links (Desktop Only) */}
         <nav className="hidden md:flex items-center h-full space-x-8">
@@ -95,12 +86,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             id="nav-presenze"
             onClick={() => setActiveView('cards')}
             className={`relative flex items-center justify-center h-[72px] px-1 text-sm font-semibold transition-colors cursor-pointer ${
-              activeView === 'cards' ? 'text-[#00A77B]' : 'text-[#64748B] hover:text-[#101B32]'
+              activeView === 'cards' ? 'text-[#0b5cd5]' : 'text-[#64748B] hover:text-[#101B32]'
             }`}
           >
             <span>Presenze</span>
             {activeView === 'cards' && (
-              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#00A77B] rounded-t-full" />
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#0b5cd5] rounded-t-full" />
             )}
           </button>
 
@@ -111,12 +102,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               setActiveView('leaves');
             }}
             className={`relative flex items-center justify-center h-[72px] px-1 text-sm font-semibold transition-colors cursor-pointer ${
-              activeView === 'leaves' ? 'text-[#00A77B]' : 'text-[#64748B] hover:text-[#101B32]'
+              activeView === 'leaves' ? 'text-[#0b5cd5]' : 'text-[#64748B] hover:text-[#101B32]'
             }`}
           >
             <span>Ferie e permessi</span>
             {activeView === 'leaves' && (
-              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#00A77B] rounded-t-full" />
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#0b5cd5] rounded-t-full" />
             )}
           </button>
 
@@ -127,12 +118,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               setActiveView('report');
             }}
             className={`relative flex items-center justify-center h-[72px] px-1 text-sm font-semibold transition-colors cursor-pointer ${
-              activeView === 'report' ? 'text-[#00A77B]' : 'text-[#64748B] hover:text-[#101B32]'
+              activeView === 'report' ? 'text-[#0b5cd5]' : 'text-[#64748B] hover:text-[#101B32]'
             }`}
           >
             <span>Report</span>
             {activeView === 'report' && (
-              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#00A77B] rounded-t-full" />
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#0b5cd5] rounded-t-full" />
             )}
           </button>
         </nav>
@@ -149,7 +140,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 : 'Connessione al database cloud...'
             }
           >
-            <span className={`w-2 h-2 rounded-full ${isCloudConnected ? 'bg-[#00A77B]' : 'bg-amber-500 animate-pulse'}`} />
+            <span className={`w-2 h-2 rounded-full ${isCloudConnected ? 'bg-[#0b5cd5]' : 'bg-amber-500 animate-pulse'}`} />
             <span>{isCloudConnected ? 'Sincronizzato' : 'Connessione...'}</span>
           </div>
 
@@ -176,7 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E2E8F0] rounded-2xl shadow-lg py-2 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="px-4 py-2 border-b border-[#E2E8F0] mb-1">
                   <p className="font-bold text-[#101B32]">Amministratore</p>
-                  <p className="text-[10px] text-[#64748B] truncate">TigiBadge System</p>
+                  <p className="text-[10px] text-[#64748B] truncate">TIGi Presenze System</p>
                 </div>
 
                 {onClearAll && (
@@ -215,7 +206,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex md:hidden items-center gap-3">
           {/* Mini Sync dot with pulse */}
           <div 
-            className={`w-2.5 h-2.5 rounded-full ${isCloudConnected ? 'bg-[#00A77B]' : 'bg-amber-500 animate-pulse'}`}
+            className={`w-2.5 h-2.5 rounded-full ${isCloudConnected ? 'bg-[#0b5cd5]' : 'bg-amber-500 animate-pulse'}`}
             title={isCloudConnected ? 'Sincronizzato' : 'Connessione in corso...'}
           />
           
@@ -262,7 +253,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className={`w-full flex items-center justify-between p-3 rounded-xl font-bold transition-all text-sm cursor-pointer ${
                 activeView === 'cards'
-                  ? 'bg-[#E6F7F3] text-[#00A77B]'
+                  ? 'bg-[#e6f0fa] text-[#0b5cd5]'
                   : 'text-[#64748B] hover:bg-[#F4F7FA] hover:text-[#101B32]'
               }`}
             >
@@ -270,7 +261,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Users className="w-5 h-5" />
                 <span>Presenze</span>
               </div>
-              {activeView === 'cards' && <span className="w-2 h-2 rounded-full bg-[#00A77B]" />}
+              {activeView === 'cards' && <span className="w-2 h-2 rounded-full bg-[#0b5cd5]" />}
             </button>
 
             <button
@@ -281,7 +272,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className={`w-full flex items-center justify-between p-3 rounded-xl font-bold transition-all text-sm cursor-pointer ${
                 activeView === 'leaves'
-                  ? 'bg-[#E6F7F3] text-[#00A77B]'
+                  ? 'bg-[#e6f0fa] text-[#0b5cd5]'
                   : 'text-[#64748B] hover:bg-[#F4F7FA] hover:text-[#101B32]'
               }`}
             >
@@ -289,7 +280,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Palmtree className="w-5 h-5" />
                 <span>Ferie e permessi</span>
               </div>
-              {activeView === 'leaves' && <span className="w-2 h-2 rounded-full bg-[#00A77B]" />}
+              {activeView === 'leaves' && <span className="w-2 h-2 rounded-full bg-[#0b5cd5]" />}
             </button>
 
             <button
@@ -300,7 +291,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className={`w-full flex items-center justify-between p-3 rounded-xl font-bold transition-all text-sm cursor-pointer ${
                 activeView === 'report'
-                  ? 'bg-[#E6F7F3] text-[#00A77B]'
+                  ? 'bg-[#e6f0fa] text-[#0b5cd5]'
                   : 'text-[#64748B] hover:bg-[#F4F7FA] hover:text-[#101B32]'
               }`}
             >
@@ -308,7 +299,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <FileSpreadsheet className="w-5 h-5" />
                 <span>Report</span>
               </div>
-              {activeView === 'report' && <span className="w-2 h-2 rounded-full bg-[#00A77B]" />}
+              {activeView === 'report' && <span className="w-2 h-2 rounded-full bg-[#0b5cd5]" />}
             </button>
           </div>
 

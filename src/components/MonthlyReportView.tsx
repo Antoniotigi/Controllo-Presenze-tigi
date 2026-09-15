@@ -110,7 +110,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-2xl flex items-center justify-center font-bold shadow-xs">
+            <div className="w-12 h-12 bg-blue-100 text-[#0b5cd5] rounded-2xl flex items-center justify-center font-bold shadow-xs">
               <FileSpreadsheet className="w-6 h-6" />
             </div>
             <div>
@@ -157,7 +157,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
               className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md shadow-slate-200 flex items-center gap-2 transition-all cursor-pointer"
               title="Esporta il cartellino mensile e il registro giornaliero in formato PDF"
             >
-              <FileText className="w-4 h-4 text-emerald-400" />
+              <FileText className="w-4 h-4 text-[#0b5cd5]" />
               <span>{isExportingPDF ? 'Generazione...' : 'Esporta PDF'}</span>
               <ChevronDown className="w-3.5 h-3.5 opacity-60 ml-0.5" />
             </button>
@@ -240,7 +240,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                 <th className="py-2.5 px-3">Dipendente</th>
                 <th className="py-2.5 px-3 text-center">Gg Lavorati</th>
                 <th className="py-2.5 px-3 text-right">Ore Lavorate</th>
-                <th className="py-2.5 px-3 text-right text-emerald-700 font-bold">
+                <th className="py-2.5 px-3 text-right text-[#0b5cd5] font-bold">
                   Straordinari (+)
                 </th>
                 <th className="py-2.5 px-3 text-right text-amber-700 font-bold">
@@ -270,7 +270,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
                     {formatMinutesToHM(s.totalWorkedMinutes)}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-semibold text-emerald-700">
+                  <td className="py-3 px-3 text-right font-mono font-semibold text-[#0b5cd5]">
                     {s.totalOvertimeMinutes > 0
                       ? `+${formatMinutesToHM(s.totalOvertimeMinutes)}`
                       : '0h 00m'}
@@ -283,7 +283,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   <td className="py-3 px-3 text-right font-mono font-bold">
                     <span
                       className={
-                        s.netBalanceMinutes >= 0 ? 'text-emerald-700' : 'text-amber-700'
+                        s.netBalanceMinutes >= 0 ? 'text-[#0b5cd5]' : 'text-amber-700'
                       }
                     >
                       {s.netBalanceMinutes >= 0 ? '+' : ''}
@@ -358,7 +358,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   <th className="py-2.5 px-3 text-center font-medium text-amber-600">Uscita Turno</th>
                   <th className="py-2.5 px-3 text-center font-medium text-amber-600">Rientro Turno</th>
                   <th className="py-2.5 px-3 text-right">Ore Lavorate</th>
-                  <th className="py-2.5 px-3 text-right text-emerald-700 font-semibold">
+                  <th className="py-2.5 px-3 text-right text-[#0b5cd5] font-semibold">
                     Straordinari
                   </th>
                   <th className="py-2.5 px-3 text-right text-amber-700 font-semibold">
@@ -405,7 +405,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                       <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
                         {calc.hoursWorkedFormatted}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-emerald-700 font-semibold">
+                      <td className="py-2.5 px-3 text-right font-mono text-[#0b5cd5] font-semibold">
                         {calc.overtimeMinutes > 0 ? calc.overtimeFormatted : '—'}
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono text-amber-700 font-semibold">

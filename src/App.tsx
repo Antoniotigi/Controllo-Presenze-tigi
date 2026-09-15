@@ -43,6 +43,7 @@ import {
   formatMinutesToHM,
 } from './utils/timeUtils';
 import { Navbar } from './components/Navbar';
+import { Logo } from './components/Logo';
 import { EmployeeCard } from './components/EmployeeCard';
 import { LeaveManagementView } from './components/LeaveManagementView';
 import { MonthlyReportView } from './components/MonthlyReportView';
@@ -604,19 +605,19 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 font-sans antialiased">
         <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-xl shadow-slate-100 p-8 space-y-6">
-          <div className="text-center space-y-2">
-            <div className="inline-flex w-12 h-12 bg-slate-900 text-white rounded-2xl items-center justify-center font-bold shadow-md shadow-slate-200">
-              <Users className="w-6 h-6 text-emerald-400" />
+          <div className="text-center space-y-4 flex flex-col items-center">
+            <Logo size={64} showText={false} />
+            <div className="space-y-1">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                TIGi Presenze Accesso Sicuro
+              </h1>
+              <p className="text-sm text-slate-500">
+                {showMfaInput 
+                  ? "Verifica a due fattori (MFA) richiesta" 
+                  : "Inserisci le credenziali per accedere al pannello presenze"
+                }
+              </p>
             </div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              TigiBadge Accesso Sicuro
-            </h1>
-            <p className="text-sm text-slate-500">
-              {showMfaInput 
-                ? "Verifica a due fattori (MFA) richiesta" 
-                : "Inserisci le credenziali per accedere al pannello presenze"
-              }
-            </p>
           </div>
 
           <form onSubmit={handleLoginSubmit} className="space-y-4">
@@ -765,7 +766,7 @@ export default function App() {
             {showMfaSetup && (
               <div className="mt-3 text-left bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-[#0b5cd5] animate-pulse" />
                   <span>Configura Google Authenticator</span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
@@ -805,7 +806,7 @@ export default function App() {
 
           <div className="text-center pt-2">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              TigiBadge • Sistema di Monitoraggio Presenze
+              TIGi Presenze • Sistema di Monitoraggio Presenze
             </span>
             <span className="text-[9px] text-slate-400 block mt-1">
               Timeout sessione: 24 ore • Crittografia SHA-256 attiva
@@ -835,7 +836,7 @@ export default function App() {
       {/* Floating Notification Toast */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-[#101B32] text-white px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2.5 border border-[#E2E8F0]/10 animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-[#00A77B]" />
+          <CheckCircle2 className="w-4 h-4 text-[#0b5cd5]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -848,7 +849,7 @@ export default function App() {
             <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-[#101B32] text-white rounded-xl flex items-center justify-center font-bold">
-                  <Users className="w-6 h-6 text-[#00A77B]" />
+                  <Users className="w-6 h-6 text-[#0b5cd5]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2.5">
@@ -856,7 +857,7 @@ export default function App() {
                       {isToday ? 'Presenze di oggi' : 'Presenze passate'}
                     </h2>
                     {isToday ? (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F7F3] text-[#00A77B] uppercase tracking-wider">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#e6f0fa] text-[#0b5cd5] uppercase tracking-wider">
                         In Servizio
                       </span>
                     ) : (
@@ -926,7 +927,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setCurrentDate(today)}
-                    className="px-3.5 py-2 text-xs font-bold text-[#00A77B] bg-[#E6F7F3] hover:bg-[#d8f2ec] rounded-lg transition-colors cursor-pointer shadow-2xs"
+                    className="px-3.5 py-2 text-xs font-bold text-[#0b5cd5] bg-[#e6f0fa] hover:bg-[#d2e5f7] rounded-lg transition-colors cursor-pointer shadow-2xs"
                   >
                     Oggi
                   </button>
@@ -944,7 +945,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActiveView('report')}
-                  className="px-3.5 py-2 text-xs font-bold text-white bg-[#00A77B] hover:bg-[#00946d] rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  className="px-3.5 py-2 text-xs font-bold text-white bg-[#0b5cd5] hover:bg-[#0a4ebd] rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
                   <span>Report mensile</span>
@@ -956,7 +957,7 @@ export default function App() {
             <div className="grid grid-cols-3 gap-4 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
               <div className="flex flex-col justify-between">
                 <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">In servizio</span>
-                <span className="text-3xl font-black text-[#00A77B] mt-1">{countActiveNow}</span>
+                <span className="text-3xl font-black text-[#0b5cd5] mt-1">{countActiveNow}</span>
               </div>
               <div className="flex flex-col justify-between border-l border-[#E2E8F0] pl-4">
                 <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">In pausa</span>
@@ -1002,7 +1003,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setActiveView('report')}
-                className="text-xs font-bold text-[#101B32] hover:text-[#00A77B] underline whitespace-nowrap self-end sm:self-center cursor-pointer"
+                className="text-xs font-bold text-[#101B32] hover:text-[#0b5cd5] underline whitespace-nowrap self-end sm:self-center cursor-pointer"
               >
                 Visualizza Riepilogo Mese ed Esporta →
               </button>
@@ -1035,7 +1036,7 @@ export default function App() {
         {/* Sleek Interface Footer */}
         <footer className="mt-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-[#E2E8F0]">
           <div className="text-xs text-[#64748B] font-semibold">
-            <span>TigiBadge • Pannello Rilevazione Presenze</span>
+            <span>TIGi Presenze • Pannello Rilevazione Presenze</span>
           </div>
           <div className="text-xs sm:text-sm text-[#64748B] font-semibold flex items-center gap-2">
             <span>{formatDateIT(currentDate)}</span>
