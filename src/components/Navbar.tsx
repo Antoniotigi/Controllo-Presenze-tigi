@@ -296,7 +296,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <div className="flex items-center gap-3">
-                <FileSpreadsheet className="w-5 h-5" />
+                <FileSpreadsheet className="w-5 h-5 text-[#16a34a]" />
                 <span>Report</span>
               </div>
               {activeView === 'report' && <span className="w-2 h-2 rounded-full bg-[#0b5cd5]" />}

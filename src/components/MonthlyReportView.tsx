@@ -110,7 +110,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
       <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-100 text-[#0b5cd5] rounded-2xl flex items-center justify-center font-bold shadow-xs">
+            <div className="w-12 h-12 bg-green-100 text-[#16a34a] rounded-2xl flex items-center justify-center font-bold shadow-xs">
               <FileSpreadsheet className="w-6 h-6" />
             </div>
             <div>

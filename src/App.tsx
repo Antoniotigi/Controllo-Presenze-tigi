@@ -857,7 +857,7 @@ export default function App() {
                       {isToday ? 'Presenze di oggi' : 'Presenze passate'}
                     </h2>
                     {isToday ? (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#e6f0fa] text-[#0b5cd5] uppercase tracking-wider">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase tracking-wider">
                         In Servizio
                       </span>
                     ) : (
@@ -945,9 +945,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActiveView('report')}
-                  className="px-3.5 py-2 text-xs font-bold text-white bg-[#0b5cd5] hover:bg-[#0a4ebd] rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  className="px-3.5 py-2 text-xs font-bold text-[#101B32] bg-white hover:bg-[#F4F7FA] rounded-lg border border-[#E2E8F0] transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
+                  <FileSpreadsheet className="w-4 h-4 text-[#16a34a]" />
                   <span>Report mensile</span>
                 </button>
               </div>
@@ -957,7 +957,7 @@ export default function App() {
             <div className="grid grid-cols-3 gap-4 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
               <div className="flex flex-col justify-between">
                 <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">In servizio</span>
-                <span className="text-3xl font-black text-[#0b5cd5] mt-1">{countActiveNow}</span>
+                <span className="text-3xl font-black text-[#16a34a] mt-1">{countActiveNow}</span>
               </div>
               <div className="flex flex-col justify-between border-l border-[#E2E8F0] pl-4">
                 <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">In pausa</span>

@@ -516,8 +516,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             </h3>
             <div className="flex items-center gap-1.5 mt-1">
               {calculation.status === 'al_lavoro' && (
-                <span className="text-xs font-semibold text-[#0b5cd5] flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#0b5cd5] animate-pulse"></span>
+                <span className="text-xs font-semibold text-[#16a34a] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></span>
                   In servizio
                 </span>
               )}
