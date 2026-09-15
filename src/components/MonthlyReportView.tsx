@@ -240,10 +240,10 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                 <th className="py-2.5 px-3">Dipendente</th>
                 <th className="py-2.5 px-3 text-center">Gg Lavorati</th>
                 <th className="py-2.5 px-3 text-right">Ore Lavorate</th>
-                <th className="py-2.5 px-3 text-right text-[#0b5cd5] font-bold">
+                <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">
                   Straordinari (+)
                 </th>
-                <th className="py-2.5 px-3 text-right text-amber-700 font-bold">
+                <th className="py-2.5 px-3 text-right text-red-600 font-bold">
                   Recuperi (-)
                 </th>
                 <th className="py-2.5 px-3 text-right">Saldo Netto</th>
@@ -270,12 +270,12 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
                     {formatMinutesToHM(s.totalWorkedMinutes)}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-semibold text-[#0b5cd5]">
+                  <td className="py-3 px-3 text-right font-mono font-semibold text-emerald-600">
                     {s.totalOvertimeMinutes > 0
                       ? `+${formatMinutesToHM(s.totalOvertimeMinutes)}`
                       : '0h 00m'}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-semibold text-amber-700">
+                  <td className="py-3 px-3 text-right font-mono font-semibold text-red-600">
                     {s.totalDeficitMinutes > 0
                       ? `-${formatMinutesToHM(s.totalDeficitMinutes)}`
                       : '0h 00m'}
@@ -283,7 +283,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   <td className="py-3 px-3 text-right font-mono font-bold">
                     <span
                       className={
-                        s.netBalanceMinutes >= 0 ? 'text-[#0b5cd5]' : 'text-amber-700'
+                        s.netBalanceMinutes >= 0 ? 'text-emerald-600' : 'text-red-600'
                       }
                     >
                       {s.netBalanceMinutes >= 0 ? '+' : ''}
@@ -358,10 +358,10 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   <th className="py-2.5 px-3 text-center font-medium text-amber-600">Uscita Turno</th>
                   <th className="py-2.5 px-3 text-center font-medium text-amber-600">Rientro Turno</th>
                   <th className="py-2.5 px-3 text-right">Ore Lavorate</th>
-                  <th className="py-2.5 px-3 text-right text-[#0b5cd5] font-semibold">
+                  <th className="py-2.5 px-3 text-right text-emerald-600 font-semibold">
                     Straordinari
                   </th>
-                  <th className="py-2.5 px-3 text-right text-amber-700 font-semibold">
+                  <th className="py-2.5 px-3 text-right text-red-600 font-semibold">
                     Recuperi
                   </th>
                   <th className="py-2.5 px-3">Note / Assenza</th>
@@ -405,10 +405,10 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                       <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
                         {calc.hoursWorkedFormatted}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-[#0b5cd5] font-semibold">
+                      <td className="py-2.5 px-3 text-right font-mono text-emerald-600 font-semibold">
                         {calc.overtimeMinutes > 0 ? calc.overtimeFormatted : '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-amber-700 font-semibold">
+                      <td className="py-2.5 px-3 text-right font-mono text-red-600 font-semibold">
                         {calc.deficitMinutes > 0 ? calc.deficitFormatted : '—'}
                       </td>
                       <td className="py-2.5 px-3 text-slate-600">

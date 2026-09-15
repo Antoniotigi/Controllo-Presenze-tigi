@@ -251,7 +251,7 @@ export function exportToPDF(
       0: { halign: 'left', fontStyle: 'bold', cellWidth: 50 },
       1: { cellWidth: 20 },
       2: { cellWidth: 32, fontStyle: 'bold' },
-      3: { cellWidth: 34, textColor: [11, 92, 213] }, // Brand Blue
+      3: { cellWidth: 34, textColor: [16, 185, 129] }, // Emerald Green
       4: { cellWidth: 34, textColor: [239, 68, 68] },  // Red/Amber
       5: { cellWidth: 30, fontStyle: 'bold' },
       6: { cellWidth: 24 },
@@ -383,7 +383,7 @@ export function exportToPDF(
         if (data.column.index === 8 && data.cell.raw) {
           const rawStr = data.cell.raw as string;
           if (rawStr.startsWith('+')) {
-            data.cell.styles.textColor = [11, 92, 213]; // Brand Blue
+            data.cell.styles.textColor = [16, 185, 129]; // Emerald Green
           } else if (rawStr.startsWith('-')) {
             data.cell.styles.textColor = [239, 68, 68]; // Red
           }
