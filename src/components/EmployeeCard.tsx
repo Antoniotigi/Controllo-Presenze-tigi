@@ -15,6 +15,7 @@ import {
   Coffee,
   ChevronRight,
   Calendar,
+  Clock,
 } from 'lucide-react';
 import { Employee, TimeRecord, DayCalculation } from '../types';
 import {
@@ -85,6 +86,12 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
   );
   const [isSavedFeedback, setIsSavedFeedback] = useState(false);
 
+  // Admin password lock states
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [passwordValue, setPasswordValue] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+
   // Sync state whenever record ID or date changes (e.g. date switched or employee switched)
   useEffect(() => {
     const times = getRecordTimestamps(record);
@@ -116,7 +123,23 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     setPermessoHours(pH);
     setPermessoMinutes(pM);
     setLeaveHours(record?.leaveHours || 0);
+
+    // Reset lock when switching employee or date
+    setIsAdminUnlocked(false);
+    setShowPasswordInput(false);
+    setPasswordValue('');
+    setPasswordError(false);
   }, [record?.id, currentDate]);
+
+  // Lock back when card is collapsed
+  useEffect(() => {
+    if (!isExpanded) {
+      setIsAdminUnlocked(false);
+      setShowPasswordInput(false);
+      setPasswordValue('');
+      setPasswordError(false);
+    }
+  }, [isExpanded]);
 
   // 60 seconds auto-collapse timer on expansion
   useEffect(() => {
@@ -474,6 +497,39 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
   ];
   const avatarStyle = avatarThemes[index % avatarThemes.length];
 
+  // Next logical slot for system-time clock-in/out
+  const nextSlot = (() => {
+    if (leaveType === 'ferie') return null;
+    if (!clockInMorning) {
+      return { key: 'clockInMorning', label: 'Timbra Ingresso' };
+    }
+    if (!clockOutMorning) {
+      return { key: 'clockOutMorning', label: 'Timbra Uscita' };
+    }
+    if (!clockInAfternoon) {
+      return { key: 'clockInAfternoon', label: 'Timbra Rientro' };
+    }
+    if (!clockOutAfternoon) {
+      return { key: 'clockOutAfternoon', label: 'Timbra Uscita' };
+    }
+    return null;
+  })();
+
+  const handleQuickStamp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!nextSlot) return;
+
+    if (nextSlot.key === 'clockInMorning') {
+      setInMorningNow();
+    } else if (nextSlot.key === 'clockOutMorning') {
+      setOutMorningNow();
+    } else if (nextSlot.key === 'clockInAfternoon') {
+      setInAfternoonNow();
+    } else if (nextSlot.key === 'clockOutAfternoon') {
+      setOutAfternoonNow();
+    }
+  };
+
   // Daily balance label logic
   const standardMinutesToday = getStandardMinutesForDay(currentDate, employee);
   const diffFromStandard = calculation.minutesWorked - standardMinutesToday;
@@ -652,42 +708,60 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
       })()}
 
       {/* Dividere e Timbrature (Visible by default) */}
-      <div className="border-t border-[#E2E8F0] mt-3.5 pt-3.5">
-        {(() => {
-          const stampsList = [
-            { label: 'Ingresso', value: clockInMorning, icon: LogIn, iconColor: 'text-[#0b5cd5]' },
-            { label: 'Pausa', value: clockOutMorning, icon: Coffee, iconColor: 'text-amber-500' },
-            { label: 'Rientro', value: clockInAfternoon, icon: LogIn, iconColor: 'text-blue-500' },
-            { label: 'Uscita', value: clockOutAfternoon, icon: LogOut, iconColor: 'text-slate-500' },
-          ].filter((s) => s.value);
+      <div className="border-t border-[#E2E8F0] mt-3.5 pt-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-[44px]">
+        <div className="flex-1">
+          {(() => {
+            const stampsList = [
+              { label: 'Ingresso', value: clockInMorning, icon: LogIn, iconColor: 'text-[#0b5cd5]' },
+              { label: 'Pausa', value: clockOutMorning, icon: Coffee, iconColor: 'text-amber-500' },
+              { label: 'Rientro', value: clockInAfternoon, icon: LogIn, iconColor: 'text-blue-500' },
+              { label: 'Uscita', value: clockOutAfternoon, icon: LogOut, iconColor: 'text-slate-500' },
+            ].filter((s) => s.value);
 
-          if (stampsList.length === 0) {
+            if (stampsList.length === 0) {
+              return (
+                <span className="text-xs text-[#64748B] italic">
+                  {leaveType === 'ferie'
+                    ? 'Ferie registrate per la giornata'
+                    : leaveType === 'permesso'
+                    ? 'Permesso registrato per la giornata'
+                    : 'Nessuna timbratura registrata oggi'}
+                </span>
+              );
+            }
+
             return (
-              <span className="text-xs text-[#64748B] italic">
-                {leaveType === 'ferie'
-                  ? 'Ferie registrate per la giornata'
-                  : leaveType === 'permesso'
-                  ? 'Permesso registrato per la giornata'
-                  : 'Nessuna timbratura registrata oggi'}
-              </span>
+              <div className="flex flex-wrap items-center gap-y-2 text-xs text-[#64748B]">
+                {stampsList.map((stamp, sIdx) => (
+                  <React.Fragment key={stamp.label}>
+                    {sIdx > 0 && <div className="w-[1px] bg-[#E2E8F0] h-3.5 mx-3" />}
+                    <div className="flex items-center gap-1.5">
+                      <stamp.icon className={`w-3.5 h-3.5 ${stamp.iconColor}`} />
+                      <span className="font-semibold text-[#64748B]">{stamp.label}</span>
+                      <span className="font-mono font-bold text-[#101B32]">{stamp.value}</span>
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
             );
-          }
+          })()}
+        </div>
 
-          return (
-            <div className="flex flex-wrap items-center gap-y-2 text-xs text-[#64748B]">
-              {stampsList.map((stamp, sIdx) => (
-                <React.Fragment key={stamp.label}>
-                  {sIdx > 0 && <div className="w-[1px] bg-[#E2E8F0] h-3.5 mx-3" />}
-                  <div className="flex items-center gap-1.5">
-                    <stamp.icon className={`w-3.5 h-3.5 ${stamp.iconColor}`} />
-                    <span className="font-semibold text-[#64748B]">{stamp.label}</span>
-                    <span className="font-mono font-bold text-[#101B32]">{stamp.value}</span>
-                  </div>
-                </React.Fragment>
-              ))}
-            </div>
-          );
-        })()}
+        {!isExpanded && isToday && (
+          <button
+            type="button"
+            onClick={handleQuickStamp}
+            disabled={!nextSlot}
+            className={`px-4.5 py-2 text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center justify-center gap-2 select-none shrink-0 ${
+              nextSlot
+                ? 'bg-green-600 hover:bg-green-700 text-white active:scale-[0.98] cursor-pointer'
+                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>{nextSlot ? nextSlot.label : 'Turno completo'}</span>
+          </button>
+        )}
       </div>
 
       {/* Expanded Interactive Control Area */}
@@ -726,6 +800,94 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Admin Unlock Panel */}
+              <div className="bg-slate-50 border border-[#E2E8F0] rounded-xl p-3.5 shadow-2xs">
+                {isAdminUnlocked ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-green-700 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></span>
+                      Modifica manuale sbloccata (Amministratore)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsAdminUnlocked(false)}
+                      className="text-xs font-bold text-rose-600 hover:text-rose-700 transition-colors cursor-pointer"
+                    >
+                      Blocca modifiche
+                    </button>
+                  </div>
+                ) : !showPasswordInput ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-[#64748B]">
+                      L'inserimento orari manuale è disattivato.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordInput(true)}
+                      className="text-xs font-bold text-[#0b5cd5] hover:underline cursor-pointer"
+                    >
+                      Sblocca manuale
+                    </button>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (passwordValue === 'Mappescio2026@') {
+                        setIsAdminUnlocked(true);
+                        setPasswordError(false);
+                        setShowPasswordInput(false);
+                        setPasswordValue('');
+                      } else {
+                        setPasswordError(true);
+                      }
+                    }}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#101B32]">Password Amministratore:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowPasswordInput(false);
+                          setPasswordValue('');
+                          setPasswordError(false);
+                        }}
+                        className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase"
+                      >
+                        Annulla
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        placeholder="Mappescio2026@..."
+                        value={passwordValue}
+                        onChange={(e) => {
+                          setPasswordValue(e.target.value);
+                          if (passwordError) setPasswordError(false);
+                        }}
+                        className={`flex-1 bg-white border ${
+                          passwordError ? 'border-rose-500' : 'border-slate-200'
+                        } rounded-lg px-2.5 py-1.5 text-xs font-medium focus:ring-1 focus:ring-[#0b5cd5] focus:outline-none`}
+                        autoFocus
+                      />
+                      <button
+                        type="submit"
+                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Sblocca
+                      </button>
+                    </div>
+                    {passwordError && (
+                      <span className="text-[10px] font-semibold text-rose-600">
+                        Password errata. Riprova.
+                      </span>
+                    )}
+                  </form>
+                )}
+              </div>
+
               {/* Timestamps inputs Grid */}
               <div className="grid grid-cols-1 gap-4">
                 {/* Mattina Block */}
@@ -747,7 +909,18 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           1ª Entrata
                         </label>
-                        {isToday && (
+                        {isToday && clockInMorning ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setClockInMorning('');
+                              persistChanges({ clockInMorning: '' });
+                            }}
+                            className="text-[10px] font-semibold text-rose-600 hover:underline cursor-pointer"
+                          >
+                            Cancella
+                          </button>
+                        ) : isToday ? (
                           <button
                             type="button"
                             onClick={setInMorningNow}
@@ -755,19 +928,29 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           >
                             Ora
                           </button>
-                        )}
+                        ) : null}
                       </div>
-                      <input
-                        id={`in-morn-${employee.id}`}
-                        type="time"
-                        value={clockInMorning}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setClockInMorning(val);
-                          persistChanges({ clockInMorning: val });
-                        }}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
-                      />
+                      {isAdminUnlocked ? (
+                        <input
+                          id={`in-morn-${employee.id}`}
+                          type="time"
+                          value={clockInMorning}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setClockInMorning(val);
+                            persistChanges({ clockInMorning: val });
+                          }}
+                          className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
+                        />
+                      ) : (
+                        <input
+                          id={`in-morn-${employee.id}`}
+                          type="time"
+                          value={clockInMorning}
+                          readOnly
+                          className="bg-slate-100 border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-500 cursor-not-allowed outline-none shadow-2xs"
+                        />
+                      )}
                     </div>
 
                     {/* Uscita Mattina */}
@@ -779,7 +962,18 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           1ª Uscita
                         </label>
-                        {isToday && (
+                        {isToday && clockOutMorning ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setClockOutMorning('');
+                              persistChanges({ clockOutMorning: '' });
+                            }}
+                            className="text-[10px] font-semibold text-rose-600 hover:underline cursor-pointer"
+                          >
+                            Cancella
+                          </button>
+                        ) : isToday ? (
                           <button
                             type="button"
                             onClick={setOutMorningNow}
@@ -787,19 +981,29 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           >
                             Ora
                           </button>
-                        )}
+                        ) : null}
                       </div>
-                      <input
-                        id={`out-morn-${employee.id}`}
-                        type="time"
-                        value={clockOutMorning}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setClockOutMorning(val);
-                          persistChanges({ clockOutMorning: val });
-                        }}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
-                      />
+                      {isAdminUnlocked ? (
+                        <input
+                          id={`out-morn-${employee.id}`}
+                          type="time"
+                          value={clockOutMorning}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setClockOutMorning(val);
+                            persistChanges({ clockOutMorning: val });
+                          }}
+                          className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
+                        />
+                      ) : (
+                        <input
+                          id={`out-morn-${employee.id}`}
+                          type="time"
+                          value={clockOutMorning}
+                          readOnly
+                          className="bg-slate-100 border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-500 cursor-not-allowed outline-none shadow-2xs"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -823,7 +1027,18 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           2ª Entrata
                         </label>
-                        {isToday && (
+                        {isToday && clockInAfternoon ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setClockInAfternoon('');
+                              persistChanges({ clockInAfternoon: '' });
+                            }}
+                            className="text-[10px] font-semibold text-rose-600 hover:underline cursor-pointer"
+                          >
+                            Cancella
+                          </button>
+                        ) : isToday ? (
                           <button
                             type="button"
                             onClick={setInAfternoonNow}
@@ -831,19 +1046,29 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           >
                             Ora
                           </button>
-                        )}
+                        ) : null}
                       </div>
-                      <input
-                        id={`in-aft-${employee.id}`}
-                        type="time"
-                        value={clockInAfternoon}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setClockInAfternoon(val);
-                          persistChanges({ clockInAfternoon: val });
-                        }}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
-                      />
+                      {isAdminUnlocked ? (
+                        <input
+                          id={`in-aft-${employee.id}`}
+                          type="time"
+                          value={clockInAfternoon}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setClockInAfternoon(val);
+                            persistChanges({ clockInAfternoon: val });
+                          }}
+                          className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
+                        />
+                      ) : (
+                        <input
+                          id={`in-aft-${employee.id}`}
+                          type="time"
+                          value={clockInAfternoon}
+                          readOnly
+                          className="bg-slate-100 border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-500 cursor-not-allowed outline-none shadow-2xs"
+                        />
+                      )}
                     </div>
 
                     {/* Uscita Pomeriggio */}
@@ -855,7 +1080,18 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           2ª Uscita
                         </label>
-                        {isToday && (
+                        {isToday && clockOutAfternoon ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setClockOutAfternoon('');
+                              persistChanges({ clockOutAfternoon: '' });
+                            }}
+                            className="text-[10px] font-semibold text-rose-600 hover:underline cursor-pointer"
+                          >
+                            Cancella
+                          </button>
+                        ) : isToday ? (
                           <button
                             type="button"
                             onClick={setOutAfternoonNow}
@@ -863,19 +1099,29 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           >
                             Ora
                           </button>
-                        )}
+                        ) : null}
                       </div>
-                      <input
-                        id={`out-aft-${employee.id}`}
-                        type="time"
-                        value={clockOutAfternoon}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setClockOutAfternoon(val);
-                          persistChanges({ clockOutAfternoon: val });
-                        }}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
-                      />
+                      {isAdminUnlocked ? (
+                        <input
+                          id={`out-aft-${employee.id}`}
+                          type="time"
+                          value={clockOutAfternoon}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setClockOutAfternoon(val);
+                            persistChanges({ clockOutAfternoon: val });
+                          }}
+                          className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
+                        />
+                      ) : (
+                        <input
+                          id={`out-aft-${employee.id}`}
+                          type="time"
+                          value={clockOutAfternoon}
+                          readOnly
+                          className="bg-slate-100 border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-500 cursor-not-allowed outline-none shadow-2xs"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
