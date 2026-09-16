@@ -996,8 +996,8 @@ export default function App() {
             <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 text-xs text-[#64748B] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-center gap-2.5">
                 <HelpCircle className="w-4 h-4 text-[#64748B] shrink-0" />
-                <span>
-                  <strong>Regola Standard:</strong> 8 ore al giorno. Le ore oltre le 8h sono calcolate come <strong>Straordinario (+)</strong>, quelle inferiori come <strong>Recupero Ore (-)</strong>.
+                <span className="font-semibold text-slate-700">
+                  In caso di omessa timbratura o timbratura errata contattare Giulia.
                 </span>
               </div>
               <button
