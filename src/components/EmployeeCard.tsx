@@ -666,8 +666,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               const progressBarColor = (() => {
                 if (calculation.status === 'al_lavoro') return 'bg-[#16a34a]';
                 if (calculation.status === 'pausa') return 'bg-amber-400';
-                if (calculation.status === 'completato') return 'bg-[#64748B]';
-                return 'bg-[#0b5cd5]';
+                // completato, non_timbrato (assente), ferie, permesso are all gray
+                return 'bg-[#64748B]';
               })();
               return (
                 <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
