@@ -501,16 +501,16 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
   const nextSlot = (() => {
     if (leaveType === 'ferie') return null;
     if (!clockInMorning) {
-      return { key: 'clockInMorning', label: 'Timbra Ingresso' };
+      return { key: 'clockInMorning', label: 'Timbra Ingresso', type: 'entrata' as const };
     }
     if (!clockOutMorning) {
-      return { key: 'clockOutMorning', label: 'Timbra Uscita' };
+      return { key: 'clockOutMorning', label: 'Timbra Uscita', type: 'uscita' as const };
     }
     if (!clockInAfternoon) {
-      return { key: 'clockInAfternoon', label: 'Timbra Rientro' };
+      return { key: 'clockInAfternoon', label: 'Timbra Rientro', type: 'entrata' as const };
     }
     if (!clockOutAfternoon) {
-      return { key: 'clockOutAfternoon', label: 'Timbra Uscita' };
+      return { key: 'clockOutAfternoon', label: 'Timbra Uscita', type: 'uscita' as const };
     }
     return null;
   })();
@@ -662,12 +662,22 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             </div>
 
             {/* Progress bar */}
-            <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-[#0b5cd5] h-full rounded-full transition-all duration-300"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
+            {(() => {
+              const progressBarColor = (() => {
+                if (calculation.status === 'al_lavoro') return 'bg-[#16a34a]';
+                if (calculation.status === 'pausa') return 'bg-amber-400';
+                if (calculation.status === 'completato') return 'bg-[#64748B]';
+                return 'bg-[#0b5cd5]';
+              })();
+              return (
+                <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
+                  <div
+                    className={`${progressBarColor} h-full rounded-full transition-all duration-300`}
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+              );
+            })()}
 
             {/* Time deficit or surplus */}
             <div className="flex items-center justify-between h-5 pt-0.5">
@@ -753,9 +763,11 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             onClick={handleQuickStamp}
             disabled={!nextSlot}
             className={`px-4.5 py-2 text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center justify-center gap-2 select-none shrink-0 ${
-              nextSlot
-                ? 'bg-green-600 hover:bg-green-700 text-white active:scale-[0.98] cursor-pointer'
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              !nextSlot
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                : nextSlot.type === 'entrata'
+                ? 'bg-[#16a34a] hover:bg-green-700 text-white active:scale-[0.98] cursor-pointer'
+                : 'bg-rose-600 hover:bg-rose-700 text-white active:scale-[0.98] cursor-pointer'
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
@@ -924,7 +936,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           <button
                             type="button"
                             onClick={setInMorningNow}
-                            className="text-[10px] font-semibold text-[#0b5cd5] hover:underline cursor-pointer"
+                            className="text-[10px] font-bold text-green-600 hover:text-green-700 hover:underline cursor-pointer"
                           >
                             Ora
                           </button>
@@ -977,7 +989,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           <button
                             type="button"
                             onClick={setOutMorningNow}
-                            className="text-[10px] font-semibold text-[#0b5cd5] hover:underline cursor-pointer"
+                            className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
                           >
                             Ora
                           </button>
@@ -1042,7 +1054,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           <button
                             type="button"
                             onClick={setInAfternoonNow}
-                            className="text-[10px] font-semibold text-[#0b5cd5] hover:underline cursor-pointer"
+                            className="text-[10px] font-bold text-green-600 hover:text-green-700 hover:underline cursor-pointer"
                           >
                             Ora
                           </button>
@@ -1095,7 +1107,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           <button
                             type="button"
                             onClick={setOutAfternoonNow}
-                            className="text-[10px] font-semibold text-[#0b5cd5] hover:underline cursor-pointer"
+                            className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
                           >
                             Ora
                           </button>
