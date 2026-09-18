@@ -55,14 +55,15 @@ export function computeMonthlyStats(
 
       // Determine if this day should be counted in summary stats
       // "nel riepilogo mensile non inserire le ore non lavorate del giorno aggiorna il conteggio solo a fine giornata a timbrature completate"
+      // User request: "nel Riepilogo Dipendenti non conteggiare la giornata in corso," -> do not count today at all in the summary
       const isFuture = r.date > todayStr;
       const isToday = r.date === todayStr;
 
       let shouldCount = false;
       if (!isFuture) {
         if (isToday) {
-          // Only count today if it is completed (status is completed or has a leave/permesso justification)
-          shouldCount = calc.status === 'completato' || r.leaveType !== 'none';
+          // Non conteggiamo la giornata in corso nel riepilogo dipendenti
+          shouldCount = false;
         } else {
           // Past days are always counted (unexcused past absences will rightly carry over the 8/9/7.2h deficit)
           shouldCount = true;
