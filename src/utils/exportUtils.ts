@@ -13,6 +13,7 @@ import {
   getPermessoMinutes,
   getCompleteMonthRecords,
   getTodayDateString,
+  getDayOfWeek,
 } from './timeUtils';
 
 export interface MonthlyStatsPerEmployee {
@@ -25,6 +26,28 @@ export interface MonthlyStatsPerEmployee {
   ferieDays: number;
   permessiHours: number;
   permessiMinutes: number;
+}
+
+/**
+ * Checks if today's timbrature are fully complete depending on schedule
+ */
+function areTimbratureComplete(r: TimeRecord, emp: Employee): boolean {
+  const times = getRecordTimestamps(r);
+  const dayOfWeek = getDayOfWeek(r.date);
+  const schedule = emp.scheduleType || 'standard_8h';
+
+  if (schedule === 'six_days' && dayOfWeek === 6) {
+    // On Saturday for 6-day schedule, only morning shift is expected
+    return Boolean(times.clockInMorning && times.clockOutMorning);
+  }
+
+  // For any other working day, both shifts are expected
+  return Boolean(
+    times.clockInMorning &&
+    times.clockOutMorning &&
+    times.clockInAfternoon &&
+    times.clockOutAfternoon
+  );
 }
 
 export function computeMonthlyStats(
@@ -55,15 +78,17 @@ export function computeMonthlyStats(
 
       // Determine if this day should be counted in summary stats
       // "nel riepilogo mensile non inserire le ore non lavorate del giorno aggiorna il conteggio solo a fine giornata a timbrature completate"
-      // User request: "nel Riepilogo Dipendenti non conteggiare la giornata in corso," -> do not count today at all in the summary
+      // User request: non escludere oggi una tantum, ma la giornata in corso fino a quando non vengono inserite tutte le timbrature o giustificata con ferie o malattia
       const isFuture = r.date > todayStr;
       const isToday = r.date === todayStr;
 
       let shouldCount = false;
       if (!isFuture) {
         if (isToday) {
-          // Non conteggiamo la giornata in corso nel riepilogo dipendenti
-          shouldCount = false;
+          // Conteggiamo oggi solo se è giustificato (ferie, malattia, permesso) o se ha tutte le timbrature inserite
+          const hasJustification = r.leaveType && r.leaveType !== 'none';
+          const timbratureComplete = areTimbratureComplete(r, emp);
+          shouldCount = hasJustification || timbratureComplete;
         } else {
           // Past days are always counted (unexcused past absences will rightly carry over the 8/9/7.2h deficit)
           shouldCount = true;
