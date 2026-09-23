@@ -178,6 +178,67 @@ export function exportToExcel(
 
   XLSX.utils.book_append_sheet(wb, wsSummary, 'Riepilogo Mensile');
 
+  // 2. Dettaglio Giornaliero
+  const allMonthRecords = getCompleteMonthRecords(monthYear, employees, records);
+  const detailRows = allMonthRecords.map((r) => {
+    const emp = employees.find((e) => e.id === r.employeeId);
+    const calc = calculateRecord(r, undefined, false, emp);
+    const times = getRecordTimestamps(r);
+    const dateParts = r.date.split('-');
+    const dateFormatted = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : r.date;
+    const outAftDisplay = times.clockOutAfternoon
+      ? times.clockOutAfternoonNextDay
+        ? `${times.clockOutAfternoon} (+1 gg 🌙)`
+        : times.clockOutAfternoon
+      : '—';
+
+    let otDef = '—';
+    if (calc.overtimeMinutes > 0) {
+      otDef = `+${formatMinutesToHM(calc.overtimeMinutes)}`;
+    } else if (calc.deficitMinutes > 0) {
+      otDef = `-${formatMinutesToHM(calc.deficitMinutes)}`;
+    }
+
+    let noteText = '';
+    if (r.leaveType === 'ferie') noteText = 'Ferie';
+    else if (r.leaveType === 'malattia') noteText = 'Malattia';
+    else if (r.leaveType === 'permesso') {
+      const pm = getPermessoMinutes(r);
+      noteText = `Permesso (${formatMinutesToHM(pm)})`;
+    }
+    if (r.notes) noteText = noteText ? `${noteText} - ${r.notes}` : r.notes;
+
+    return {
+      'Data': dateFormatted,
+      'Dipendente': emp?.name || r.employeeId,
+      '1ª Entrata (Mattina)': times.clockInMorning || '—',
+      '1ª Uscita (Mattina)': times.clockOutMorning || '—',
+      '2ª Entrata (Pomeriggio)': times.clockInAfternoon || '—',
+      '2ª Uscita (Pomeriggio)': outAftDisplay,
+      'Uscita Turno': r.exitDuringTurnStart || '—',
+      'Rientro Turno': r.exitDuringTurnEnd || '—',
+      'Ore Lavorate': calc.hoursWorkedFormatted,
+      'Straordinari / Recuperi': otDef,
+      'Note / Assenza': noteText || '—',
+    };
+  });
+
+  const wsDetail = XLSX.utils.json_to_sheet(detailRows);
+  wsDetail['!cols'] = [
+    { wch: 12 }, // Data
+    { wch: 22 }, // Dipendente
+    { wch: 20 }, // 1ª Entrata
+    { wch: 20 }, // 1ª Uscita
+    { wch: 22 }, // 2ª Entrata
+    { wch: 24 }, // 2ª Uscita
+    { wch: 14 }, // Uscita Turno
+    { wch: 14 }, // Rientro Turno
+    { wch: 14 }, // Ore Lavorate
+    { wch: 22 }, // Straordinari / Recuperi
+    { wch: 30 }, // Note
+  ];
+  XLSX.utils.book_append_sheet(wb, wsDetail, 'Dettaglio Giornaliero');
+
   const fileName = `TIGi_Presenze_${monthYear}_${monthTitle.replace(/\s+/g, '_')}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }
@@ -349,7 +410,7 @@ export function exportToPDF(
         times.clockInMorning || '—',
         times.clockOutMorning || '—',
         times.clockInAfternoon || '—',
-        times.clockOutAfternoon || '—',
+        times.clockOutAfternoon ? (times.clockOutAfternoonNextDay ? `${times.clockOutAfternoon} (+1)` : times.clockOutAfternoon) : '—',
         r.exitDuringTurnStart || '—',
         r.exitDuringTurnEnd || '—',
         worked,

@@ -69,6 +69,7 @@ export function clearAllCartelliniTimes(records: TimeRecord[]): TimeRecord[] {
     clockOutMorning: '',
     clockInAfternoon: '',
     clockOutAfternoon: '',
+    clockOutAfternoonNextDay: false,
     clockIn: '',
     clockOut: '',
     notes: '',

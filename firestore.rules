@@ -34,7 +34,12 @@ service cloud.firestore {
         (!('leaveType' in data) || (data.leaveType in ['none', 'ferie', 'permesso', 'malattia'])) &&
         (!('leaveHours' in data) || (data.leaveHours is number)) &&
         (!('permessoHours' in data) || (data.permessoHours is number)) &&
-        (!('permessoMinutes' in data) || (data.permessoMinutes is number));
+        (!('permessoMinutes' in data) || (data.permessoMinutes is number)) &&
+        (!('clockOutAfternoonNextDay' in data) || (data.clockOutAfternoonNextDay is bool)) &&
+        (!('exitDuringTurnStart' in data) || (data.exitDuringTurnStart is string && data.exitDuringTurnStart.size() <= 10)) &&
+        (!('exitDuringTurnEnd' in data) || (data.exitDuringTurnEnd is string && data.exitDuringTurnEnd.size() <= 10)) &&
+        (!('permessoStart' in data) || (data.permessoStart is string && data.permessoStart.size() <= 10)) &&
+        (!('permessoEnd' in data) || (data.permessoEnd is string && data.permessoEnd.size() <= 10));
     }
 
     // Leave Request Validator

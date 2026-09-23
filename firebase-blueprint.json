@@ -12,6 +12,7 @@
         "clockOutMorning": { "type": "string", "maxLength": 10 },
         "clockInAfternoon": { "type": "string", "maxLength": 10 },
         "clockOutAfternoon": { "type": "string", "maxLength": 10 },
+        "clockOutAfternoonNextDay": { "type": "boolean" },
         "clockIn": { "type": "string", "maxLength": 10 },
         "clockOut": { "type": "string", "maxLength": 10 },
         "notes": { "type": "string", "maxLength": 500 },

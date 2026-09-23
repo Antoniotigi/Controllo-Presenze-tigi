@@ -19,6 +19,7 @@ export interface TimeRecord {
   clockOutMorning: string; // HH:mm or ''
   clockInAfternoon: string; // HH:mm or ''
   clockOutAfternoon: string; // HH:mm or ''
+  clockOutAfternoonNextDay?: boolean; // Turno pomeridiano/notturno concluso dopo la mezzanotte (+1 giorno)
   // Legacy fields for backward compatibility
   clockIn?: string;
   clockOut?: string;

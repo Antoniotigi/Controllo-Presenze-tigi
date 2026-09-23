@@ -82,15 +82,76 @@ export function formatMonthIT(yearMonthStr: string): string {
 
 /**
  * Calculates minutes between two "HH:mm" time strings.
+ * Supports intervals that cross midnight if end < start.
  */
-export function getMinutesBetweenTimes(start: string, end: string): number {
+export function getMinutesBetweenTimes(start: string, end: string, allowOvernight = true): number {
   if (!start || !end) return 0;
   const [sh, sm] = start.split(':').map(Number);
   const [eh, em] = end.split(':').map(Number);
   if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return 0;
   const startMins = sh * 60 + sm;
   const endMins = eh * 60 + em;
+  if (endMins < startMins && allowOvernight) {
+    return (24 * 60 - startMins) + endMins;
+  }
   return Math.max(0, endMins - startMins);
+}
+
+/**
+ * Checks whether the afternoon/evening shift concludes after midnight (overnight shift, +1 day).
+ * Returns true if:
+ * 1. record has clockOutAfternoonNextDay explicitly set to true, OR
+ * 2. both clockInAfternoon and clockOutAfternoon are present and clockOutAfternoon <= clockInAfternoon
+ *    (e.g., In: 18:00 (1080), Out: 01:30 (90) -> 01:30 is next calendar day after midnight).
+ */
+export function isAfternoonShiftOvernight(
+  clockInAfternoon?: string,
+  clockOutAfternoon?: string,
+  clockOutAfternoonNextDay?: boolean
+): boolean {
+  if (!clockInAfternoon || !clockOutAfternoon) return false;
+  if (clockOutAfternoonNextDay === true) return true;
+  if (clockOutAfternoonNextDay === false) return false;
+  const inMins = timeToMinutes(clockInAfternoon);
+  const outMins = timeToMinutes(clockOutAfternoon);
+  return outMins <= inMins;
+}
+
+/**
+ * Calculates total worked minutes for afternoon/evening shift,
+ * taking into account shifts that cross midnight (+1 day).
+ */
+export function getAfternoonWorkedMinutes(
+  clockInAfternoon?: string,
+  clockOutAfternoon?: string,
+  clockOutAfternoonNextDay?: boolean
+): number {
+  if (!clockInAfternoon || !clockOutAfternoon) return 0;
+  const inMins = timeToMinutes(clockInAfternoon);
+  const outMins = timeToMinutes(clockOutAfternoon);
+
+  const isOvernight = isAfternoonShiftOvernight(
+    clockInAfternoon,
+    clockOutAfternoon,
+    clockOutAfternoonNextDay
+  );
+
+  if (isOvernight) {
+    return (24 * 60 - inMins) + outMins;
+  }
+  return Math.max(0, outMins - inMins);
+}
+
+/**
+ * Get date string for yesterday "YYYY-MM-DD" based on a reference date (defaults to today).
+ */
+export function getYesterdayDateString(refDateStr?: string): string {
+  const ref = refDateStr ? new Date(refDateStr + 'T12:00:00') : new Date();
+  ref.setDate(ref.getDate() - 1);
+  const y = ref.getFullYear();
+  const m = (ref.getMonth() + 1).toString().padStart(2, '0');
+  const d = ref.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 /**
@@ -124,6 +185,7 @@ export function getRecordTimestamps(record?: TimeRecord | null) {
       clockOutMorning: '',
       clockInAfternoon: '',
       clockOutAfternoon: '',
+      clockOutAfternoonNextDay: false,
     };
   }
 
@@ -133,12 +195,19 @@ export function getRecordTimestamps(record?: TimeRecord | null) {
     record.clockInAfternoon !== undefined ||
     record.clockOutAfternoon !== undefined;
 
+  const isOvernight = isAfternoonShiftOvernight(
+    record.clockInAfternoon || '',
+    record.clockOutAfternoon || record.clockOut || '',
+    record.clockOutAfternoonNextDay
+  );
+
   if (hasNewFields) {
     return {
       clockInMorning: record.clockInMorning || '',
       clockOutMorning: record.clockOutMorning || '',
       clockInAfternoon: record.clockInAfternoon || '',
       clockOutAfternoon: record.clockOutAfternoon || '',
+      clockOutAfternoonNextDay: isOvernight,
     };
   }
 
@@ -149,6 +218,7 @@ export function getRecordTimestamps(record?: TimeRecord | null) {
       clockOutMorning: '12:30',
       clockInAfternoon: '13:30',
       clockOutAfternoon: record.clockOut,
+      clockOutAfternoonNextDay: isOvernight,
     };
   }
 
@@ -157,6 +227,7 @@ export function getRecordTimestamps(record?: TimeRecord | null) {
     clockOutMorning: '',
     clockInAfternoon: '',
     clockOutAfternoon: record.clockOut || '',
+    clockOutAfternoonNextDay: isOvernight,
   };
 }
 
@@ -428,12 +499,32 @@ export function calculateRecord(
   if (clockInAfternoon) {
     const inAftMins = timeToMinutes(clockInAfternoon);
     if (clockOutAfternoon) {
-      const outAftMins = timeToMinutes(clockOutAfternoon);
-      afternoonMinutes = Math.max(0, outAftMins - inAftMins);
+      afternoonMinutes = getAfternoonWorkedMinutes(
+        clockInAfternoon,
+        clockOutAfternoon,
+        record.clockOutAfternoonNextDay
+      );
     } else if (isToday) {
       // Currently working afternoon shift
-      afternoonMinutes = Math.max(0, sysMins - inAftMins);
+      if (sysMins >= inAftMins) {
+        afternoonMinutes = sysMins - inAftMins;
+      } else {
+        // Shift started today and system time has passed midnight
+        afternoonMinutes = (24 * 60 - inAftMins) + sysMins;
+      }
       isLiveAfternoon = true;
+    } else {
+      // Check if record is from yesterday and shift is still running into today
+      const todayStr = getTodayDateString();
+      const yesterdayStr = getYesterdayDateString(todayStr);
+      if (record.date === yesterdayStr) {
+        const elapsed = (24 * 60 - inAftMins) + sysMins;
+        // Sanity limit: shift duration < 18 hours (1080 mins)
+        if (elapsed > 0 && elapsed <= 18 * 60) {
+          afternoonMinutes = elapsed;
+          isLiveAfternoon = true;
+        }
+      }
     }
   }
 
@@ -442,7 +533,7 @@ export function calculateRecord(
   // Subtract explicit "Uscita durante il turno di lavoro" from physical worked hours if present
   let exitDuration = 0;
   if (record.exitDuringTurnStart && record.exitDuringTurnEnd) {
-    exitDuration = getMinutesBetweenTimes(record.exitDuringTurnStart, record.exitDuringTurnEnd);
+    exitDuration = getMinutesBetweenTimes(record.exitDuringTurnStart, record.exitDuringTurnEnd, true);
   }
   netWorked = Math.max(0, netWorked - exitDuration);
 
@@ -461,7 +552,7 @@ export function calculateRecord(
   // Deficit is flagged when day shift is complete or day has past
   const isFinished =
     clockOutAfternoon !== '' ||
-    (!isToday && (clockInMorning !== '' || clockInAfternoon !== ''));
+    (!isToday && !isLive && (clockInMorning !== '' || clockInAfternoon !== ''));
   const isDeficit = diffFromStandard < 0 && isFinished && !isLive && standardMins > 0;
   const deficitMinutes = isDeficit ? Math.abs(diffFromStandard) : 0;
 

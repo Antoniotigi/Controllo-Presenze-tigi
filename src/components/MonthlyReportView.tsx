@@ -394,7 +394,21 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                         {times.clockInAfternoon || '—'}
                       </td>
                       <td className="py-2.5 px-3 text-center font-mono text-slate-800">
-                        {times.clockOutAfternoon || '—'}
+                        {times.clockOutAfternoon ? (
+                          <span className="inline-flex items-center justify-center gap-1">
+                            <span>{times.clockOutAfternoon}</span>
+                            {times.clockOutAfternoonNextDay && (
+                              <span
+                                className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/70 px-1 py-0.2 rounded"
+                                title="Concluso dopo la mezzanotte (+1 giorno)"
+                              >
+                                +1 🌙
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          '—'
+                        )}
                       </td>
                       <td className="py-2.5 px-3 text-center font-mono text-amber-700 font-semibold">
                         {r.exitDuringTurnStart || '—'}

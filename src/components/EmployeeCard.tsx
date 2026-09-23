@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Calendar,
   Clock,
+  Moon,
 } from 'lucide-react';
 import { Employee, TimeRecord, DayCalculation } from '../types';
 import {
@@ -25,6 +26,8 @@ import {
   formatMinutesToHM,
   getRecordTimestamps,
   getMinutesBetweenTimes,
+  isAfternoonShiftOvernight,
+  timeToMinutes,
 } from '../utils/timeUtils';
 
 interface EmployeeCardProps {
@@ -56,6 +59,9 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
   const [clockOutMorning, setClockOutMorning] = useState<string>(initialTimes.clockOutMorning);
   const [clockInAfternoon, setClockInAfternoon] = useState<string>(initialTimes.clockInAfternoon);
   const [clockOutAfternoon, setClockOutAfternoon] = useState<string>(initialTimes.clockOutAfternoon);
+  const [clockOutAfternoonNextDay, setClockOutAfternoonNextDay] = useState<boolean>(
+    Boolean(initialTimes.clockOutAfternoonNextDay)
+  );
 
   const [notes, setNotes] = useState<string>(record?.notes || '');
   const [leaveType, setLeaveType] = useState<TimeRecord['leaveType']>(record?.leaveType || 'none');
@@ -99,6 +105,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     setClockOutMorning(times.clockOutMorning);
     setClockInAfternoon(times.clockInAfternoon);
     setClockOutAfternoon(times.clockOutAfternoon);
+    setClockOutAfternoonNextDay(Boolean(times.clockOutAfternoonNextDay));
 
     setNotes(record?.notes || '');
     setLeaveType(record?.leaveType || 'none');
@@ -160,6 +167,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     clockOutMorning,
     clockInAfternoon,
     clockOutAfternoon,
+    clockOutAfternoonNextDay,
     clockIn: clockInMorning,
     clockOut: clockOutAfternoon || clockOutMorning,
     notes,
@@ -222,6 +230,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     const nextOutMorning = partial.clockOutMorning !== undefined ? partial.clockOutMorning : clockOutMorning;
     const nextInAfternoon = partial.clockInAfternoon !== undefined ? partial.clockInAfternoon : clockInAfternoon;
     const nextOutAfternoon = partial.clockOutAfternoon !== undefined ? partial.clockOutAfternoon : clockOutAfternoon;
+    const nextOutAfternoonNextDay = partial.clockOutAfternoonNextDay !== undefined ? partial.clockOutAfternoonNextDay : clockOutAfternoonNextDay;
     const nextNotes = partial.notes !== undefined ? partial.notes : notes;
     const nextLeaveType = partial.leaveType !== undefined ? partial.leaveType : leaveType;
     const nextLeaveHours = partial.leaveHours !== undefined ? partial.leaveHours : leaveHours;
@@ -240,6 +249,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
       clockOutMorning: nextOutMorning,
       clockInAfternoon: nextInAfternoon,
       clockOutAfternoon: nextOutAfternoon,
+      clockOutAfternoonNextDay: nextOutAfternoonNextDay,
       clockIn: nextInMorning,
       clockOut: nextOutAfternoon || nextOutMorning,
       notes: nextNotes,
@@ -413,8 +423,12 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
 
   const setOutAfternoonNow = () => {
     const now = getCurrentTimeHHMM();
+    const isOvernight = clockInAfternoon
+      ? timeToMinutes(now) <= timeToMinutes(clockInAfternoon)
+      : false;
     setClockOutAfternoon(now);
-    persistChanges({ clockOutAfternoon: now });
+    setClockOutAfternoonNextDay(isOvernight);
+    persistChanges({ clockOutAfternoon: now, clockOutAfternoonNextDay: isOvernight });
   };
 
   const toggleFerie = () => {
@@ -721,11 +735,23 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
       <div className="border-t border-[#E2E8F0] mt-3.5 pt-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-[44px]">
         <div className="flex-1">
           {(() => {
+            const isOvernight = isAfternoonShiftOvernight(
+              clockInAfternoon,
+              clockOutAfternoon,
+              clockOutAfternoonNextDay
+            );
+
             const stampsList = [
-              { label: 'Ingresso', value: clockInMorning, icon: LogIn, iconColor: 'text-[#0b5cd5]' },
-              { label: 'Pausa', value: clockOutMorning, icon: Coffee, iconColor: 'text-amber-500' },
-              { label: 'Rientro', value: clockInAfternoon, icon: LogIn, iconColor: 'text-blue-500' },
-              { label: 'Uscita', value: clockOutAfternoon, icon: LogOut, iconColor: 'text-slate-500' },
+              { label: 'Ingresso', value: clockInMorning, icon: LogIn, iconColor: 'text-[#0b5cd5]', badge: null },
+              { label: 'Pausa', value: clockOutMorning, icon: Coffee, iconColor: 'text-amber-500', badge: null },
+              { label: 'Rientro', value: clockInAfternoon, icon: LogIn, iconColor: 'text-blue-500', badge: null },
+              {
+                label: 'Uscita',
+                value: clockOutAfternoon,
+                icon: LogOut,
+                iconColor: isOvernight ? 'text-indigo-600' : 'text-slate-500',
+                badge: isOvernight ? '+1 gg 🌙' : null,
+              },
             ].filter((s) => s.value);
 
             if (stampsList.length === 0) {
@@ -749,6 +775,11 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                       <stamp.icon className={`w-3.5 h-3.5 ${stamp.iconColor}`} />
                       <span className="font-semibold text-[#64748B]">{stamp.label}</span>
                       <span className="font-mono font-bold text-[#101B32]">{stamp.value}</span>
+                      {stamp.badge && (
+                        <span className="px-1.5 py-0.5 bg-indigo-50 border border-indigo-200/70 text-indigo-700 text-[10px] font-bold rounded flex items-center gap-0.5">
+                          {stamp.badge}
+                        </span>
+                      )}
                     </div>
                   </React.Fragment>
                 ))}
@@ -1121,7 +1152,9 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           onChange={(e) => {
                             const val = e.target.value;
                             setClockOutAfternoon(val);
-                            persistChanges({ clockOutAfternoon: val });
+                            const autoOvernight = clockInAfternoon && val ? timeToMinutes(val) <= timeToMinutes(clockInAfternoon) : false;
+                            setClockOutAfternoonNextDay(autoOvernight);
+                            persistChanges({ clockOutAfternoon: val, clockOutAfternoonNextDay: autoOvernight });
                           }}
                           className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 focus:ring-1 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
                         />
@@ -1136,6 +1169,52 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                       )}
                     </div>
                   </div>
+
+                  {/* Overnight shift notice & duration */}
+                  {(() => {
+                    const isOvernight = isAfternoonShiftOvernight(
+                      clockInAfternoon,
+                      clockOutAfternoon,
+                      clockOutAfternoonNextDay
+                    );
+
+                    return (
+                      <>
+                        {clockInAfternoon && clockOutAfternoon && isOvernight && (
+                          <div className="mt-3 p-2.5 bg-indigo-50/80 border border-indigo-200/80 rounded-lg flex items-center justify-between gap-2 text-xs text-indigo-900">
+                            <div className="flex items-center gap-2">
+                              <Moon className="w-4 h-4 text-indigo-600 shrink-0" />
+                              <span>
+                                <strong className="font-semibold">Turno notturno:</strong> uscita dopo la mezzanotte (+1 giorno).
+                              </span>
+                            </div>
+                            <span className="font-mono font-bold text-indigo-800 bg-white px-2 py-0.5 rounded border border-indigo-200 shrink-0">
+                              Durata: {formatMinutesToHM(calculation.afternoonMinutes)}
+                            </span>
+                          </div>
+                        )}
+
+                        {isAdminUnlocked && clockInAfternoon && clockOutAfternoon && (
+                          <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={clockOutAfternoonNextDay}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setClockOutAfternoonNextDay(checked);
+                                persistChanges({ clockOutAfternoonNextDay: checked });
+                              }}
+                              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5 cursor-pointer"
+                            />
+                            <span className="flex items-center gap-1.5 font-medium">
+                              <Moon className="w-3.5 h-3.5 text-indigo-600" />
+                              Concluso dopo la mezzanotte (+1 giorno)
+                            </span>
+                          </label>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
