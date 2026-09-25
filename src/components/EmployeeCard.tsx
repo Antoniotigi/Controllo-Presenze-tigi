@@ -904,7 +904,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                     <div className="flex gap-2">
                       <input
                         type="password"
-                        placeholder="Mappescio2026@..."
+                        placeholder="password"
                         value={passwordValue}
                         onChange={(e) => {
                           setPasswordValue(e.target.value);
