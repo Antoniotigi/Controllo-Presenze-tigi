@@ -63,6 +63,9 @@ export interface DayCalculation {
   status: 'al_lavoro' | 'pausa' | 'completato' | 'non_timbrato' | 'ferie' | 'permesso';
   effectiveMinutesWorked?: number;
   effectiveHoursFormatted?: string;
+  overtimeDiurniMinutes?: number;
+  overtimeNotturniMinutes?: number;
+  overtimeFestiviMinutes?: number;
 }
 
 export interface EmployeeMonthlySummary {

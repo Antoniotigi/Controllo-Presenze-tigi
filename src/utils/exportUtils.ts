@@ -21,6 +21,9 @@ export interface MonthlyStatsPerEmployee {
   daysWorked: number;
   totalWorkedMinutes: number;
   totalOvertimeMinutes: number;
+  totalOvertimeDiurniMinutes: number;
+  totalOvertimeNotturniMinutes: number;
+  totalOvertimeFestiviMinutes: number;
   totalDeficitMinutes: number;
   netBalanceMinutes: number;
   ferieDays: number;
@@ -64,6 +67,9 @@ export function computeMonthlyStats(
     let daysWorked = 0;
     let totalWorkedMinutes = 0;
     let totalOvertimeMinutes = 0;
+    let totalOvertimeDiurniMinutes = 0;
+    let totalOvertimeNotturniMinutes = 0;
+    let totalOvertimeFestiviMinutes = 0;
     let totalDeficitMinutes = 0;
     let ferieDays = 0;
     let permessiHours = 0;
@@ -111,6 +117,9 @@ export function computeMonthlyStats(
 
         totalWorkedMinutes += calc.minutesWorked;
         totalOvertimeMinutes += calc.overtimeMinutes;
+        totalOvertimeDiurniMinutes += calc.overtimeDiurniMinutes || 0;
+        totalOvertimeNotturniMinutes += calc.overtimeNotturniMinutes || 0;
+        totalOvertimeFestiviMinutes += calc.overtimeFestiviMinutes || 0;
         totalDeficitMinutes += calc.deficitMinutes;
       }
     });
@@ -122,6 +131,9 @@ export function computeMonthlyStats(
       daysWorked,
       totalWorkedMinutes,
       totalOvertimeMinutes,
+      totalOvertimeDiurniMinutes,
+      totalOvertimeNotturniMinutes,
+      totalOvertimeFestiviMinutes,
       totalDeficitMinutes,
       netBalanceMinutes,
       ferieDays,
@@ -151,7 +163,10 @@ export function exportToExcel(
     'Giorni Lavorati': s.daysWorked,
     'Ore Totali Lavorate': formatMinutesToHM(s.totalWorkedMinutes),
     'Ore Decimali': Number(formatMinutesToDecimal(s.totalWorkedMinutes)),
-    'Straordinari (+)': formatMinutesToHM(s.totalOvertimeMinutes),
+    'Straordinari Diurni': s.totalOvertimeDiurniMinutes > 0 ? formatMinutesToHM(s.totalOvertimeDiurniMinutes) : '—',
+    'Straordinari Notturni': s.totalOvertimeNotturniMinutes > 0 ? formatMinutesToHM(s.totalOvertimeNotturniMinutes) : '—',
+    'Straordinari Festivi': s.totalOvertimeFestiviMinutes > 0 ? formatMinutesToHM(s.totalOvertimeFestiviMinutes) : '—',
+    'Totale Straordinari': s.totalOvertimeMinutes > 0 ? formatMinutesToHM(s.totalOvertimeMinutes) : '—',
     'Recupero Ore (-)': formatMinutesToHM(s.totalDeficitMinutes),
     'Saldo Netto': (s.netBalanceMinutes >= 0 ? '+' : '') + formatMinutesToHM(s.netBalanceMinutes),
     'Ferie Fruite (gg)': s.ferieDays,
@@ -169,7 +184,10 @@ export function exportToExcel(
     { wch: 15 }, // Giorni
     { wch: 18 }, // Ore Totali
     { wch: 14 }, // Decimali
-    { wch: 16 }, // Straordinari
+    { wch: 20 }, // Straordinari Diurni
+    { wch: 20 }, // Straordinari Notturni
+    { wch: 20 }, // Straordinari Festivi
+    { wch: 20 }, // Totale Straordinari
     { wch: 16 }, // Recupero
     { wch: 15 }, // Saldo
     { wch: 16 }, // Ferie
@@ -192,13 +210,6 @@ export function exportToExcel(
         : times.clockOutAfternoon
       : '—';
 
-    let otDef = '—';
-    if (calc.overtimeMinutes > 0) {
-      otDef = `+${formatMinutesToHM(calc.overtimeMinutes)}`;
-    } else if (calc.deficitMinutes > 0) {
-      otDef = `-${formatMinutesToHM(calc.deficitMinutes)}`;
-    }
-
     let noteText = '';
     if (r.leaveType === 'ferie') noteText = 'Ferie';
     else if (r.leaveType === 'malattia') noteText = 'Malattia';
@@ -218,7 +229,11 @@ export function exportToExcel(
       'Uscita Turno': r.exitDuringTurnStart || '—',
       'Rientro Turno': r.exitDuringTurnEnd || '—',
       'Ore Lavorate': calc.hoursWorkedFormatted,
-      'Straordinari / Recuperi': otDef,
+      'Straordinari Diurni': calc.overtimeDiurniMinutes && calc.overtimeDiurniMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeDiurniMinutes)}` : '—',
+      'Straordinari Notturni': calc.overtimeNotturniMinutes && calc.overtimeNotturniMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeNotturniMinutes)}` : '—',
+      'Straordinari Festivi': calc.overtimeFestiviMinutes && calc.overtimeFestiviMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeFestiviMinutes)}` : '—',
+      'Totale Straordinari': calc.overtimeMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeMinutes)}` : '—',
+      'Recuperi': calc.deficitMinutes > 0 ? `-${formatMinutesToHM(calc.deficitMinutes)}` : '—',
       'Note / Assenza': noteText || '—',
     };
   });
@@ -234,7 +249,11 @@ export function exportToExcel(
     { wch: 14 }, // Uscita Turno
     { wch: 14 }, // Rientro Turno
     { wch: 14 }, // Ore Lavorate
-    { wch: 22 }, // Straordinari / Recuperi
+    { wch: 20 }, // Straordinari Diurni
+    { wch: 20 }, // Straordinari Notturni
+    { wch: 20 }, // Straordinari Festivi
+    { wch: 20 }, // Totale Straordinari
+    { wch: 14 }, // Recuperi
     { wch: 30 }, // Note
   ];
   XLSX.utils.book_append_sheet(wb, wsDetail, 'Dettaglio Giornaliero');
@@ -303,13 +322,16 @@ export function exportToPDF(
   doc.text('Riepilogo Mensile per Dipendente', 14, 32);
 
   const summaryHead = [
-    ['Dipendente', 'Gg Lav.', 'Ore Lavorate', 'Straordinari (+)', 'Recupero Ore (-)', 'Saldo Netto', 'Ferie', 'Permessi']
+    ['Dipendente', 'Gg Lav.', 'Ore Lavorate', 'Str. Diurni', 'Str. Notturni', 'Str. Festivi', 'Tot. Straord.', 'Recuperi (-)', 'Saldo Netto', 'Ferie', 'Permessi']
   ];
 
   const summaryBody = stats.map((s) => [
     s.employee.name,
     s.daysWorked.toString(),
     formatMinutesToHM(s.totalWorkedMinutes),
+    s.totalOvertimeDiurniMinutes > 0 ? `+${formatMinutesToHM(s.totalOvertimeDiurniMinutes)}` : '0h 00m',
+    s.totalOvertimeNotturniMinutes > 0 ? `+${formatMinutesToHM(s.totalOvertimeNotturniMinutes)}` : '0h 00m',
+    s.totalOvertimeFestiviMinutes > 0 ? `+${formatMinutesToHM(s.totalOvertimeFestiviMinutes)}` : '0h 00m',
     s.totalOvertimeMinutes > 0 ? `+${formatMinutesToHM(s.totalOvertimeMinutes)}` : '0h 00m',
     s.totalDeficitMinutes > 0 ? `-${formatMinutesToHM(s.totalDeficitMinutes)}` : '0h 00m',
     (s.netBalanceMinutes >= 0 ? '+' : '') + formatMinutesToHM(s.netBalanceMinutes),
@@ -325,27 +347,30 @@ export function exportToPDF(
     headStyles: {
       fillColor: [30, 41, 59],
       textColor: [255, 255, 255],
-      fontSize: 9,
+      fontSize: 8,
       fontStyle: 'bold',
       halign: 'center',
     },
     bodyStyles: {
-      fontSize: 8.5,
+      fontSize: 7.5,
       textColor: [51, 65, 85],
       halign: 'center',
     },
     columnStyles: {
-      0: { halign: 'left', fontStyle: 'bold', cellWidth: 50 },
-      1: { cellWidth: 20 },
-      2: { cellWidth: 32, fontStyle: 'bold' },
-      3: { cellWidth: 34, textColor: [16, 185, 129] }, // Emerald Green
-      4: { cellWidth: 34, textColor: [239, 68, 68] },  // Red/Amber
-      5: { cellWidth: 30, fontStyle: 'bold' },
-      6: { cellWidth: 24 },
-      7: { cellWidth: 24 },
+      0: { halign: 'left', fontStyle: 'bold', cellWidth: 42 },
+      1: { cellWidth: 16 },
+      2: { cellWidth: 22, fontStyle: 'bold' },
+      3: { cellWidth: 22, textColor: [100, 116, 139] }, // Diurni Slate
+      4: { cellWidth: 22, textColor: [23, 37, 84], fontStyle: 'bold' }, // Notturni Midnight Blue (RGB [23, 37, 84])
+      5: { cellWidth: 22, textColor: [153, 27, 27], fontStyle: 'bold' }, // Festivi Brick Red (RGB [153, 27, 27])
+      6: { cellWidth: 24, fontStyle: 'bold', textColor: [16, 185, 129] }, // Totale Emerald Green
+      7: { cellWidth: 22, textColor: [239, 68, 68] },  // Red/Amber
+      8: { cellWidth: 24, fontStyle: 'bold' },
+      9: { cellWidth: 18 },
+      10: { cellWidth: 18 },
     },
     styles: {
-      cellPadding: 2.5,
+      cellPadding: 2,
     },
   });
 
@@ -365,7 +390,7 @@ export function exportToPDF(
     doc.text(`Mese: ${monthTitle} (${monthYear})  |  Qualifica: ${emp.role}`, 14, 22);
 
     const detailedHead = [
-      ['Data', '1ª Entr.', '1ª Usc.', '2ª Entr.', '2ª Usc.', 'Usc. Turno', 'Rie. Turno', 'Lavorato', 'Straordinari / Recuperi', 'Note / Assenza']
+      ['Data', '1ª Entr.', '1ª Usc.', '2ª Entr.', '2ª Usc.', 'Usc. Turno', 'Rie. Turno', 'Lavorato', 'Str. Diurni', 'Str. Notturni', 'Str. Festivi', 'Tot. Straordinari', 'Recup.', 'Note / Assenza']
     ];
 
     const empRecords = getCompleteMonthRecords(monthYear, [emp], records);
@@ -374,15 +399,6 @@ export function exportToPDF(
       const times = getRecordTimestamps(r);
       const dateFormatted = formatDateIT(r.date);
       const worked = calc.hoursWorkedFormatted;
-
-      let otDef = '—';
-      if (calc.overtimeMinutes > 0) {
-        otDef = `+${formatMinutesToHM(calc.overtimeMinutes)}`;
-      } else if (calc.deficitMinutes > 0) {
-        otDef = `-${formatMinutesToHM(calc.deficitMinutes)}`;
-      } else if (calc.minutesWorked > 0) {
-        otDef = '0h 00m';
-      }
 
       let noteCol = '';
       if (r.leaveType === 'ferie') {
@@ -414,7 +430,11 @@ export function exportToPDF(
         r.exitDuringTurnStart || '—',
         r.exitDuringTurnEnd || '—',
         worked,
-        otDef,
+        calc.overtimeDiurniMinutes && calc.overtimeDiurniMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeDiurniMinutes)}` : '—',
+        calc.overtimeNotturniMinutes && calc.overtimeNotturniMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeNotturniMinutes)}` : '—',
+        calc.overtimeFestiviMinutes && calc.overtimeFestiviMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeFestiviMinutes)}` : '—',
+        calc.overtimeMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeMinutes)}` : '—',
+        calc.deficitMinutes > 0 ? `-${formatMinutesToHM(calc.deficitMinutes)}` : '—',
         noteCol || '—'
       ];
     });
@@ -427,29 +447,33 @@ export function exportToPDF(
       headStyles: {
         fillColor: [51, 65, 85], // Slate 700
         textColor: [255, 255, 255],
-        fontSize: 8,
+        fontSize: 7.5,
         fontStyle: 'bold',
         halign: 'center',
       },
       bodyStyles: {
-        fontSize: 7.5,
+        fontSize: 7,
         textColor: [51, 65, 85],
         halign: 'center',
       },
       columnStyles: {
-        0: { cellWidth: 22, fontStyle: 'bold' },
-        1: { cellWidth: 18 },
-        2: { cellWidth: 18 },
-        3: { cellWidth: 18 },
-        4: { cellWidth: 18 },
-        5: { cellWidth: 22, textColor: [180, 83, 9] }, // Amber-700
-        6: { cellWidth: 22, textColor: [180, 83, 9] }, // Amber-700
-        7: { cellWidth: 24, fontStyle: 'bold' },
-        8: { cellWidth: 36, fontStyle: 'bold' },
-        9: { halign: 'left' },
+        0: { cellWidth: 20, fontStyle: 'bold' },
+        1: { cellWidth: 14 },
+        2: { cellWidth: 14 },
+        3: { cellWidth: 14 },
+        4: { cellWidth: 14 },
+        5: { cellWidth: 16, textColor: [180, 83, 9] }, // Amber-700
+        6: { cellWidth: 16, textColor: [180, 83, 9] }, // Amber-700
+        7: { cellWidth: 16, fontStyle: 'bold' },
+        8: { cellWidth: 16 },
+        9: { cellWidth: 16 },
+        10: { cellWidth: 16 },
+        11: { cellWidth: 18, fontStyle: 'bold' },
+        12: { cellWidth: 16, fontStyle: 'bold', textColor: [239, 68, 68] },
+        13: { halign: 'left' },
       },
       styles: {
-        cellPadding: 1.5,
+        cellPadding: 1,
       },
       didParseCell: (data) => {
         // Highlight weekend dates
@@ -466,12 +490,27 @@ export function exportToPDF(
             }
           }
         }
-        // Color coding for Overtime/Deficit
-        if (data.column.index === 8 && data.cell.raw) {
+        // Color coding for Overtime (columns 8, 9, 10, 11) and Deficit (column 12)
+        if ((data.column.index === 8 || data.column.index === 9 || data.column.index === 10 || data.column.index === 11) && data.cell.raw) {
           const rawStr = data.cell.raw as string;
           if (rawStr.startsWith('+')) {
-            data.cell.styles.textColor = [16, 185, 129]; // Emerald Green
-          } else if (rawStr.startsWith('-')) {
+            if (data.column.index === 8) {
+              data.cell.styles.textColor = [100, 116, 139]; // Diurni Slate
+            } else if (data.column.index === 9) {
+              data.cell.styles.textColor = [23, 37, 84]; // Notturni Midnight Blue
+              data.cell.styles.fontStyle = 'bold';
+            } else if (data.column.index === 10) {
+              data.cell.styles.textColor = [153, 27, 27]; // Festivi Brick Red
+              data.cell.styles.fontStyle = 'bold';
+            } else if (data.column.index === 11) {
+              data.cell.styles.textColor = [16, 185, 129]; // Totale Emerald Green
+              data.cell.styles.fontStyle = 'bold';
+            }
+          }
+        }
+        if (data.column.index === 12 && data.cell.raw) {
+          const rawStr = data.cell.raw as string;
+          if (rawStr.startsWith('-')) {
             data.cell.styles.textColor = [239, 68, 68]; // Red
           }
         }

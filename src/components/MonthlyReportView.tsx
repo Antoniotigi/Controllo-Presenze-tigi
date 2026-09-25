@@ -240,9 +240,10 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                 <th className="py-2.5 px-3">Dipendente</th>
                 <th className="py-2.5 px-3 text-center">Gg Lavorati</th>
                 <th className="py-2.5 px-3 text-right">Ore Lavorate</th>
-                <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">
-                  Straordinari (+)
-                </th>
+                <th className="py-2.5 px-3 text-right text-slate-500 font-semibold">Str. Diurni</th>
+                <th className="py-2.5 px-3 text-right text-blue-900 font-bold">Str. Notturni</th>
+                <th className="py-2.5 px-3 text-right text-red-800 font-bold">Str. Festivi</th>
+                <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">Tot. Straordinari</th>
                 <th className="py-2.5 px-3 text-right text-red-600 font-bold">
                   Recuperi (-)
                 </th>
@@ -270,7 +271,22 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
                     {formatMinutesToHM(s.totalWorkedMinutes)}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-semibold text-emerald-600">
+                  <td className="py-3 px-3 text-right font-mono font-semibold text-slate-500">
+                    {s.totalOvertimeDiurniMinutes > 0
+                      ? `+${formatMinutesToHM(s.totalOvertimeDiurniMinutes)}`
+                      : '—'}
+                  </td>
+                  <td className="py-3 px-3 text-right font-mono font-bold text-blue-900 bg-blue-50/40 rounded-lg">
+                    {s.totalOvertimeNotturniMinutes > 0
+                      ? `+${formatMinutesToHM(s.totalOvertimeNotturniMinutes)}`
+                      : '—'}
+                  </td>
+                  <td className="py-3 px-3 text-right font-mono font-bold text-red-800 bg-red-50/40 rounded-lg">
+                    {s.totalOvertimeFestiviMinutes > 0
+                      ? `+${formatMinutesToHM(s.totalOvertimeFestiviMinutes)}`
+                      : '—'}
+                  </td>
+                  <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600 bg-emerald-50/40 rounded-lg">
                     {s.totalOvertimeMinutes > 0
                       ? `+${formatMinutesToHM(s.totalOvertimeMinutes)}`
                       : '0h 00m'}
@@ -351,16 +367,17 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                 <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50">
                   <th className="py-2.5 px-3">Data</th>
                   <th className="py-2.5 px-3">Dipendente</th>
-                  <th className="py-2.5 px-3 text-center">1ª Entr. (Matt.)</th>
-                  <th className="py-2.5 px-3 text-center">1ª Usc. (Matt.)</th>
-                  <th className="py-2.5 px-3 text-center">2ª Entr. (Pom.)</th>
-                  <th className="py-2.5 px-3 text-center">2ª Usc. (Pom.)</th>
+                  <th className="py-2.5 px-3 text-center">1ª Entr.</th>
+                  <th className="py-2.5 px-3 text-center">1ª Usc.</th>
+                  <th className="py-2.5 px-3 text-center">2ª Entr.</th>
+                  <th className="py-2.5 px-3 text-center">2ª Usc.</th>
                   <th className="py-2.5 px-3 text-center font-medium text-amber-600">Uscita Turno</th>
                   <th className="py-2.5 px-3 text-center font-medium text-amber-600">Rientro Turno</th>
                   <th className="py-2.5 px-3 text-right">Ore Lavorate</th>
-                  <th className="py-2.5 px-3 text-right text-emerald-600 font-semibold">
-                    Straordinari
-                  </th>
+                  <th className="py-2.5 px-3 text-right text-slate-500 font-semibold">Str. Diurni</th>
+                  <th className="py-2.5 px-3 text-right text-blue-900 font-bold">Str. Notturni</th>
+                  <th className="py-2.5 px-3 text-right text-red-800 font-bold">Str. Festivi</th>
+                  <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">Tot. Straordinari</th>
                   <th className="py-2.5 px-3 text-right text-red-600 font-semibold">
                     Recuperi
                   </th>
@@ -419,8 +436,17 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                       <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
                         {calc.hoursWorkedFormatted}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-emerald-600 font-semibold">
-                        {calc.overtimeMinutes > 0 ? calc.overtimeFormatted : '—'}
+                      <td className="py-2.5 px-3 text-right font-mono text-slate-500">
+                        {calc.overtimeDiurniMinutes && calc.overtimeDiurniMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeDiurniMinutes)}` : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-blue-900 font-semibold bg-blue-50/30 rounded px-1.5">
+                        {calc.overtimeNotturniMinutes && calc.overtimeNotturniMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeNotturniMinutes)}` : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-red-800 font-semibold bg-red-50/30 rounded px-1.5">
+                        {calc.overtimeFestiviMinutes && calc.overtimeFestiviMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeFestiviMinutes)}` : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-emerald-600 font-bold bg-emerald-50/30 rounded">
+                        {calc.overtimeMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeMinutes)}` : '—'}
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono text-red-600 font-semibold">
                         {calc.deficitMinutes > 0 ? calc.deficitFormatted : '—'}

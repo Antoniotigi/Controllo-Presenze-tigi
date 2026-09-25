@@ -615,6 +615,84 @@ export function calculateRecord(
     status = 'non_timbrato';
   }
 
+  // Calculate diurnal, night, and holiday overtime splits
+  let overtimeDiurniMinutes = 0;
+  let overtimeNotturniMinutes = 0;
+  let overtimeFestiviMinutes = 0;
+
+  if (overtimeMinutes > 0 && record) {
+    const isHolidayDay = isHoliday(record.date) || getDayOfWeek(record.date) === 0;
+    if (isHolidayDay) {
+      overtimeFestiviMinutes = overtimeMinutes;
+    } else {
+      const intervals: { start: number; end: number }[] = [];
+      const times = getRecordTimestamps(record);
+      
+      const inMorn = times.clockInMorning ? timeToMinutes(times.clockInMorning) : 0;
+      const outMorn = times.clockOutMorning ? timeToMinutes(times.clockOutMorning) : 0;
+      const inAft = times.clockInAfternoon ? timeToMinutes(times.clockInAfternoon) : 0;
+      const outAft = times.clockOutAfternoon ? timeToMinutes(times.clockOutAfternoon) : 0;
+
+      if (times.clockInMorning && times.clockOutAfternoon && !times.clockOutMorning && !times.clockInAfternoon) {
+        const isOvernight = times.clockOutAfternoonNextDay || (outAft <= inMorn);
+        intervals.push({ start: inMorn, end: isOvernight ? 1440 + outAft : outAft });
+      } else if (times.clockInMorning && times.clockOutMorning && !times.clockInAfternoon && !times.clockOutAfternoon) {
+        const isOvernight = outMorn <= inMorn;
+        intervals.push({ start: inMorn, end: isOvernight ? 1440 + outMorn : outMorn });
+      } else if (times.clockInAfternoon && times.clockOutAfternoon && !times.clockInMorning && !times.clockOutMorning) {
+        const isOvernight = times.clockOutAfternoonNextDay || (outAft <= inAft);
+        intervals.push({ start: inAft, end: isOvernight ? 1440 + outAft : outAft });
+      } else {
+        if (times.clockInMorning && times.clockOutMorning) {
+          const isOvernight = outMorn <= inMorn;
+          intervals.push({ start: inMorn, end: isOvernight ? 1440 + outMorn : outMorn });
+        }
+        if (times.clockInAfternoon && times.clockOutAfternoon) {
+          const isOvernight = times.clockOutAfternoonNextDay || (outAft <= inAft);
+          intervals.push({ start: inAft, end: isOvernight ? 1440 + outAft : outAft });
+        }
+      }
+
+      let finalIntervals: { start: number; end: number }[] = [];
+      if (record.exitDuringTurnStart && record.exitDuringTurnEnd) {
+        const exS = timeToMinutes(record.exitDuringTurnStart);
+        const exE = timeToMinutes(record.exitDuringTurnEnd);
+        for (const iv of intervals) {
+          if (exE <= iv.start || exS >= iv.end) {
+            finalIntervals.push(iv);
+          } else {
+            if (exS > iv.start) {
+              finalIntervals.push({ start: iv.start, end: exS });
+            }
+            if (exE < iv.end) {
+              finalIntervals.push({ start: exE, end: iv.end });
+            }
+          }
+        }
+      } else {
+        finalIntervals = intervals;
+      }
+
+      const workedMinutesList: number[] = [];
+      for (const iv of finalIntervals) {
+        for (let m = iv.start; m < iv.end; m++) {
+          workedMinutesList.push(m);
+        }
+      }
+
+      const otList = workedMinutesList.slice(-overtimeMinutes);
+      for (const m of otList) {
+        const minInDay = m % 1440;
+        const isNight = minInDay >= 1320 || minInDay < 360;
+        if (isNight) {
+          overtimeNotturniMinutes++;
+        } else {
+          overtimeDiurniMinutes++;
+        }
+      }
+    }
+  }
+
   return {
     minutesWorked: netWorked,
     hoursWorkedFormatted: formatMinutesToHM(netWorked),
@@ -630,6 +708,9 @@ export function calculateRecord(
     status,
     effectiveMinutesWorked: totalMinsWithJustification,
     effectiveHoursFormatted: formatMinutesToHM(totalMinsWithJustification),
+    overtimeDiurniMinutes,
+    overtimeNotturniMinutes,
+    overtimeFestiviMinutes,
   };
 }
 
