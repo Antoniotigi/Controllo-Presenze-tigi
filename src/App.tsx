@@ -475,6 +475,40 @@ export default function App() {
     };
   }, []);
 
+  // Ensure Antonio Santoro's 24/09 record is present and seeded
+  useEffect(() => {
+    const hasAntonioRecord = records.some(
+      (r) => r.employeeId === 'emp-1' && r.date === '2026-09-24' && r.clockInMorning === '07:15'
+    );
+    if (!hasAntonioRecord) {
+      const seedRec: TimeRecord = {
+        id: 'rec-emp-1-2026-09-24',
+        employeeId: 'emp-1',
+        date: '2026-09-24',
+        clockInMorning: '07:15',
+        clockOutMorning: '',
+        clockInAfternoon: '',
+        clockOutAfternoon: '00:45',
+        clockOutAfternoonNextDay: true,
+        clockIn: '07:15',
+        clockOut: '00:45',
+        leaveType: 'none',
+        leaveHours: 0,
+        notes: 'Turno unico continuato a cavallo della mezzanotte',
+        updatedAt: new Date().toISOString(),
+      };
+      setRecords((prev) => {
+        const filtered = prev.filter(r => !(r.employeeId === 'emp-1' && r.date === '2026-09-24'));
+        const updated = [...filtered, seedRec];
+        saveTimeRecords(updated);
+        return updated;
+      });
+      saveRecordToFirestore(seedRec).catch((err) =>
+        console.warn('Failed to seed Antonio record to Firestore:', err)
+      );
+    }
+  }, [records]);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);

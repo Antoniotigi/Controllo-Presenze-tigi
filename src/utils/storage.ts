@@ -56,7 +56,24 @@ const LEAVES_KEY = 'timbrature_leaves_v2';
  * Generates initial empty records (all cartellini clock times cleared).
  */
 function generateSeedRecords(): TimeRecord[] {
-  return [];
+  return [
+    {
+      id: 'rec-emp-1-2026-09-24',
+      employeeId: 'emp-1',
+      date: '2026-09-24',
+      clockInMorning: '07:15',
+      clockOutMorning: '',
+      clockInAfternoon: '',
+      clockOutAfternoon: '00:45',
+      clockOutAfternoonNextDay: true,
+      clockIn: '07:15',
+      clockOut: '00:45',
+      leaveType: 'none',
+      leaveHours: 0,
+      notes: 'Turno unico continuato a cavallo della mezzanotte',
+      updatedAt: new Date().toISOString(),
+    }
+  ];
 }
 
 /**

@@ -107,14 +107,28 @@ export function getMinutesBetweenTimes(start: string, end: string, allowOvernigh
 export function isAfternoonShiftOvernight(
   clockInAfternoon?: string,
   clockOutAfternoon?: string,
-  clockOutAfternoonNextDay?: boolean
+  clockOutAfternoonNextDay?: boolean,
+  clockInMorning?: string,
+  clockOutMorning?: string
 ): boolean {
-  if (!clockInAfternoon || !clockOutAfternoon) return false;
   if (clockOutAfternoonNextDay === true) return true;
   if (clockOutAfternoonNextDay === false) return false;
-  const inMins = timeToMinutes(clockInAfternoon);
-  const outMins = timeToMinutes(clockOutAfternoon);
-  return outMins <= inMins;
+
+  // Case 1: Standard afternoon shift
+  if (clockInAfternoon && clockOutAfternoon) {
+    const inMins = timeToMinutes(clockInAfternoon);
+    const outMins = timeToMinutes(clockOutAfternoon);
+    return outMins <= inMins;
+  }
+
+  // Case 2: Single shift from morning to afternoon (inMorning & outAfternoon, other two empty)
+  if (clockInMorning && clockOutAfternoon && !clockOutMorning && !clockInAfternoon) {
+    const inMins = timeToMinutes(clockInMorning);
+    const outMins = timeToMinutes(clockOutAfternoon);
+    return outMins <= inMins;
+  }
+
+  return false;
 }
 
 /**
@@ -198,7 +212,9 @@ export function getRecordTimestamps(record?: TimeRecord | null) {
   const isOvernight = isAfternoonShiftOvernight(
     record.clockInAfternoon || '',
     record.clockOutAfternoon || record.clockOut || '',
-    record.clockOutAfternoonNextDay
+    record.clockOutAfternoonNextDay,
+    record.clockInMorning || record.clockIn || '',
+    record.clockOutMorning || ''
   );
 
   if (hasNewFields) {
@@ -420,7 +436,7 @@ export function calculateRecord(
     };
   }
 
-  const { clockInMorning, clockOutMorning, clockInAfternoon, clockOutAfternoon } =
+  const { clockInMorning, clockOutMorning, clockInAfternoon, clockOutAfternoon, clockOutAfternoonNextDay } =
     getRecordTimestamps(record);
   const permMins = getPermessoMinutes(record);
 
@@ -480,49 +496,81 @@ export function calculateRecord(
 
   let morningMinutes = 0;
   let isLiveMorning = false;
-
-  if (clockInMorning) {
-    const inMornMins = timeToMinutes(clockInMorning);
-    if (clockOutMorning) {
-      const outMornMins = timeToMinutes(clockOutMorning);
-      morningMinutes = Math.max(0, outMornMins - inMornMins);
-    } else if (isToday) {
-      // Currently working morning shift
-      morningMinutes = Math.max(0, sysMins - inMornMins);
-      isLiveMorning = true;
-    }
-  }
-
   let afternoonMinutes = 0;
   let isLiveAfternoon = false;
 
-  if (clockInAfternoon) {
-    const inAftMins = timeToMinutes(clockInAfternoon);
-    if (clockOutAfternoon) {
-      afternoonMinutes = getAfternoonWorkedMinutes(
-        clockInAfternoon,
-        clockOutAfternoon,
-        record.clockOutAfternoonNextDay
-      );
-    } else if (isToday) {
-      // Currently working afternoon shift
-      if (sysMins >= inAftMins) {
-        afternoonMinutes = sysMins - inAftMins;
-      } else {
-        // Shift started today and system time has passed midnight
-        afternoonMinutes = (24 * 60 - inAftMins) + sysMins;
-      }
-      isLiveAfternoon = true;
+  const inMornMins = clockInMorning ? timeToMinutes(clockInMorning) : 0;
+  const outMornMins = clockOutMorning ? timeToMinutes(clockOutMorning) : 0;
+  const inAftMins = clockInAfternoon ? timeToMinutes(clockInAfternoon) : 0;
+  const outAftMins = clockOutAfternoon ? timeToMinutes(clockOutAfternoon) : 0;
+
+  // Single shift from morning to afternoon (Case 1: inMorning & outAfternoon, other two empty)
+  if (clockInMorning && clockOutAfternoon && !clockOutMorning && !clockInAfternoon) {
+    const isOvernight = clockOutAfternoonNextDay || (outAftMins <= inMornMins);
+    if (isOvernight) {
+      afternoonMinutes = (24 * 60 - inMornMins) + outAftMins;
     } else {
-      // Check if record is from yesterday and shift is still running into today
-      const todayStr = getTodayDateString();
-      const yesterdayStr = getYesterdayDateString(todayStr);
-      if (record.date === yesterdayStr) {
-        const elapsed = (24 * 60 - inAftMins) + sysMins;
-        // Sanity limit: shift duration < 18 hours (1080 mins)
-        if (elapsed > 0 && elapsed <= 18 * 60) {
-          afternoonMinutes = elapsed;
-          isLiveAfternoon = true;
+      afternoonMinutes = Math.max(0, outAftMins - inMornMins);
+    }
+  }
+  // Single shift in morning (Case 2: inMorning & outMorning, other two empty)
+  else if (clockInMorning && clockOutMorning && !clockInAfternoon && !clockOutAfternoon) {
+    const isOvernight = outMornMins <= inMornMins;
+    if (isOvernight) {
+      morningMinutes = (24 * 60 - inMornMins) + outMornMins;
+    } else {
+      morningMinutes = Math.max(0, outMornMins - inMornMins);
+    }
+  }
+  // Single shift in afternoon (Case 3: inAfternoon & outAfternoon, other two empty)
+  else if (clockInAfternoon && clockOutAfternoon && !clockInMorning && !clockOutMorning) {
+    const isOvernight = clockOutAfternoonNextDay || (outAftMins <= inAftMins);
+    if (isOvernight) {
+      afternoonMinutes = (24 * 60 - inAftMins) + outAftMins;
+    } else {
+      afternoonMinutes = Math.max(0, outAftMins - inAftMins);
+    }
+  }
+  // Standard or mixed shifts
+  else {
+    if (clockInMorning) {
+      if (clockOutMorning) {
+        const isOvernight = outMornMins <= inMornMins;
+        if (isOvernight) {
+          morningMinutes = (24 * 60 - inMornMins) + outMornMins;
+        } else {
+          morningMinutes = Math.max(0, outMornMins - inMornMins);
+        }
+      } else if (isToday) {
+        morningMinutes = Math.max(0, sysMins - inMornMins);
+        isLiveMorning = true;
+      }
+    }
+
+    if (clockInAfternoon) {
+      if (clockOutAfternoon) {
+        const isOvernight = clockOutAfternoonNextDay || (outAftMins <= inAftMins);
+        if (isOvernight) {
+          afternoonMinutes = (24 * 60 - inAftMins) + outAftMins;
+        } else {
+          afternoonMinutes = Math.max(0, outAftMins - inAftMins);
+        }
+      } else if (isToday) {
+        if (sysMins >= inAftMins) {
+          afternoonMinutes = sysMins - inAftMins;
+        } else {
+          afternoonMinutes = (24 * 60 - inAftMins) + sysMins;
+        }
+        isLiveAfternoon = true;
+      } else {
+        const todayStr = getTodayDateString();
+        const yesterdayStr = getYesterdayDateString(todayStr);
+        if (record.date === yesterdayStr) {
+          const elapsed = (24 * 60 - inAftMins) + sysMins;
+          if (elapsed > 0 && elapsed <= 18 * 60) {
+            afternoonMinutes = elapsed;
+            isLiveAfternoon = true;
+          }
         }
       }
     }
