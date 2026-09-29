@@ -98,6 +98,15 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
   const [passwordValue, setPasswordValue] = useState('');
   const [passwordError, setPasswordError] = useState(false);
 
+  // Close clocking inputs verification state
+  const [pendingStamp, setPendingStamp] = useState<{
+    key: 'clockInMorning' | 'clockOutMorning' | 'clockInAfternoon' | 'clockOutAfternoon';
+    time: string;
+    action: () => void;
+    conflictingTime: string;
+    conflictingLabel: string;
+  } | null>(null);
+
   // Sync state whenever record ID or date changes (e.g. date switched or employee switched)
   useEffect(() => {
     const times = getRecordTimestamps(record);
@@ -401,24 +410,81 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     });
   };
 
+  const triggerStampWithSafetyCheck = (
+    key: 'clockInMorning' | 'clockOutMorning' | 'clockInAfternoon' | 'clockOutAfternoon',
+    action: () => void,
+    newTime: string
+  ) => {
+    const existingStamps = [
+      { key: 'clockInMorning', value: clockInMorning },
+      { key: 'clockOutMorning', value: clockOutMorning },
+      { key: 'clockInAfternoon', value: clockInAfternoon },
+      { key: 'clockOutAfternoon', value: clockOutAfternoon },
+    ];
+
+    let hasConflict = false;
+    let conflictingTime = '';
+    let conflictingLabel = '';
+
+    const labelMap = {
+      clockInMorning: '1ª Entrata',
+      clockOutMorning: '1ª Uscita',
+      clockInAfternoon: '2ª Entrata',
+      clockOutAfternoon: '2ª Uscita',
+    };
+
+    for (const stamp of existingStamps) {
+      if (stamp.key !== key && stamp.value) {
+        const diff = Math.abs(timeToMinutes(stamp.value) - timeToMinutes(newTime));
+        if (diff < 2) {
+          hasConflict = true;
+          conflictingTime = stamp.value;
+          conflictingLabel = labelMap[stamp.key as keyof typeof labelMap];
+          break;
+        }
+      }
+    }
+
+    if (hasConflict) {
+      setPendingStamp({
+        key,
+        time: newTime,
+        action,
+        conflictingTime,
+        conflictingLabel,
+      });
+    } else {
+      action();
+    }
+  };
+
   const setInMorningNow = () => {
     const now = getCurrentTimeHHMM();
-    setClockInMorning(now);
-    if (leaveType !== 'none') setLeaveType('none');
-    persistChanges({ clockInMorning: now, leaveType: 'none' });
+    const action = () => {
+      setClockInMorning(now);
+      if (leaveType !== 'none') setLeaveType('none');
+      persistChanges({ clockInMorning: now, leaveType: 'none' });
+    };
+    triggerStampWithSafetyCheck('clockInMorning', action, now);
   };
 
   const setOutMorningNow = () => {
     const now = getCurrentTimeHHMM();
-    setClockOutMorning(now);
-    persistChanges({ clockOutMorning: now });
+    const action = () => {
+      setClockOutMorning(now);
+      persistChanges({ clockOutMorning: now });
+    };
+    triggerStampWithSafetyCheck('clockOutMorning', action, now);
   };
 
   const setInAfternoonNow = () => {
     const now = getCurrentTimeHHMM();
-    setClockInAfternoon(now);
-    if (leaveType !== 'none') setLeaveType('none');
-    persistChanges({ clockInAfternoon: now, leaveType: 'none' });
+    const action = () => {
+      setClockInAfternoon(now);
+      if (leaveType !== 'none') setLeaveType('none');
+      persistChanges({ clockInAfternoon: now, leaveType: 'none' });
+    };
+    triggerStampWithSafetyCheck('clockInAfternoon', action, now);
   };
 
   const setOutAfternoonNow = () => {
@@ -426,9 +492,12 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     const isOvernight = clockInAfternoon
       ? timeToMinutes(now) <= timeToMinutes(clockInAfternoon)
       : false;
-    setClockOutAfternoon(now);
-    setClockOutAfternoonNextDay(isOvernight);
-    persistChanges({ clockOutAfternoon: now, clockOutAfternoonNextDay: isOvernight });
+    const action = () => {
+      setClockOutAfternoon(now);
+      setClockOutAfternoonNextDay(isOvernight);
+      persistChanges({ clockOutAfternoon: now, clockOutAfternoonNextDay: isOvernight });
+    };
+    triggerStampWithSafetyCheck('clockOutAfternoon', action, now);
   };
 
   const toggleFerie = () => {
@@ -1411,6 +1480,60 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 }`}
               >
                 {leaveType === 'ferie' ? 'In Ferie' : 'Segna Ferie'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pop up di conferma per timbrature ravvicinate (meno di 2 minuti) */}
+      {pendingStamp && (
+        <div 
+          id={`double-stamp-modal-${employee.id}`}
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200"
+        >
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden p-6 space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center shrink-0">
+                <Clock className="w-6 h-6 animate-pulse" />
+              </div>
+              <div className="space-y-1.5 flex-1">
+                <h3 className="text-lg font-bold text-slate-900">
+                  Conferma seconda timbratura
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Stai inserendo una timbratura di <strong className="text-slate-900">
+                    {pendingStamp.key === 'clockInMorning' ? '1ª Entrata' : pendingStamp.key === 'clockOutMorning' ? '1ª Uscita' : pendingStamp.key === 'clockInAfternoon' ? '2ª Entrata' : '2ª Uscita'}
+                  </strong> alle <span className="font-mono font-bold text-[#101B32] bg-slate-100 px-1.5 py-0.5 rounded-md">{pendingStamp.time}</span>.
+                </p>
+                <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 p-3 rounded-xl leading-relaxed space-y-1">
+                  <p className="font-semibold">⚠️ Attenzione: scarto inferiore a 2 minuti!</p>
+                  <p>
+                    L'orario inserito è molto vicino alla precedente timbratura di <strong>{pendingStamp.conflictingLabel} ({pendingStamp.conflictingTime})</strong>.
+                  </p>
+                  <p>Sei sicuro di voler inserire questa seconda timbratura?</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setPendingStamp(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Annulla
+              </button>
+              <button
+                type="button"
+                id="confirm-double-stamp-button"
+                onClick={() => {
+                  pendingStamp.action();
+                  setPendingStamp(null);
+                }}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                Sì, conferma
               </button>
             </div>
           </div>
