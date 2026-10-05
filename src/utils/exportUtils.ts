@@ -117,13 +117,7 @@ function getCarryOverForMonth(
     if (!isFuture) {
       if (isToday) {
         const hasJustification = r.leaveType && r.leaveType !== 'none';
-        const times = getRecordTimestamps(r);
-        const timbratureComplete = Boolean(
-          times.clockInMorning &&
-          times.clockOutMorning &&
-          times.clockInAfternoon &&
-          times.clockOutAfternoon
-        );
+        const timbratureComplete = areTimbratureComplete(r, employee);
         shouldCount = hasJustification || timbratureComplete;
       } else {
         shouldCount = true;

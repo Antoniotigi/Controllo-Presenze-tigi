@@ -901,126 +901,123 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <p className="text-rose-600 text-xs mt-1">
                 Computate 8 ore standard retribuite nel cartellino
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setLeaveType('none');
-                  setClockInMorning('08:30');
-                  setClockOutMorning('12:30');
-                  setClockInAfternoon('13:30');
-                  setClockOutAfternoon('17:30');
-                  persistChanges({
-                    leaveType: 'none',
-                    clockInMorning: '08:30',
-                    clockOutMorning: '12:30',
-                    clockInAfternoon: '13:30',
-                    clockOutAfternoon: '17:30',
-                  });
-                }}
-                className="mt-3 text-xs font-bold underline text-rose-800 hover:text-rose-900 cursor-pointer"
-              >
-                Annulla Ferie e ripristina timbrature standard
-              </button>
+              {loggedInUsername !== 'tigicongress' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeaveType('none');
+                    setClockInMorning('08:30');
+                    setClockOutMorning('12:30');
+                    setClockInAfternoon('13:30');
+                    setClockOutAfternoon('17:30');
+                    persistChanges({
+                      leaveType: 'none',
+                      clockInMorning: '08:30',
+                      clockOutMorning: '12:30',
+                      clockInAfternoon: '13:30',
+                      clockOutAfternoon: '17:30',
+                    });
+                  }}
+                  className="mt-3 text-xs font-bold underline text-rose-800 hover:text-rose-900 cursor-pointer"
+                >
+                  Annulla Ferie e ripristina timbrature standard
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Admin Unlock Panel */}
-              <div className="bg-slate-50 border border-[#E2E8F0] rounded-xl p-3.5 shadow-2xs">
-                {loggedInUsername === 'tigicongress' ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-rose-600 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                      L'utente tigicongress non è abilitato a modificare gli orari.
-                    </span>
-                  </div>
-                ) : isAdminUnlocked ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-green-700 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></span>
-                      Modifica manuale sbloccata (Giulia)
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsAdminUnlocked(false)}
-                      className="text-xs font-bold text-rose-600 hover:text-rose-700 transition-colors cursor-pointer"
-                    >
-                      Blocca modifiche
-                    </button>
-                  </div>
-                ) : !showPasswordInput ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-[#64748B]">
-                      L'inserimento orari manuale è disattivato.
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswordInput(true)}
-                      className="text-xs font-bold text-[#0b5cd5] hover:underline cursor-pointer"
-                    >
-                      Sblocca manuale
-                    </button>
-                  </div>
-                ) : (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      if (passwordValue === 'AmzvNi9Gb5SCLC9TYNQ3') {
-                        setIsAdminUnlocked(true);
-                        setPasswordError(false);
-                        setShowPasswordInput(false);
-                        setPasswordValue('');
-                      } else {
-                        setPasswordError(true);
-                      }
-                    }}
-                    className="flex flex-col gap-2"
-                  >
+              {/* Admin Unlock Panel - Hidden for tigicongress */}
+              {loggedInUsername !== 'tigicongress' && (
+                <div className="bg-slate-50 border border-[#E2E8F0] rounded-xl p-3.5 shadow-2xs">
+                  {isAdminUnlocked ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#101B32]">Password di Giulia:</span>
+                      <span className="text-xs font-semibold text-green-700 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></span>
+                        Modifica manuale sbloccata (Giulia)
+                      </span>
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={() => setIsAdminUnlocked(false)}
+                        className="text-xs font-bold text-rose-600 hover:text-rose-700 transition-colors cursor-pointer"
+                      >
+                        Blocca modifiche
+                      </button>
+                    </div>
+                  ) : !showPasswordInput ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-[#64748B]">
+                        L'inserimento orari manuale è disattivato.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswordInput(true)}
+                        className="text-xs font-bold text-[#0b5cd5] hover:underline cursor-pointer"
+                      >
+                        Sblocca manuale
+                      </button>
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (passwordValue === 'AmzvNi9Gb5SCLC9TYNQ3') {
+                          setIsAdminUnlocked(true);
+                          setPasswordError(false);
                           setShowPasswordInput(false);
                           setPasswordValue('');
-                          setPasswordError(false);
-                        }}
-                        className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase"
-                      >
-                        Annulla
-                      </button>
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        type="password"
-                        placeholder="password di sblocco"
-                        value={passwordValue}
-                        onChange={(e) => {
-                          setPasswordValue(e.target.value);
-                          if (passwordError) setPasswordError(false);
-                        }}
-                        className={`flex-1 bg-white border ${
-                          passwordError ? 'border-rose-500' : 'border-slate-200'
-                        } rounded-lg px-2.5 py-1.5 text-xs font-medium focus:ring-1 focus:ring-[#0b5cd5] focus:outline-none`}
-                        autoFocus
-                      />
-                      <button
-                        type="submit"
-                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                      >
-                        Sblocca
-                      </button>
-                    </div>
-                    {passwordError && (
-                      <span className="text-[10px] font-semibold text-rose-600">
-                        Password errata. Riprova con la password di Giulia.
-                      </span>
-                    )}
-                  </form>
-                )}
-              </div>
+                        } else {
+                          setPasswordError(true);
+                        }
+                      }}
+                      className="flex flex-col gap-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#101B32]">Password di Giulia:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPasswordInput(false);
+                            setPasswordValue('');
+                            setPasswordError(false);
+                          }}
+                          className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase"
+                        >
+                          Annulla
+                        </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="password"
+                          placeholder="password di sblocco"
+                          value={passwordValue}
+                          onChange={(e) => {
+                            setPasswordValue(e.target.value);
+                            if (passwordError) setPasswordError(false);
+                          }}
+                          className={`flex-1 bg-white border ${
+                            passwordError ? 'border-rose-500' : 'border-slate-200'
+                          } rounded-lg px-2.5 py-1.5 text-xs font-medium focus:ring-1 focus:ring-[#0b5cd5] focus:outline-none`}
+                          autoFocus
+                        />
+                        <button
+                          type="submit"
+                          className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                        >
+                          Sblocca
+                        </button>
+                      </div>
+                      {passwordError && (
+                        <span className="text-[10px] font-semibold text-rose-600">
+                          Password errata. Riprova con la password di Giulia.
+                        </span>
+                      )}
+                    </form>
+                  )}
+                </div>
+              )}
 
-              {/* Overtime & Banca Ore Authorization Section */}
-              {(calculation.overtimeMinutes > 0 || overtimeAuthorized || overtimeEventName) && (
+              {/* Overtime & Banca Ore Authorization Section - Hidden for tigicongress */}
+              {loggedInUsername !== 'tigicongress' && (calculation.overtimeMinutes > 0 || overtimeAuthorized || overtimeEventName) && (
                 <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-indigo-600" />
@@ -1390,8 +1387,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         type="time"
                         value={exitDuringTurnStart || ''}
                         onChange={(e) => handleExitDuringTurnStartChange(e.target.value)}
-                        readOnly={!isAdminUnlocked}
-                        className={`${isAdminUnlocked ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]`}
+                        readOnly={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
+                        className={`${(isAdminUnlocked || loggedInUsername === 'tigicongress') ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]`}
                       />
                     </div>
 
@@ -1404,8 +1401,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         type="time"
                         value={exitDuringTurnEnd || ''}
                         onChange={(e) => handleExitDuringTurnEndChange(e.target.value)}
-                        readOnly={!isAdminUnlocked}
-                        className={`${isAdminUnlocked ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]`}
+                        readOnly={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
+                        className={`${(isAdminUnlocked || loggedInUsername === 'tigicongress') ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]`}
                       />
                     </div>
                   </div>
@@ -1443,8 +1440,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         max="8"
                         value={permessoHours}
                         onChange={(e) => handlePermessoHoursChange(parseInt(e.target.value) || 0)}
-                        readOnly={!isAdminUnlocked}
-                        className={`${isAdminUnlocked ? 'bg-white text-purple-950' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold focus:ring-1 focus:ring-purple-500 outline-none`}
+                        readOnly={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
+                        className={`${(isAdminUnlocked || loggedInUsername === 'tigicongress') ? 'bg-white text-purple-950' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold focus:ring-1 focus:ring-purple-500 outline-none`}
                       />
                     </div>
 
@@ -1459,14 +1456,14 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         max="59"
                         value={permessoMinutes}
                         onChange={(e) => handlePermessoMinutesChange(parseInt(e.target.value) || 0)}
-                        readOnly={!isAdminUnlocked}
-                        className={`${isAdminUnlocked ? 'bg-white text-purple-950' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold focus:ring-1 focus:ring-purple-500 outline-none`}
+                        readOnly={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
+                        className={`${(isAdminUnlocked || loggedInUsername === 'tigicongress') ? 'bg-white text-purple-950' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold focus:ring-1 focus:ring-purple-500 outline-none`}
                       />
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between text-xs pt-1">
-                    {missingMinutes > 0 && currentPermessoMinutes < missingMinutes && isAdminUnlocked ? (
+                    {missingMinutes > 0 && currentPermessoMinutes < missingMinutes && (isAdminUnlocked || loggedInUsername === 'tigicongress') ? (
                       <button
                         type="button"
                         onClick={handleAutoCompensate}
@@ -1478,7 +1475,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                       <span />
                     )}
 
-                    {currentPermessoMinutes > 0 && isAdminUnlocked && (
+                    {currentPermessoMinutes > 0 && (isAdminUnlocked || loggedInUsername === 'tigicongress') && (
                       <button
                         type="button"
                         onClick={handleClearPermesso}
@@ -1505,8 +1502,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                     setNotes(val);
                     persistChanges({ notes: val });
                   }}
-                  readOnly={!isAdminUnlocked}
-                  className={`${isAdminUnlocked ? 'bg-slate-50 text-slate-800 focus:bg-white focus:ring-1 focus:ring-[#0b5cd5]' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs outline-none`}
+                  readOnly={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
+                  className={`${(isAdminUnlocked || loggedInUsername === 'tigicongress') ? 'bg-slate-50 text-slate-800 focus:bg-white focus:ring-1 focus:ring-[#0b5cd5]' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs outline-none`}
                 />
               </div>
             </div>
@@ -1539,9 +1536,9 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <button
                 type="button"
                 onClick={toggleExitDuringTurn}
-                disabled={!isAdminUnlocked}
+                disabled={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
                 className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
-                  !isAdminUnlocked
+                  !(isAdminUnlocked || loggedInUsername === 'tigicongress')
                     ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
                     : showExitDuringTurn
                     ? 'bg-amber-50 text-amber-700 border-amber-200 cursor-pointer'
@@ -1554,9 +1551,9 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <button
                 type="button"
                 onClick={togglePermesso}
-                disabled={!isAdminUnlocked}
+                disabled={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
                 className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
-                  !isAdminUnlocked
+                  !(isAdminUnlocked || loggedInUsername === 'tigicongress')
                     ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
                     : leaveType === 'permesso'
                     ? 'bg-purple-50 text-purple-700 border-purple-200 cursor-pointer'
@@ -1566,20 +1563,22 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 {leaveType === 'permesso' ? 'In Permesso' : 'Segna Permesso'}
               </button>
 
-              <button
-                type="button"
-                onClick={toggleFerie}
-                disabled={!isAdminUnlocked}
-                className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
-                  !isAdminUnlocked
-                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                    : leaveType === 'ferie'
-                    ? 'bg-rose-50 text-rose-700 border-rose-200 cursor-pointer'
-                    : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA] cursor-pointer'
-                }`}
-              >
-                {leaveType === 'ferie' ? 'In Ferie' : 'Segna Ferie'}
-              </button>
+              {loggedInUsername !== 'tigicongress' && (
+                <button
+                  type="button"
+                  onClick={toggleFerie}
+                  disabled={!isAdminUnlocked}
+                  className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
+                    !isAdminUnlocked
+                      ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                      : leaveType === 'ferie'
+                      ? 'bg-rose-50 text-rose-700 border-rose-200 cursor-pointer'
+                      : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA] cursor-pointer'
+                  }`}
+                >
+                  {leaveType === 'ferie' ? 'In Ferie' : 'Segna Ferie'}
+                </button>
+              )}
             </div>
           </div>
         </div>
