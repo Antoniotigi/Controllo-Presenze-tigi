@@ -11,7 +11,7 @@ import {
   ChevronDown,
   User,
 } from 'lucide-react';
-import { Employee, TimeRecord, LeaveRequest } from '../types';
+import { Employee, TimeRecord, LeaveRequest, BancaOreCarryOverSetting } from '../types';
 import {
   formatMonthIT,
   calculateRecord,
@@ -32,6 +32,9 @@ interface MonthlyReportViewProps {
   leaves: LeaveRequest[];
   currentDate: string;
   onBackToCards: () => void;
+  carryOverSettings?: BancaOreCarryOverSetting[];
+  onSaveCarryOverSetting?: (setting: BancaOreCarryOverSetting) => void;
+  loggedInUsername?: string;
 }
 
 export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
@@ -40,6 +43,9 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
   leaves,
   currentDate,
   onBackToCards,
+  carryOverSettings = [],
+  onSaveCarryOverSetting = (setting: BancaOreCarryOverSetting) => {},
+  loggedInUsername = '',
 }) => {
   // Current selected month: "YYYY-MM"
   const [selectedMonth, setSelectedMonth] = useState<string>(
@@ -55,7 +61,8 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
     selectedMonth,
     employees,
     records,
-    leaves
+    leaves,
+    carryOverSettings
   );
 
   const handlePrevMonth = () => {
@@ -77,7 +84,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
   const handleExcelExport = () => {
     setIsExportingExcel(true);
     try {
-      exportToExcel(selectedMonth, employees, records, leaves);
+      exportToExcel(selectedMonth, employees, records, leaves, carryOverSettings);
     } catch (err) {
       console.error(err);
     } finally {
@@ -88,7 +95,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
   const handlePDFExport = (employeeId: string = 'all') => {
     setIsExportingPDF(true);
     try {
-      exportToPDF(selectedMonth, employees, records, leaves, employeeId);
+      exportToPDF(selectedMonth, employees, records, leaves, employeeId, carryOverSettings);
     } catch (err) {
       console.error(err);
     } finally {
@@ -294,15 +301,56 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                       ? `-${formatMinutesToHM(s.totalBancaOreCompensated)}`
                       : '—'}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-bold bg-slate-100 rounded-b-lg">
-                    <span
-                      className={
-                        s.bancaOreBalance >= 0 ? 'text-indigo-600' : 'text-amber-600'
-                      }
-                    >
-                      {s.bancaOreBalance >= 0 ? '+' : ''}
-                      {formatMinutesToHM(s.bancaOreBalance)}
-                    </span>
+                  <td className="py-3 px-3 text-right bg-slate-100 rounded-b-lg min-w-[150px]">
+                    {(() => {
+                      const isCarryOverChecked = carryOverSettings.some(
+                        (setting) => setting.employeeId === s.employee.id && setting.month === selectedMonth && setting.enabled
+                      );
+                      const carryOver = s.bancaOreCarryOver || 0;
+                      const monthBalance = s.totalBancaOreAccumulated - s.totalBancaOreCompensated;
+
+                      return (
+                        <div className="flex flex-col items-end gap-1.5 py-1">
+                          <div className="flex items-center gap-1.5 justify-end font-mono">
+                            {carryOver !== 0 && (
+                              <span className="text-[10px] text-slate-500 font-medium">
+                                (Mese: {monthBalance >= 0 ? '+' : ''}{formatMinutesToHM(monthBalance)})
+                              </span>
+                            )}
+                            <span className={`font-bold ${s.bancaOreBalance >= 0 ? 'text-indigo-600' : 'text-amber-600'}`}>
+                              {s.bancaOreBalance >= 0 ? '+' : ''}
+                              {formatMinutesToHM(s.bancaOreBalance)}
+                            </span>
+                          </div>
+
+                          <label className="flex items-center gap-1.5 cursor-pointer select-none text-[10px] text-slate-600 font-bold hover:text-slate-900 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={isCarryOverChecked}
+                              disabled={loggedInUsername === 'tigicongress'}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                onSaveCarryOverSetting({
+                                  id: `carry-${s.employee.id}-${selectedMonth}`,
+                                  employeeId: s.employee.id,
+                                  month: selectedMonth,
+                                  enabled: checked,
+                                  updatedAt: new Date().toISOString(),
+                                });
+                              }}
+                              className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 accent-indigo-600 focus:ring-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                            <span>Riporta saldo</span>
+                          </label>
+
+                          {carryOver !== 0 && (
+                            <span className="text-[9px] text-slate-400 font-medium italic">
+                              Riporto prec.: {carryOver >= 0 ? '+' : ''}{formatMinutesToHM(carryOver)}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="py-3 px-3 text-center text-slate-700">
                     {s.ferieDays > 0 ? (

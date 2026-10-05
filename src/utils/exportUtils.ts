@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Employee, TimeRecord, LeaveRequest } from '../types';
+import { Employee, TimeRecord, LeaveRequest, BancaOreCarryOverSetting } from '../types';
 import {
   calculateRecord,
   formatMinutesToHM,
@@ -34,6 +34,7 @@ export interface MonthlyStatsPerEmployee {
   totalBancaOreCompensated: number;
   bancaOreBalance: number;
   totalPaidOvertimeMinutes: number;
+  bancaOreCarryOver?: number;
 }
 
 /**
@@ -58,11 +59,99 @@ function areTimbratureComplete(r: TimeRecord, emp: Employee): boolean {
   );
 }
 
+function getCarryOverForMonth(
+  employeeId: string,
+  month: string, // YYYY-MM
+  records: TimeRecord[],
+  leaves: LeaveRequest[],
+  employee: Employee,
+  carryOverSettings: BancaOreCarryOverSetting[],
+  visitedMonths = new Set<string>()
+): number {
+  if (visitedMonths.has(month)) return 0;
+  visitedMonths.add(month);
+
+  const [yearStr, monthStr] = month.split('-');
+  const year = parseInt(yearStr);
+  const monthNum = parseInt(monthStr);
+  if (year < 2026) return 0;
+
+  let prevYear = year;
+  let prevMonthNum = monthNum - 1;
+  if (prevMonthNum === 0) {
+    prevMonthNum = 12;
+    prevYear = year - 1;
+  }
+  const prevMonth = `${prevYear}-${prevMonthNum.toString().padStart(2, '0')}`;
+
+  const isEnabled = carryOverSettings.some(
+    (s) => s.employeeId === employeeId && s.month === prevMonth && s.enabled
+  );
+
+  if (!isEnabled) {
+    return 0;
+  }
+
+  const prevCarryOver = getCarryOverForMonth(
+    employeeId,
+    prevMonth,
+    records,
+    leaves,
+    employee,
+    carryOverSettings,
+    visitedMonths
+  );
+
+  const empRecords = getCompleteMonthRecords(prevMonth, [employee], records);
+  const todayStr = getTodayDateString();
+
+  let totalBancaOreAccumulated = 0;
+  let totalBancaOreCompensated = 0;
+
+  empRecords.forEach((r) => {
+    const calc = calculateRecord(r, undefined, false, employee);
+    const isFuture = r.date > todayStr;
+    const isToday = r.date === todayStr;
+
+    let shouldCount = false;
+    if (!isFuture) {
+      if (isToday) {
+        const hasJustification = r.leaveType && r.leaveType !== 'none';
+        const times = getRecordTimestamps(r);
+        const timbratureComplete = Boolean(
+          times.clockInMorning &&
+          times.clockOutMorning &&
+          times.clockInAfternoon &&
+          times.clockOutAfternoon
+        );
+        shouldCount = hasJustification || timbratureComplete;
+      } else {
+        shouldCount = true;
+      }
+    }
+
+    if (shouldCount) {
+      const isAuthorized = r.overtimeAuthorized === true || (r.overtimeEventName && r.overtimeEventName.trim() !== '');
+      const otDiurni = calc.overtimeDiurniMinutes || 0;
+
+      if (!isAuthorized) {
+        totalBancaOreAccumulated += otDiurni;
+      }
+      if (calc.deficitMinutes && calc.deficitMinutes > 0) {
+        totalBancaOreCompensated += calc.deficitMinutes;
+      }
+    }
+  });
+
+  return prevCarryOver + totalBancaOreAccumulated - totalBancaOreCompensated;
+}
+
 export function computeMonthlyStats(
   monthYear: string, // YYYY-MM
   employees: Employee[],
   records: TimeRecord[],
-  leaves: LeaveRequest[]
+  leaves: LeaveRequest[],
+  carryOverSettings: BancaOreCarryOverSetting[] = []
 ): MonthlyStatsPerEmployee[] {
   const todayStr = getTodayDateString();
 
@@ -149,7 +238,8 @@ export function computeMonthlyStats(
     });
 
     const netBalanceMinutes = totalOvertimeMinutes - totalDeficitMinutes;
-    const bancaOreBalance = totalBancaOreAccumulated - totalBancaOreCompensated;
+    const carryOver = getCarryOverForMonth(emp.id, monthYear, records, leaves, emp, carryOverSettings);
+    const bancaOreBalance = carryOver + (totalBancaOreAccumulated - totalBancaOreCompensated);
 
     return {
       employee: emp,
@@ -168,6 +258,7 @@ export function computeMonthlyStats(
       totalBancaOreCompensated,
       bancaOreBalance,
       totalPaidOvertimeMinutes,
+      bancaOreCarryOver: carryOver,
     };
   });
 }
@@ -181,10 +272,11 @@ export function exportToExcel(
   monthYear: string,
   employees: Employee[],
   records: TimeRecord[],
-  leaves: LeaveRequest[]
+  leaves: LeaveRequest[],
+  carryOverSettings: BancaOreCarryOverSetting[] = []
 ): void {
   const monthTitle = formatMonthIT(monthYear);
-  const stats = computeMonthlyStats(monthYear, employees, records, leaves);
+  const stats = computeMonthlyStats(monthYear, employees, records, leaves, carryOverSettings);
 
   // 1. Riepilogo Data
   const summaryRows = stats.map((s) => ({
@@ -317,7 +409,8 @@ export function exportToPDF(
   employees: Employee[],
   records: TimeRecord[],
   leaves: LeaveRequest[],
-  selectedEmployeeId: string = 'all'
+  selectedEmployeeId: string = 'all',
+  carryOverSettings: BancaOreCarryOverSetting[] = []
 ): void {
   const monthTitle = formatMonthIT(monthYear);
   
@@ -326,7 +419,7 @@ export function exportToPDF(
     ? employees
     : employees.filter((e) => e.id === selectedEmployeeId);
 
-  const stats = computeMonthlyStats(monthYear, filteredEmployees, records, leaves);
+  const stats = computeMonthlyStats(monthYear, filteredEmployees, records, leaves, carryOverSettings);
 
   // Landscape A4 for best table readability
   const doc = new jsPDF({

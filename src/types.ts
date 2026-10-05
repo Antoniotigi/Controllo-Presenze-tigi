@@ -92,3 +92,11 @@ export interface EmployeeMonthlySummary {
   bancaOreBalance?: number;
   totalPaidOvertimeMinutes?: number;
 }
+
+export interface BancaOreCarryOverSetting {
+  id: string; // `carry-${employeeId}-${month}`
+  employeeId: string;
+  month: string; // YYYY-MM
+  enabled: boolean;
+  updatedAt: string;
+}

@@ -26,7 +26,7 @@ import {
   ChevronRight,
   Moon,
 } from 'lucide-react';
-import { Employee, TimeRecord, LeaveRequest } from './types';
+import { Employee, TimeRecord, LeaveRequest, BancaOreCarryOverSetting } from './types';
 import {
   getEmployees,
   saveEmployees,
@@ -63,6 +63,8 @@ import {
   saveEmployeeToFirestore,
   isCollectionEmpty,
   clearAllRecordsInFirestore,
+  subscribeToBancaOreCarryOver,
+  saveBancaOreCarryOverToFirestore,
 } from './firebase';
 
 export default function App() {
@@ -78,6 +80,7 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string>('');
   const [preselectedLeaveEmployee, setPreselectedLeaveEmployee] = useState<string | undefined>();
   const [isCloudConnected, setIsCloudConnected] = useState<boolean>(false);
+  const [carryOverSettings, setCarryOverSettings] = useState<BancaOreCarryOverSetting[]>([]);
 
   // Secure Cryptographic Helpers (Pure client-side Web Crypto API)
   const sha256 = async (message: string): Promise<string> => {
@@ -408,6 +411,7 @@ export default function App() {
     let unsubscribeRecords: (() => void) | undefined;
     let unsubscribeLeaves: (() => void) | undefined;
     let unsubscribeEmployees: (() => void) | undefined;
+    let unsubscribeCarryOver: (() => void) | undefined;
 
     async function initFirebaseSync() {
       const connected = await testConnection();
@@ -485,6 +489,17 @@ export default function App() {
         },
         () => setIsCloudConnected(false)
       );
+
+      // Realtime listener for carryover settings
+      unsubscribeCarryOver = subscribeToBancaOreCarryOver(
+        (remoteSettings) => {
+          setIsCloudConnected(true);
+          if (remoteSettings) {
+            setCarryOverSettings(remoteSettings);
+          }
+        },
+        () => setIsCloudConnected(false)
+      );
     }
 
     initFirebaseSync();
@@ -493,6 +508,7 @@ export default function App() {
       if (unsubscribeRecords) unsubscribeRecords();
       if (unsubscribeLeaves) unsubscribeLeaves();
       if (unsubscribeEmployees) unsubscribeEmployees();
+      if (unsubscribeCarryOver) unsubscribeCarryOver();
     };
   }, []);
 
@@ -1160,6 +1176,16 @@ export default function App() {
             leaves={leaves}
             currentDate={currentDate}
             onBackToCards={() => setActiveView('cards')}
+            carryOverSettings={carryOverSettings}
+            loggedInUsername={loggedInUsername}
+            onSaveCarryOverSetting={async (setting: BancaOreCarryOverSetting) => {
+              setCarryOverSettings((prev) => {
+                const filtered = prev.filter((s) => s.id !== setting.id);
+                return [...filtered, setting];
+              });
+              await saveBancaOreCarryOverToFirestore(setting);
+              showToast('Impostazione riporto ore sincronizzata!');
+            }}
           />
         )}
 

@@ -63,6 +63,15 @@ service cloud.firestore {
         data.name is string && data.name.size() <= 100;
     }
 
+    // Banca Ore Carry Over Validator
+    function isValidBancaOreCarryOver(data) {
+      return data.id is string && data.id.size() <= 100 &&
+        data.employeeId is string && data.employeeId.size() <= 50 &&
+        data.month is string && data.month.size() <= 7 &&
+        data.enabled is bool &&
+        data.updatedAt is string && data.updatedAt.size() <= 50;
+    }
+
     // Test connection doc
     match /test/{docId} {
       allow get: if isValidId(docId);
@@ -93,6 +102,15 @@ service cloud.firestore {
       allow create: if isValidId(employeeId) && isValidEmployee(incoming());
       allow update: if isValidId(employeeId) && isValidEmployee(incoming());
       allow delete: if isValidId(employeeId);
+    }
+
+    // Banca Ore Carry Over collection
+    match /banca_ore_carry_over/{settingId} {
+      allow get: if isValidId(settingId);
+      allow list: if true;
+      allow create: if isValidId(settingId) && isValidBancaOreCarryOver(incoming());
+      allow update: if isValidId(settingId) && isValidBancaOreCarryOver(incoming());
+      allow delete: if isValidId(settingId);
     }
   }
 }

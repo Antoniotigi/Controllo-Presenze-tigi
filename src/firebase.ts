@@ -12,7 +12,7 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
-import { Employee, TimeRecord, LeaveRequest } from './types';
+import { Employee, TimeRecord, LeaveRequest, BancaOreCarryOverSetting } from './types';
 
 // Initialize Firebase App & Firestore
 const app = initializeApp(firebaseConfig);
@@ -303,5 +303,37 @@ export async function isCollectionEmpty(collectionName: string): Promise<boolean
     return snap.empty;
   } catch {
     return true;
+  }
+}
+
+// Subscribe to carry over settings
+export function subscribeToBancaOreCarryOver(
+  onData: (settings: BancaOreCarryOverSetting[]) => void,
+  onError?: (err: unknown) => void
+) {
+  const path = 'banca_ore_carry_over';
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => {
+      const settings: BancaOreCarryOverSetting[] = [];
+      snapshot.forEach((docSnap) => {
+        settings.push(docSnap.data() as BancaOreCarryOverSetting);
+      });
+      onData(settings);
+    },
+    (error) => {
+      if (onError) onError(error);
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  );
+}
+
+// Save carry over setting
+export async function saveBancaOreCarryOverToFirestore(setting: BancaOreCarryOverSetting): Promise<void> {
+  const path = `banca_ore_carry_over/${setting.id}`;
+  try {
+    await setDoc(doc(db, 'banca_ore_carry_over', setting.id), setting, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 }

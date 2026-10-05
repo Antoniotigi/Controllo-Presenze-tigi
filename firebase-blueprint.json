@@ -62,6 +62,19 @@
         "permessiSpettanti": { "type": "number" }
       },
       "required": ["id", "name"]
+    },
+    "bancaOreCarryOver": {
+      "title": "Banca Ore Carry Over Setting",
+      "description": "Indicates whether the Banca Ore balance for a given month is carried over to the next month for an employee",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "employeeId": { "type": "string", "maxLength": 50 },
+        "month": { "type": "string", "maxLength": 7 },
+        "enabled": { "type": "boolean" },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "employeeId", "month", "enabled", "updatedAt"]
     }
   },
   "firestore": {
@@ -76,6 +89,10 @@
     "/employees/{employeeId}": {
       "schema": "employee",
       "description": "Employee profiles"
+    },
+    "/banca_ore_carry_over/{settingId}": {
+      "schema": "bancaOreCarryOver",
+      "description": "Banca Ore Carry Over settings per employee and month"
     }
   }
 }
