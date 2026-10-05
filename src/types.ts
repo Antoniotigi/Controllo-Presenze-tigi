@@ -34,6 +34,9 @@ export interface TimeRecord {
   exitDuringTurnStart?: string; // Orario uscita durante il turno HH:mm
   exitDuringTurnEnd?: string; // Orario rientro durante il turno HH:mm
   updatedAt: string;
+  // Overtime authorization and event mapping
+  overtimeAuthorized?: boolean;
+  overtimeEventName?: string;
 }
 
 export interface LeaveRequest {
@@ -66,6 +69,11 @@ export interface DayCalculation {
   overtimeDiurniMinutes?: number;
   overtimeNotturniMinutes?: number;
   overtimeFestiviMinutes?: number;
+  // Banca Ore and Paid Overtime fields
+  bancaOreAccumulated?: number;
+  bancaOreCompensated?: number;
+  paidOvertimeMinutes?: number;
+  netDeficitMinutes?: number;
 }
 
 export interface EmployeeMonthlySummary {
@@ -78,4 +86,9 @@ export interface EmployeeMonthlySummary {
   ferieDaysUsed: number;
   permessiHoursUsed: number;
   malattiaDaysUsed: number;
+  // Banca Ore and Paid Overtime summary fields
+  totalBancaOreAccumulated?: number;
+  totalBancaOreCompensated?: number;
+  bancaOreBalance?: number;
+  totalPaidOvertimeMinutes?: number;
 }

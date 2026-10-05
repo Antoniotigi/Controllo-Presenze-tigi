@@ -39,6 +39,7 @@ interface EmployeeCardProps {
   onSave: (record: TimeRecord) => void;
   onOpenLeaveForEmployee: (employeeId: string) => void;
   index?: number;
+  loggedInUsername?: string;
 }
 
 export const EmployeeCard: React.FC<EmployeeCardProps> = ({
@@ -50,6 +51,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
   onSave,
   onOpenLeaveForEmployee,
   index = 0,
+  loggedInUsername = '',
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const initialTimes = getRecordTimestamps(record);
@@ -91,6 +93,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     !!(record?.exitDuringTurnStart || record?.exitDuringTurnEnd)
   );
   const [isSavedFeedback, setIsSavedFeedback] = useState(false);
+  const [overtimeAuthorized, setOvertimeAuthorized] = useState<boolean>(Boolean(record?.overtimeAuthorized));
+  const [overtimeEventName, setOvertimeEventName] = useState<string>(record?.overtimeEventName || '');
 
   // Admin password lock states
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
@@ -118,6 +122,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
 
     setNotes(record?.notes || '');
     setLeaveType(record?.leaveType || 'none');
+    setOvertimeAuthorized(Boolean(record?.overtimeAuthorized));
+    setOvertimeEventName(record?.overtimeEventName || '');
     setPermessoStart(record?.permessoStart || '');
     setPermessoEnd(record?.permessoEnd || '');
     setExitDuringTurnStart(record?.exitDuringTurnStart || '');
@@ -188,6 +194,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     permessoEnd,
     exitDuringTurnStart,
     exitDuringTurnEnd,
+    overtimeAuthorized,
+    overtimeEventName,
     updatedAt: new Date().toISOString(),
   };
 
@@ -249,6 +257,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     const nextPermessoEnd = partial.permessoEnd !== undefined ? partial.permessoEnd : permessoEnd;
     const nextExitDuringTurnStart = partial.exitDuringTurnStart !== undefined ? partial.exitDuringTurnStart : exitDuringTurnStart;
     const nextExitDuringTurnEnd = partial.exitDuringTurnEnd !== undefined ? partial.exitDuringTurnEnd : exitDuringTurnEnd;
+    const nextOvertimeAuthorized = partial.overtimeAuthorized !== undefined ? partial.overtimeAuthorized : overtimeAuthorized;
+    const nextOvertimeEventName = partial.overtimeEventName !== undefined ? partial.overtimeEventName : overtimeEventName;
 
     const updatedRecord: TimeRecord = {
       id: record?.id || `rec-${employee.id}-${currentDate}`,
@@ -270,6 +280,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
       permessoEnd: nextPermessoEnd,
       exitDuringTurnStart: nextExitDuringTurnStart,
       exitDuringTurnEnd: nextExitDuringTurnEnd,
+      overtimeAuthorized: nextOvertimeAuthorized,
+      overtimeEventName: nextOvertimeEventName,
       updatedAt: new Date().toISOString(),
     };
 
@@ -914,11 +926,18 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             <div className="space-y-4">
               {/* Admin Unlock Panel */}
               <div className="bg-slate-50 border border-[#E2E8F0] rounded-xl p-3.5 shadow-2xs">
-                {isAdminUnlocked ? (
+                {loggedInUsername === 'tigicongress' ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-rose-600 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                      L'utente tigicongress non è abilitato a modificare gli orari.
+                    </span>
+                  </div>
+                ) : isAdminUnlocked ? (
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-green-700 flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></span>
-                      Modifica manuale sbloccata (Amministratore)
+                      Modifica manuale sbloccata (Giulia)
                     </span>
                     <button
                       type="button"
@@ -945,7 +964,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
-                      if (passwordValue === 'Mappescio2026@') {
+                      if (passwordValue === 'AmzvNi9Gb5SCLC9TYNQ3') {
                         setIsAdminUnlocked(true);
                         setPasswordError(false);
                         setShowPasswordInput(false);
@@ -957,7 +976,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                     className="flex flex-col gap-2"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#101B32]">Password Amministratore:</span>
+                      <span className="text-xs font-bold text-[#101B32]">Password di Giulia:</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -973,7 +992,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                     <div className="flex gap-2">
                       <input
                         type="password"
-                        placeholder="password"
+                        placeholder="password di sblocco"
                         value={passwordValue}
                         onChange={(e) => {
                           setPasswordValue(e.target.value);
@@ -993,12 +1012,78 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                     </div>
                     {passwordError && (
                       <span className="text-[10px] font-semibold text-rose-600">
-                        Password errata. Riprova.
+                        Password errata. Riprova con la password di Giulia.
                       </span>
                     )}
                   </form>
                 )}
               </div>
+
+              {/* Overtime & Banca Ore Authorization Section */}
+              {(calculation.overtimeMinutes > 0 || overtimeAuthorized || overtimeEventName) && (
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-indigo-600" />
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                        Gestione Straordinari & Banca Ore
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Questo giorno presenta {formatMinutesToHM(calculation.overtimeMinutes)} di straordinario.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {/* Authorized Checkbox */}
+                    <label className="flex items-center gap-2.5 p-3 bg-white border border-[#E2E8F0] rounded-xl cursor-pointer hover:bg-slate-50 transition-colors select-none">
+                      <input
+                        type="checkbox"
+                        checked={overtimeAuthorized}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setOvertimeAuthorized(checked);
+                          persistChanges({ overtimeAuthorized: checked });
+                        }}
+                        className="w-4 h-4 rounded text-[#0b5cd5] focus:ring-[#0b5cd5] border-slate-300 accent-indigo-600 cursor-pointer"
+                      />
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 block">Autorizza Straordinario</span>
+                        <span className="text-[10px] text-slate-500 block">Verrà pagato come straordinario ordinario</span>
+                      </div>
+                    </label>
+
+                    {/* Event Name Input */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-[#64748B] uppercase ml-1">
+                        Evento o Causale Straordinario
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Es: Evento Fiera, Assemblea..."
+                        value={overtimeEventName}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setOvertimeEventName(val);
+                          persistChanges({ overtimeEventName: val });
+                        }}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#0b5cd5] focus:border-transparent outline-none transition-all shadow-2xs"
+                      />
+                    </div>
+                  </div>
+
+                  {!overtimeAuthorized && !overtimeEventName && (
+                    <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-[10px] text-indigo-700 leading-normal">
+                      💡 Poiché lo straordinario non è autorizzato per un evento, queste ore confluiranno automaticamente nella <strong>Banca Ore</strong> per compensare futuri deficit di orario.
+                    </div>
+                  )}
+                  {(overtimeAuthorized || overtimeEventName) && (
+                    <div className="p-2.5 bg-emerald-50 border border-emerald-100 rounded-xl text-[10px] text-emerald-700 leading-normal">
+                      ✓ Straordinario autorizzato! Le ore saranno conteggiate direttamente nel riepilogo degli straordinari pagati.
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Timestamps inputs Grid */}
               <div className="grid grid-cols-1 gap-4">
@@ -1021,7 +1106,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           1ª Entrata
                         </label>
-                        {isToday && clockInMorning ? (
+                        {isToday && clockInMorning && isAdminUnlocked ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -1032,7 +1117,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           >
                             Cancella
                           </button>
-                        ) : isToday ? (
+                        ) : isToday && !clockInMorning ? (
                           <button
                             type="button"
                             onClick={setInMorningNow}
@@ -1074,7 +1159,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           1ª Uscita
                         </label>
-                        {isToday && clockOutMorning ? (
+                        {isToday && clockOutMorning && isAdminUnlocked ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -1085,7 +1170,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           >
                             Cancella
                           </button>
-                        ) : isToday ? (
+                        ) : isToday && !clockOutMorning ? (
                           <button
                             type="button"
                             onClick={setOutMorningNow}
@@ -1139,7 +1224,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           2ª Entrata
                         </label>
-                        {isToday && clockInAfternoon ? (
+                        {isToday && clockInAfternoon && isAdminUnlocked ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -1150,7 +1235,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           >
                             Cancella
                           </button>
-                        ) : isToday ? (
+                        ) : isToday && !clockInAfternoon ? (
                           <button
                             type="button"
                             onClick={setInAfternoonNow}
@@ -1192,7 +1277,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           2ª Uscita
                         </label>
-                        {isToday && clockOutAfternoon ? (
+                        {isToday && clockOutAfternoon && isAdminUnlocked ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -1203,7 +1288,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           >
                             Cancella
                           </button>
-                        ) : isToday ? (
+                        ) : isToday && !clockOutAfternoon ? (
                           <button
                             type="button"
                             onClick={setOutAfternoonNow}
@@ -1305,7 +1390,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         type="time"
                         value={exitDuringTurnStart || ''}
                         onChange={(e) => handleExitDuringTurnStartChange(e.target.value)}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]"
+                        readOnly={!isAdminUnlocked}
+                        className={`${isAdminUnlocked ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]`}
                       />
                     </div>
 
@@ -1318,7 +1404,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         type="time"
                         value={exitDuringTurnEnd || ''}
                         onChange={(e) => handleExitDuringTurnEndChange(e.target.value)}
-                        className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-slate-800 outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]"
+                        readOnly={!isAdminUnlocked}
+                        className={`${isAdminUnlocked ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]`}
                       />
                     </div>
                   </div>
@@ -1356,7 +1443,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         max="8"
                         value={permessoHours}
                         onChange={(e) => handlePermessoHoursChange(parseInt(e.target.value) || 0)}
-                        className="bg-white border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-purple-950 focus:ring-1 focus:ring-purple-500 outline-none"
+                        readOnly={!isAdminUnlocked}
+                        className={`${isAdminUnlocked ? 'bg-white text-purple-950' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold focus:ring-1 focus:ring-purple-500 outline-none`}
                       />
                     </div>
 
@@ -1371,13 +1459,14 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         max="59"
                         value={permessoMinutes}
                         onChange={(e) => handlePermessoMinutesChange(parseInt(e.target.value) || 0)}
-                        className="bg-white border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold text-purple-950 focus:ring-1 focus:ring-purple-500 outline-none"
+                        readOnly={!isAdminUnlocked}
+                        className={`${isAdminUnlocked ? 'bg-white text-purple-950' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold focus:ring-1 focus:ring-purple-500 outline-none`}
                       />
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between text-xs pt-1">
-                    {missingMinutes > 0 && currentPermessoMinutes < missingMinutes ? (
+                    {missingMinutes > 0 && currentPermessoMinutes < missingMinutes && isAdminUnlocked ? (
                       <button
                         type="button"
                         onClick={handleAutoCompensate}
@@ -1389,7 +1478,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                       <span />
                     )}
 
-                    {currentPermessoMinutes > 0 && (
+                    {currentPermessoMinutes > 0 && isAdminUnlocked && (
                       <button
                         type="button"
                         onClick={handleClearPermesso}
@@ -1416,7 +1505,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                     setNotes(val);
                     persistChanges({ notes: val });
                   }}
-                  className="bg-slate-50 border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-[#64748B] focus:bg-white focus:ring-1 focus:ring-[#0b5cd5] outline-none"
+                  readOnly={!isAdminUnlocked}
+                  className={`${isAdminUnlocked ? 'bg-slate-50 text-slate-800 focus:bg-white focus:ring-1 focus:ring-[#0b5cd5]' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs outline-none`}
                 />
               </div>
             </div>
@@ -1449,10 +1539,13 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <button
                 type="button"
                 onClick={toggleExitDuringTurn}
-                className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs cursor-pointer ${
-                  showExitDuringTurn
-                    ? 'bg-amber-50 text-amber-700 border-amber-200'
-                    : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA]'
+                disabled={!isAdminUnlocked}
+                className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
+                  !isAdminUnlocked
+                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                    : showExitDuringTurn
+                    ? 'bg-amber-50 text-amber-700 border-amber-200 cursor-pointer'
+                    : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA] cursor-pointer'
                 }`}
               >
                 {showExitDuringTurn ? 'In Uscita' : 'Uscita Turno'}
@@ -1461,10 +1554,13 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <button
                 type="button"
                 onClick={togglePermesso}
-                className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs cursor-pointer ${
-                  leaveType === 'permesso'
-                    ? 'bg-purple-50 text-purple-700 border-purple-200'
-                    : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA]'
+                disabled={!isAdminUnlocked}
+                className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
+                  !isAdminUnlocked
+                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                    : leaveType === 'permesso'
+                    ? 'bg-purple-50 text-purple-700 border-purple-200 cursor-pointer'
+                    : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA] cursor-pointer'
                 }`}
               >
                 {leaveType === 'permesso' ? 'In Permesso' : 'Segna Permesso'}
@@ -1473,10 +1569,13 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <button
                 type="button"
                 onClick={toggleFerie}
-                className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs cursor-pointer ${
-                  leaveType === 'ferie'
-                    ? 'bg-rose-50 text-rose-700 border-rose-200'
-                    : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA]'
+                disabled={!isAdminUnlocked}
+                className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
+                  !isAdminUnlocked
+                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                    : leaveType === 'ferie'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200 cursor-pointer'
+                    : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA] cursor-pointer'
                 }`}
               >
                 {leaveType === 'ferie' ? 'In Ferie' : 'Segna Ferie'}

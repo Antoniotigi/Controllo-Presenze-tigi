@@ -24,7 +24,9 @@
         "permessoEnd": { "type": "string", "maxLength": 10 },
         "exitDuringTurnStart": { "type": "string", "maxLength": 10 },
         "exitDuringTurnEnd": { "type": "string", "maxLength": 10 },
-        "updatedAt": { "type": "string", "maxLength": 50 }
+        "updatedAt": { "type": "string", "maxLength": 50 },
+        "overtimeAuthorized": { "type": "boolean" },
+        "overtimeEventName": { "type": "string", "maxLength": 200 }
       },
       "required": ["id", "employeeId", "date", "updatedAt"]
     },

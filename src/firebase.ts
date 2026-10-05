@@ -170,6 +170,8 @@ export async function saveRecordToFirestore(record: TimeRecord): Promise<void> {
       permessoEnd: record.permessoEnd || '',
       exitDuringTurnStart: record.exitDuringTurnStart || '',
       exitDuringTurnEnd: record.exitDuringTurnEnd || '',
+      overtimeAuthorized: Boolean(record.overtimeAuthorized),
+      overtimeEventName: record.overtimeEventName || '',
       updatedAt: new Date().toISOString(),
     };
     if (record.clockIn) payload.clockIn = record.clockIn;
@@ -207,6 +209,8 @@ export async function batchSaveRecordsToFirestore(records: TimeRecord[]): Promis
         permessoEnd: record.permessoEnd || '',
         exitDuringTurnStart: record.exitDuringTurnStart || '',
         exitDuringTurnEnd: record.exitDuringTurnEnd || '',
+        overtimeAuthorized: Boolean(record.overtimeAuthorized),
+        overtimeEventName: record.overtimeEventName || '',
         updatedAt: record.updatedAt || new Date().toISOString(),
       };
       if (record.clockIn) payload.clockIn = record.clockIn;
@@ -240,6 +244,8 @@ export async function clearAllRecordsInFirestore(): Promise<void> {
         leaveHours: 0,
         permessoHours: 0,
         permessoMinutes: 0,
+        overtimeAuthorized: false,
+        overtimeEventName: '',
         updatedAt: new Date().toISOString(),
       });
     });

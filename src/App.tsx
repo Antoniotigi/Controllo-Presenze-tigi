@@ -147,6 +147,19 @@ export default function App() {
   };
 
   // Authentication & MFA States
+  const [loggedInUsername, setLoggedInUsername] = useState<string>(() => {
+    try {
+      const stored = localStorage.getItem('tigi_auth_session');
+      if (stored) {
+        const { username } = JSON.parse(stored);
+        return username || '';
+      }
+    } catch {
+      // Ignore
+    }
+    return '';
+  });
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem('tigi_auth_session');
@@ -296,10 +309,16 @@ export default function App() {
     const userHash = await sha256(loginUsername);
     const passHash = await sha256(loginPassword);
 
-    const EXPECTED_USER_HASH = '40c731c40ed40ea5fc2c30e8538ae7c21efe6d19ff91b135647ad8e424a9f7d3';
-    const EXPECTED_PASS_HASH = '2f11e88ddf3f5937c33ac10aad8001f9879d6b0390e7371ddd14cfd050bd7603';
+    const EXPECTED_USER_HASH = '40c731c40ed40ea5fc2c30e8538ae7c21efe6d19ff91b135647ad8e424a9f7d3'; // tigicongress
+    const EXPECTED_PASS_HASH = '2f11e88ddf3f5937c33ac10aad8001f9879d6b0390e7371ddd14cfd050bd7603'; // tigicongress
 
-    if (userHash === EXPECTED_USER_HASH && passHash === EXPECTED_PASS_HASH) {
+    const GIULIA_USER_HASH = 'e4c2eed8a6df0147265631e9ff25b70fd0e4b3a246896695b089584bf3ce8b90'; // giulia
+    const GIULIA_PASS_HASH = 'd6833bfa7579da6fa37e5d1713dba384fe2904996be920b92351f0e26b616d44'; // AmzvNi9Gb5SCLC9TYNQ3
+
+    const isTigi = (userHash === EXPECTED_USER_HASH && passHash === EXPECTED_PASS_HASH);
+    const isGiulia = (userHash === GIULIA_USER_HASH && passHash === GIULIA_PASS_HASH);
+
+    if (isTigi || isGiulia) {
       // Credentials verified successfully! Now check Multi-Factor Authentication (TOTP)
       if (mfaEnabled) {
         if (!showMfaInput) {
@@ -316,13 +335,13 @@ export default function App() {
 
         if (mfaCode === code0 || mfaCode === codeMinus1 || mfaCode === codePlus1) {
           // Success! Complete login
-          proceedLogin();
+          proceedLogin(loginUsername);
         } else {
           setLoginError('Codice di verifica TOTP non valido. Inserisci il codice corrente dall\'app Google Authenticator.');
         }
       } else {
         // No MFA enabled, complete login immediately
-        proceedLogin();
+        proceedLogin(loginUsername);
       }
     } else {
       // Failed login attempt
@@ -341,7 +360,7 @@ export default function App() {
     }
   };
 
-  const proceedLogin = () => {
+  const proceedLogin = (username: string) => {
     // Reset brute force counter
     setFailedAttempts(0);
     localStorage.removeItem('tigi_failed_attempts');
@@ -362,8 +381,9 @@ export default function App() {
     // Set 24 hour session token
     localStorage.setItem(
       'tigi_auth_session',
-      JSON.stringify({ timestamp: Date.now() })
+      JSON.stringify({ timestamp: Date.now(), username })
     );
+    setLoggedInUsername(username);
     setIsAuthenticated(true);
     setLoginError('');
     setShowMfaInput(false);
@@ -372,6 +392,7 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('tigi_auth_session');
+    setLoggedInUsername('');
     setIsAuthenticated(false);
     setShowMfaInput(false);
     setMfaCode('');
@@ -867,6 +888,7 @@ export default function App() {
         setActiveView={setActiveView}
         isCloudConnected={isCloudConnected}
         onLogout={handleLogout}
+        loggedInUsername={loggedInUsername}
       />
 
       {/* Floating Notification Toast */}
@@ -1093,6 +1115,7 @@ export default function App() {
                     onSave={handleSaveRecord}
                     onOpenLeaveForEmployee={handleOpenLeaveForEmployee}
                     index={idx}
+                    loggedInUsername={loggedInUsername}
                   />
                 );
               })}
@@ -1126,6 +1149,7 @@ export default function App() {
             onDeleteLeave={handleDeleteLeave}
             preselectedEmployeeId={preselectedLeaveEmployee}
             onBackToCards={() => setActiveView('cards')}
+            loggedInUsername={loggedInUsername}
           />
         )}
 

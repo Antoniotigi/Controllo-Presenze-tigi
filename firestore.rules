@@ -38,6 +38,8 @@ service cloud.firestore {
         (!('clockOutAfternoonNextDay' in data) || (data.clockOutAfternoonNextDay is bool)) &&
         (!('exitDuringTurnStart' in data) || (data.exitDuringTurnStart is string && data.exitDuringTurnStart.size() <= 10)) &&
         (!('exitDuringTurnEnd' in data) || (data.exitDuringTurnEnd is string && data.exitDuringTurnEnd.size() <= 10)) &&
+        (!('overtimeAuthorized' in data) || (data.overtimeAuthorized is bool)) &&
+        (!('overtimeEventName' in data) || (data.overtimeEventName is string && data.overtimeEventName.size() <= 200)) &&
         (!('permessoStart' in data) || (data.permessoStart is string && data.permessoStart.size() <= 10)) &&
         (!('permessoEnd' in data) || (data.permessoEnd is string && data.permessoEnd.size() <= 10));
     }

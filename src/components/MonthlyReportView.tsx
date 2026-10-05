@@ -240,14 +240,12 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                 <th className="py-2.5 px-3">Dipendente</th>
                 <th className="py-2.5 px-3 text-center">Gg Lavorati</th>
                 <th className="py-2.5 px-3 text-right">Ore Lavorate</th>
-                <th className="py-2.5 px-3 text-right text-slate-500 font-semibold">Str. Diurni</th>
                 <th className="py-2.5 px-3 text-right text-blue-900 font-bold">Str. Notturni</th>
                 <th className="py-2.5 px-3 text-right text-red-800 font-bold">Str. Festivi</th>
-                <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">Tot. Straordinari</th>
-                <th className="py-2.5 px-3 text-right text-red-600 font-bold">
-                  Recuperi (-)
-                </th>
-                <th className="py-2.5 px-3 text-right">Saldo Netto</th>
+                <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">Str. Pagati (Autorizz.)</th>
+                <th className="py-2.5 px-3 text-right text-indigo-600 font-bold">Banca Ore (+)</th>
+                <th className="py-2.5 px-3 text-right text-amber-600 font-bold">Banca Ore (-)</th>
+                <th className="py-2.5 px-3 text-right text-slate-900 font-black bg-slate-100 rounded-t-lg">Saldo Banca Ore</th>
                 <th className="py-2.5 px-3 text-center">Ferie</th>
                 <th className="py-2.5 px-3 text-center">Permessi</th>
               </tr>
@@ -271,39 +269,39 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
                     {formatMinutesToHM(s.totalWorkedMinutes)}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-semibold text-slate-500">
-                    {s.totalOvertimeDiurniMinutes > 0
-                      ? `+${formatMinutesToHM(s.totalOvertimeDiurniMinutes)}`
-                      : '—'}
-                  </td>
-                  <td className="py-3 px-3 text-right font-mono font-bold text-blue-900 bg-blue-50/40 rounded-lg">
+                  <td className="py-3 px-3 text-right font-mono font-bold text-blue-900 bg-blue-50/20">
                     {s.totalOvertimeNotturniMinutes > 0
                       ? `+${formatMinutesToHM(s.totalOvertimeNotturniMinutes)}`
                       : '—'}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-bold text-red-800 bg-red-50/40 rounded-lg">
+                  <td className="py-3 px-3 text-right font-mono font-bold text-red-800 bg-red-50/20">
                     {s.totalOvertimeFestiviMinutes > 0
                       ? `+${formatMinutesToHM(s.totalOvertimeFestiviMinutes)}`
                       : '—'}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600 bg-emerald-50/40 rounded-lg">
-                    {s.totalOvertimeMinutes > 0
-                      ? `+${formatMinutesToHM(s.totalOvertimeMinutes)}`
-                      : '0h 00m'}
+                  <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600 bg-emerald-50/20">
+                    {s.totalPaidOvertimeMinutes > 0
+                      ? `+${formatMinutesToHM(s.totalPaidOvertimeMinutes)}`
+                      : '—'}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-semibold text-red-600">
-                    {s.totalDeficitMinutes > 0
-                      ? `-${formatMinutesToHM(s.totalDeficitMinutes)}`
-                      : '0h 00m'}
+                  <td className="py-3 px-3 text-right font-mono font-semibold text-indigo-600 bg-indigo-50/20">
+                    {s.totalBancaOreAccumulated > 0
+                      ? `+${formatMinutesToHM(s.totalBancaOreAccumulated)}`
+                      : '—'}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-bold">
+                  <td className="py-3 px-3 text-right font-mono font-semibold text-amber-600 bg-amber-50/20">
+                    {s.totalBancaOreCompensated > 0
+                      ? `-${formatMinutesToHM(s.totalBancaOreCompensated)}`
+                      : '—'}
+                  </td>
+                  <td className="py-3 px-3 text-right font-mono font-bold bg-slate-100 rounded-b-lg">
                     <span
                       className={
-                        s.netBalanceMinutes >= 0 ? 'text-emerald-600' : 'text-red-600'
+                        s.bancaOreBalance >= 0 ? 'text-indigo-600' : 'text-amber-600'
                       }
                     >
-                      {s.netBalanceMinutes >= 0 ? '+' : ''}
-                      {formatMinutesToHM(s.netBalanceMinutes)}
+                      {s.bancaOreBalance >= 0 ? '+' : ''}
+                      {formatMinutesToHM(s.bancaOreBalance)}
                     </span>
                   </td>
                   <td className="py-3 px-3 text-center text-slate-700">
@@ -371,16 +369,12 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   <th className="py-2.5 px-3 text-center">1ª Usc.</th>
                   <th className="py-2.5 px-3 text-center">2ª Entr.</th>
                   <th className="py-2.5 px-3 text-center">2ª Usc.</th>
-                  <th className="py-2.5 px-3 text-center font-medium text-amber-600">Uscita Turno</th>
-                  <th className="py-2.5 px-3 text-center font-medium text-amber-600">Rientro Turno</th>
                   <th className="py-2.5 px-3 text-right">Ore Lavorate</th>
-                  <th className="py-2.5 px-3 text-right text-slate-500 font-semibold">Str. Diurni</th>
                   <th className="py-2.5 px-3 text-right text-blue-900 font-bold">Str. Notturni</th>
                   <th className="py-2.5 px-3 text-right text-red-800 font-bold">Str. Festivi</th>
-                  <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">Tot. Straordinari</th>
-                  <th className="py-2.5 px-3 text-right text-red-600 font-semibold">
-                    Recuperi
-                  </th>
+                  <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">Str. Pagati (Autorizz.)</th>
+                  <th className="py-2.5 px-3 text-right text-indigo-600 font-bold">Banca Ore (+)</th>
+                  <th className="py-2.5 px-3 text-right text-amber-600 font-semibold">Banca Ore (-) / Recupero</th>
                   <th className="py-2.5 px-3">Note / Assenza</th>
                 </tr>
               </thead>
@@ -391,6 +385,25 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   const times = getRecordTimestamps(r);
                   const dateObj = new Date(r.date);
                   const weekday = dateObj.toLocaleDateString('it-IT', { weekday: 'short' });
+
+                  // Compute daily Banca Ore and Paid Overtime allocation
+                  const isAuthorized = r.overtimeAuthorized === true || (r.overtimeEventName && r.overtimeEventName.trim() !== '');
+                  const otFestivi = calc.overtimeFestiviMinutes || 0;
+                  const otNotturni = calc.overtimeNotturniMinutes || 0;
+                  const otDiurni = calc.overtimeDiurniMinutes || 0;
+                  const totalOt = calc.overtimeMinutes || 0;
+
+                  let dailyPaidOt = 0;
+                  let dailyBankAccumulated = 0;
+
+                  if (isAuthorized) {
+                    dailyPaidOt = totalOt;
+                  } else {
+                    dailyPaidOt = otFestivi + otNotturni;
+                    dailyBankAccumulated = otDiurni;
+                  }
+
+                  const dailyDeficit = calc.deficitMinutes || 0;
 
                   return (
                     <tr key={r.id} className="hover:bg-slate-50/70 transition-colors">
@@ -427,31 +440,35 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                           '—'
                         )}
                       </td>
-                      <td className="py-2.5 px-3 text-center font-mono text-amber-700 font-semibold">
-                        {r.exitDuringTurnStart || '—'}
-                      </td>
-                      <td className="py-2.5 px-3 text-center font-mono text-amber-700 font-semibold">
-                        {r.exitDuringTurnEnd || '—'}
-                      </td>
                       <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
                         {calc.hoursWorkedFormatted}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-500">
-                        {calc.overtimeDiurniMinutes && calc.overtimeDiurniMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeDiurniMinutes)}` : '—'}
-                      </td>
                       <td className="py-2.5 px-3 text-right font-mono text-blue-900 font-semibold bg-blue-50/30 rounded px-1.5">
-                        {calc.overtimeNotturniMinutes && calc.overtimeNotturniMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeNotturniMinutes)}` : '—'}
+                        {otNotturni > 0 ? `+${formatMinutesToHM(otNotturni)}` : '—'}
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono text-red-800 font-semibold bg-red-50/30 rounded px-1.5">
-                        {calc.overtimeFestiviMinutes && calc.overtimeFestiviMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeFestiviMinutes)}` : '—'}
+                        {otFestivi > 0 ? `+${formatMinutesToHM(otFestivi)}` : '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-emerald-600 font-bold bg-emerald-50/30 rounded">
-                        {calc.overtimeMinutes > 0 ? `+${formatMinutesToHM(calc.overtimeMinutes)}` : '—'}
+                      <td className="py-2.5 px-3 text-right font-mono text-emerald-600 font-bold bg-emerald-50/30 rounded px-1.5">
+                        {dailyPaidOt > 0 ? `+${formatMinutesToHM(dailyPaidOt)}` : '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-red-600 font-semibold">
-                        {calc.deficitMinutes > 0 ? calc.deficitFormatted : '—'}
+                      <td className="py-2.5 px-3 text-right font-mono text-indigo-600 font-semibold bg-indigo-50/30 rounded px-1.5">
+                        {dailyBankAccumulated > 0 ? `+${formatMinutesToHM(dailyBankAccumulated)}` : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-amber-600 font-semibold bg-amber-50/30 rounded px-1.5">
+                        {dailyDeficit > 0 ? `-${formatMinutesToHM(dailyDeficit)}` : '—'}
                       </td>
                       <td className="py-2.5 px-3 text-slate-600">
+                        {r.overtimeAuthorized && (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-[10px] mr-1">
+                            ✓ Autorizzato
+                          </span>
+                        )}
+                        {r.overtimeEventName && (
+                          <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-800 border border-indigo-200 font-bold text-[10px] mr-1">
+                            ✨ Evento: {r.overtimeEventName}
+                          </span>
+                        )}
                         {r.leaveType === 'ferie' && (
                           <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200 font-medium">
                             Ferie
