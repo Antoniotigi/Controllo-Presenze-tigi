@@ -901,7 +901,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <p className="text-rose-600 text-xs mt-1">
                 Computate 8 ore standard retribuite nel cartellino
               </p>
-              {loggedInUsername !== 'tigicongress' && (
+              {loggedInUsername?.toLowerCase() === 'giulia' && (
                 <button
                   type="button"
                   onClick={() => {
@@ -927,7 +927,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
           ) : (
             <div className="space-y-4">
               {/* Admin Unlock Panel - Hidden for tigicongress */}
-              {loggedInUsername !== 'tigicongress' && (
+              {loggedInUsername?.toLowerCase() === 'giulia' && (
                 <div className="bg-slate-50 border border-[#E2E8F0] rounded-xl p-3.5 shadow-2xs">
                   {isAdminUnlocked ? (
                     <div className="flex items-center justify-between">
@@ -1016,8 +1016,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 </div>
               )}
 
-              {/* Overtime & Banca Ore Authorization Section - Hidden for tigicongress */}
-              {loggedInUsername !== 'tigicongress' && (calculation.overtimeMinutes > 0 || overtimeAuthorized || overtimeEventName) && (
+              {/* Overtime & Banca Ore Authorization Section - Hidden for tigicongress, only visible for Giulia (Admin) */}
+              {loggedInUsername?.toLowerCase() === 'giulia' && (calculation.overtimeMinutes > 0 || overtimeAuthorized || overtimeEventName) && (
                 <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-indigo-600" />
@@ -1563,7 +1563,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 {leaveType === 'permesso' ? 'In Permesso' : 'Segna Permesso'}
               </button>
 
-              {loggedInUsername !== 'tigicongress' && (
+              {loggedInUsername?.toLowerCase() === 'giulia' && (
                 <button
                   type="button"
                   onClick={toggleFerie}

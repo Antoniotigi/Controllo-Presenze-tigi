@@ -327,7 +327,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                             <input
                               type="checkbox"
                               checked={isCarryOverChecked}
-                              disabled={loggedInUsername === 'tigicongress'}
+                              disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
                               onChange={(e) => {
                                 const checked = e.target.checked;
                                 onSaveCarryOverSetting({

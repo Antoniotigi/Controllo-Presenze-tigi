@@ -238,7 +238,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
             </div>
           )}
 
-          {loggedInUsername === 'tigicongress' && (
+          {loggedInUsername?.toLowerCase() === 'tigicongress' && (
             <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold rounded-xl flex items-center gap-2 mb-4">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>L'utente tigicongress non è abilitato a registrare nuove assenze o permessi.</span>
@@ -252,7 +252,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
               <select
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
-                disabled={loggedInUsername === 'tigicongress'}
+                disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:bg-white focus:ring-2 focus:ring-slate-900 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {employees.map((e) => (
@@ -269,7 +269,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  disabled={loggedInUsername === 'tigicongress'}
+                  disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
                   onClick={() => setType('ferie')}
                   className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     type === 'ferie'
@@ -283,7 +283,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
 
                 <button
                   type="button"
-                  disabled={loggedInUsername === 'tigicongress'}
+                  disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
                   onClick={() => setType('permesso')}
                   className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     type === 'permesso'
@@ -297,7 +297,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
 
                 <button
                   type="button"
-                  disabled={loggedInUsername === 'tigicongress'}
+                  disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
                   onClick={() => setType('malattia')}
                   className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     type === 'malattia'
@@ -311,7 +311,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
 
                 <button
                   type="button"
-                  disabled={loggedInUsername === 'tigicongress'}
+                  disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
                   onClick={() => setType('congedo')}
                   className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     type === 'congedo'
@@ -333,7 +333,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  disabled={loggedInUsername === 'tigicongress'}
+                  disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:bg-white focus:ring-2 focus:ring-slate-900 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                 />
@@ -345,7 +345,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  disabled={loggedInUsername === 'tigicongress'}
+                  disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:bg-white focus:ring-2 focus:ring-slate-900 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                 />
@@ -359,7 +359,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 <select
                   value={hoursPerDay}
                   onChange={(e) => setHoursPerDay(Number(e.target.value))}
-                  disabled={loggedInUsername === 'tigicongress'}
+                  disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
                   className="w-full px-3 py-2.5 bg-purple-50 border border-purple-200 text-purple-900 rounded-xl font-bold focus:outline-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value={1}>1 ora</option>
@@ -380,14 +380,14 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 placeholder="es. Visita medica specialistica, ferie estive..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                disabled={loggedInUsername === 'tigicongress'}
+                disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-900 outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
 
             <button
               type="submit"
-              disabled={loggedInUsername === 'tigicongress'}
+              disabled={loggedInUsername?.toLowerCase() !== 'giulia'}
               className="w-full py-3 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl font-bold shadow-md shadow-slate-200 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
             >
               <CheckCircle2 className="w-4 h-4 text-blue-400" />
@@ -467,7 +467,7 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                           {l.notes || '—'}
                         </td>
                         <td className="py-2.5 px-3 text-right">
-                          {loggedInUsername !== 'tigicongress' ? (
+                          {loggedInUsername?.toLowerCase() === 'giulia' ? (
                             <button
                               type="button"
                               onClick={() => onDeleteLeave(l.id)}

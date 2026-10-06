@@ -159,7 +159,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-1 hover:opacity-85 transition-opacity cursor-pointer focus:outline-hidden"
             >
               <div className="w-8 h-8 rounded-full bg-[#E2E8F0] border border-slate-300 flex items-center justify-center text-xs font-bold text-[#101B32]">
-                {loggedInUsername === 'giulia' ? 'GL' : 'TG'}
+                {loggedInUsername?.toLowerCase() === 'giulia' ? 'GL' : 'TG'}
               </div>
               <ChevronDown className="w-4 h-4 text-[#64748B]" />
             </button>
@@ -169,14 +169,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E2E8F0] rounded-2xl shadow-lg py-2 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="px-4 py-2 border-b border-[#E2E8F0] mb-1">
                   <p className="font-bold text-[#101B32]">
-                    {loggedInUsername === 'giulia' ? 'Giulia (Admin)' : 'TigiCongress'}
+                    {loggedInUsername?.toLowerCase() === 'giulia' ? 'Giulia (Admin)' : 'TigiCongress'}
                   </p>
                   <p className="text-[10px] text-[#64748B] truncate">
-                    {loggedInUsername === 'giulia' ? 'Accesso Completo' : 'Accesso Lettura/Timbra'}
+                    {loggedInUsername?.toLowerCase() === 'giulia' ? 'Accesso Completo' : 'Accesso Lettura/Timbra'}
                   </p>
                 </div>
 
-                {onClearAll && loggedInUsername !== 'tigicongress' && (
+                {onClearAll && loggedInUsername?.toLowerCase() === 'giulia' && (
                   <button
                     onClick={() => {
                       setIsDropdownOpen(false);
@@ -319,7 +319,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </p>
             
             <div className="flex flex-col space-y-1">
-              {onClearAll && loggedInUsername !== 'tigicongress' && (
+              {onClearAll && loggedInUsername?.toLowerCase() === 'giulia' && (
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);

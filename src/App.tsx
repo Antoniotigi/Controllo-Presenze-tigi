@@ -155,7 +155,7 @@ export default function App() {
       const stored = localStorage.getItem('tigi_auth_session');
       if (stored) {
         const { username } = JSON.parse(stored);
-        return username || '';
+        return username?.toLowerCase() || '';
       }
     } catch {
       // Ignore
@@ -309,8 +309,11 @@ export default function App() {
     }
 
     // SHA-256 based high-security verification (Plaintext passwords are not embedded in code)
-    const userHash = await sha256(loginUsername);
-    const passHash = await sha256(loginPassword);
+    const normalizedUsername = loginUsername.trim().toLowerCase();
+    const normalizedPassword = loginPassword.trim();
+
+    const userHash = await sha256(normalizedUsername);
+    const passHash = await sha256(normalizedPassword);
 
     const EXPECTED_USER_HASH = '40c731c40ed40ea5fc2c30e8538ae7c21efe6d19ff91b135647ad8e424a9f7d3'; // tigicongress
     const EXPECTED_PASS_HASH = '2f11e88ddf3f5937c33ac10aad8001f9879d6b0390e7371ddd14cfd050bd7603'; // tigicongress
@@ -338,13 +341,13 @@ export default function App() {
 
         if (mfaCode === code0 || mfaCode === codeMinus1 || mfaCode === codePlus1) {
           // Success! Complete login
-          proceedLogin(loginUsername);
+          proceedLogin(normalizedUsername);
         } else {
           setLoginError('Codice di verifica TOTP non valido. Inserisci il codice corrente dall\'app Google Authenticator.');
         }
       } else {
         // No MFA enabled, complete login immediately
-        proceedLogin(loginUsername);
+        proceedLogin(normalizedUsername);
       }
     } else {
       // Failed login attempt
