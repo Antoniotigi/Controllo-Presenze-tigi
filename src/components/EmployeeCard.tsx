@@ -102,6 +102,12 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
   const [passwordValue, setPasswordValue] = useState('');
   const [passwordError, setPasswordError] = useState(false);
 
+  // Helper to allow both tigicongress and giulia (and unlocked admin) to perform operational tasks like Uscita Turno, Permessi, Notes, and Overtime
+  const isAuthorizedToEditOperational = 
+    isAdminUnlocked || 
+    loggedInUsername?.toLowerCase() === 'tigicongress' || 
+    loggedInUsername?.toLowerCase() === 'giulia';
+
   // Close clocking inputs verification state
   const [pendingStamp, setPendingStamp] = useState<{
     key: 'clockInMorning' | 'clockOutMorning' | 'clockInAfternoon' | 'clockOutAfternoon';
@@ -1016,8 +1022,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 </div>
               )}
 
-              {/* Overtime & Banca Ore Authorization Section - Hidden for tigicongress, only visible for Giulia (Admin) */}
-              {loggedInUsername?.toLowerCase() === 'giulia' && (calculation.overtimeMinutes > 0 || overtimeAuthorized || overtimeEventName) && (
+              {/* Overtime & Banca Ore Authorization Section - Available for both tigicongress and giulia */}
+              {isAuthorizedToEditOperational && (calculation.overtimeMinutes > 0 || overtimeAuthorized || overtimeEventName) && (
                 <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-indigo-600" />
@@ -1387,8 +1393,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         type="time"
                         value={exitDuringTurnStart || ''}
                         onChange={(e) => handleExitDuringTurnStartChange(e.target.value)}
-                        readOnly={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
-                        className={`${(isAdminUnlocked || loggedInUsername === 'tigicongress') ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]`}
+                        readOnly={!isAuthorizedToEditOperational}
+                        className={`${isAuthorizedToEditOperational ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]`}
                       />
                     </div>
 
@@ -1401,8 +1407,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         type="time"
                         value={exitDuringTurnEnd || ''}
                         onChange={(e) => handleExitDuringTurnEndChange(e.target.value)}
-                        readOnly={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
-                        className={`${(isAdminUnlocked || loggedInUsername === 'tigicongress') ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]`}
+                        readOnly={!isAuthorizedToEditOperational}
+                        className={`${isAuthorizedToEditOperational ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold outline-none shadow-2xs focus:ring-1 focus:ring-[#0b5cd5]`}
                       />
                     </div>
                   </div>
@@ -1440,8 +1446,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         max="8"
                         value={permessoHours}
                         onChange={(e) => handlePermessoHoursChange(parseInt(e.target.value) || 0)}
-                        readOnly={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
-                        className={`${(isAdminUnlocked || loggedInUsername === 'tigicongress') ? 'bg-white text-purple-950' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold focus:ring-1 focus:ring-purple-500 outline-none`}
+                        readOnly={!isAuthorizedToEditOperational}
+                        className={`${isAuthorizedToEditOperational ? 'bg-white text-purple-950' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold focus:ring-1 focus:ring-purple-500 outline-none`}
                       />
                     </div>
 
@@ -1456,14 +1462,14 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         max="59"
                         value={permessoMinutes}
                         onChange={(e) => handlePermessoMinutesChange(parseInt(e.target.value) || 0)}
-                        readOnly={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
-                        className={`${(isAdminUnlocked || loggedInUsername === 'tigicongress') ? 'bg-white text-purple-950' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold focus:ring-1 focus:ring-purple-500 outline-none`}
+                        readOnly={!isAuthorizedToEditOperational}
+                        className={`${isAuthorizedToEditOperational ? 'bg-white text-purple-950' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-purple-200 rounded-lg px-2.5 py-1.5 text-sm font-mono font-semibold focus:ring-1 focus:ring-purple-500 outline-none`}
                       />
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between text-xs pt-1">
-                    {missingMinutes > 0 && currentPermessoMinutes < missingMinutes && (isAdminUnlocked || loggedInUsername === 'tigicongress') ? (
+                    {missingMinutes > 0 && currentPermessoMinutes < missingMinutes && isAuthorizedToEditOperational ? (
                       <button
                         type="button"
                         onClick={handleAutoCompensate}
@@ -1475,7 +1481,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                       <span />
                     )}
 
-                    {currentPermessoMinutes > 0 && (isAdminUnlocked || loggedInUsername === 'tigicongress') && (
+                    {currentPermessoMinutes > 0 && isAuthorizedToEditOperational && (
                       <button
                         type="button"
                         onClick={handleClearPermesso}
@@ -1502,8 +1508,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                     setNotes(val);
                     persistChanges({ notes: val });
                   }}
-                  readOnly={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
-                  className={`${(isAdminUnlocked || loggedInUsername === 'tigicongress') ? 'bg-slate-50 text-slate-800 focus:bg-white focus:ring-1 focus:ring-[#0b5cd5]' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs outline-none`}
+                  readOnly={!isAuthorizedToEditOperational}
+                  className={`${isAuthorizedToEditOperational ? 'bg-slate-50 text-slate-800 focus:bg-white focus:ring-1 focus:ring-[#0b5cd5]' : 'bg-slate-100 text-slate-500 cursor-not-allowed'} border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs outline-none`}
                 />
               </div>
             </div>
@@ -1536,9 +1542,9 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <button
                 type="button"
                 onClick={toggleExitDuringTurn}
-                disabled={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
+                disabled={!isAuthorizedToEditOperational}
                 className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
-                  !(isAdminUnlocked || loggedInUsername === 'tigicongress')
+                  !isAuthorizedToEditOperational
                     ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
                     : showExitDuringTurn
                     ? 'bg-amber-50 text-amber-700 border-amber-200 cursor-pointer'
@@ -1551,9 +1557,9 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
               <button
                 type="button"
                 onClick={togglePermesso}
-                disabled={!(isAdminUnlocked || loggedInUsername === 'tigicongress')}
+                disabled={!isAuthorizedToEditOperational}
                 className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
-                  !(isAdminUnlocked || loggedInUsername === 'tigicongress')
+                  !isAuthorizedToEditOperational
                     ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
                     : leaveType === 'permesso'
                     ? 'bg-purple-50 text-purple-700 border-purple-200 cursor-pointer'
