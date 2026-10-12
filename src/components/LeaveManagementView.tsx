@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Employee, LeaveRequest, TimeRecord } from '../types';
 import { getTodayDateString, formatDateIT } from '../utils/timeUtils';
+import { isWorkerUser } from '../utils/authConfig';
 
 interface LeaveManagementViewProps {
   employees: Employee[];
@@ -114,7 +115,9 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                 Gestione Ferie, Permessi e Assenze
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Monitoraggio residui e programmazione assenze per i 4 dipendenti
+                {isWorkerUser(loggedInUsername || '')
+                  ? 'Monitoraggio riservato di ferie e permessi personali'
+                  : 'Monitoraggio residui e programmazione assenze per i dipendenti'}
               </p>
             </div>
           </div>
@@ -242,6 +245,13 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
             <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold rounded-xl flex items-center gap-2 mb-4">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>L'utente tigicongress non è abilitato a registrare nuove assenze o permessi.</span>
+            </div>
+          )}
+
+          {isWorkerUser(loggedInUsername || '') && (
+            <div className="p-3 bg-blue-50 border border-blue-200 text-[#0b5cd5] text-xs font-semibold rounded-xl flex items-center gap-2 mb-4">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>Accesso personale: puoi consultare le tue ferie e permessi. Solo l'amministratore (Giulia) può approvare o registrare assenze ufficiali nel calendario.</span>
             </div>
           )}
 

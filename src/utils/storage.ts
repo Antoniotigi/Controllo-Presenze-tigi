@@ -26,7 +26,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     id: 'emp-3',
-    name: 'Andre Rossi',
+    name: 'Andrea Rossi',
     role: '',
     color: 'rose',
     avatarBg: 'bg-rose-600',
@@ -116,8 +116,13 @@ export function getEmployees(): Employee[] {
       if (!scheduleType) {
         scheduleType = e.id === 'emp-4' || e.name.toLowerCase().includes('dario') ? 'six_days' : 'standard_8h';
       }
+      let name = e.name;
+      if (e.id === 'emp-3' && name === 'Andre Rossi') {
+        name = 'Andrea Rossi';
+      }
       return {
         ...e,
+        name,
         role: '',
         scheduleType,
         permessiSpettanti: e.permessiSpettanti === 72 || !e.permessiSpettanti ? 88 : e.permessiSpettanti,

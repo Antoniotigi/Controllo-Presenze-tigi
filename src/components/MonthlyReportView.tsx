@@ -25,6 +25,7 @@ import {
   exportToPDF,
   MonthlyStatsPerEmployee,
 } from '../utils/exportUtils';
+import { isWorkerUser } from '../utils/authConfig';
 
 interface MonthlyReportViewProps {
   employees: Employee[];
@@ -47,11 +48,15 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
   onSaveCarryOverSetting = (setting: BancaOreCarryOverSetting) => {},
   loggedInUsername = '',
 }) => {
+  const isWorker = isWorkerUser(loggedInUsername);
+
   // Current selected month: "YYYY-MM"
   const [selectedMonth, setSelectedMonth] = useState<string>(
     currentDate.slice(0, 7)
   );
-  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>('all');
+  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>(() => {
+    return isWorker ? (employees[0]?.id || 'all') : 'all';
+  });
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
@@ -156,65 +161,78 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
           </div>
 
           {/* Export to PDF with Employee Dropdown */}
-          <div className="relative">
+          {isWorker ? (
             <button
               type="button"
-              onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+              onClick={() => handlePDFExport(employees[0]?.id || 'all')}
               disabled={isExportingPDF}
               className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md shadow-slate-200 flex items-center gap-2 transition-all cursor-pointer"
-              title="Esporta il cartellino mensile e il registro giornaliero in formato PDF"
+              title="Esporta il tuo cartellino mensile e registro presenze in formato PDF"
             >
               <FileText className="w-4 h-4 text-[#0b5cd5]" />
-              <span>{isExportingPDF ? 'Generazione...' : 'Esporta PDF'}</span>
-              <ChevronDown className="w-3.5 h-3.5 opacity-60 ml-0.5" />
+              <span>{isExportingPDF ? 'Generazione...' : 'Esporta il mio PDF'}</span>
             </button>
+          ) : (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+                disabled={isExportingPDF}
+                className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md shadow-slate-200 flex items-center gap-2 transition-all cursor-pointer"
+                title="Esporta il cartellino mensile e il registro giornaliero in formato PDF"
+              >
+                <FileText className="w-4 h-4 text-[#0b5cd5]" />
+                <span>{isExportingPDF ? 'Generazione...' : 'Esporta PDF'}</span>
+                <ChevronDown className="w-3.5 h-3.5 opacity-60 ml-0.5" />
+              </button>
 
-            {isExportDropdownOpen && (
-              <>
-                {/* Backdrop to close dropdown on outer click */}
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setIsExportDropdownOpen(false)}
-                />
-                <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 py-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Seleziona opzione
-                  </div>
-                  
-                  {/* Export All */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsExportDropdownOpen(false);
-                      handlePDFExport('all');
-                    }}
-                    className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
-                  >
-                    <Users className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Esporta Tutti</span>
-                  </button>
-
-                  <div className="border-t border-slate-100 my-1.5" />
-
-                  {/* Individual Employees */}
-                  {employees.map((emp) => (
+              {isExportDropdownOpen && (
+                <>
+                  {/* Backdrop to close dropdown on outer click */}
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsExportDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 py-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Seleziona opzione
+                    </div>
+                    
+                    {/* Export All */}
                     <button
-                      key={emp.id}
                       type="button"
                       onClick={() => {
                         setIsExportDropdownOpen(false);
-                        handlePDFExport(emp.id);
+                        handlePDFExport('all');
                       }}
-                      className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
+                      className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
                     >
-                      <User className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="truncate">Esporta {emp.name}</span>
+                      <Users className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Esporta Tutti</span>
                     </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+
+                    <div className="border-t border-slate-100 my-1.5" />
+
+                    {/* Individual Employees */}
+                    {employees.map((emp) => (
+                      <button
+                        key={emp.id}
+                        type="button"
+                        onClick={() => {
+                          setIsExportDropdownOpen(false);
+                          handlePDFExport(emp.id);
+                        }}
+                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer"
+                      >
+                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="truncate">Esporta {emp.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           <button
             type="button"
@@ -234,10 +252,14 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-slate-700" />
             <h3 className="text-sm font-semibold text-slate-900">
-              Riepilogo Dipendenti • {formatMonthIT(selectedMonth)}
+              {isWorker
+                ? `Riepilogo Personale • ${formatMonthIT(selectedMonth)}`
+                : `Riepilogo Dipendenti • ${formatMonthIT(selectedMonth)}`}
             </h3>
           </div>
-          <span className="text-xs text-slate-500">Standard 8h al giorno</span>
+          <span className="text-xs text-slate-500">
+            {isWorker ? 'Dati personali riservati' : 'Standard 8h al giorno'}
+          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -384,22 +406,31 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
             <span className="text-xs text-slate-400">({monthRecords.length} registrazioni)</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-xs text-slate-600">Filtra per dipendente:</span>
-            <select
-              value={selectedEmployeeFilter}
-              onChange={(e) => setSelectedEmployeeFilter(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-hidden"
-            >
-              <option value="all">Tutti e 4 i dipendenti</option>
-              {employees.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {isWorker ? (
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
+              <Filter className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-xs text-slate-700 font-semibold">
+                Registro personale: <strong className="text-slate-900">{employees[0]?.name}</strong>
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Filter className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-xs text-slate-600">Filtra per dipendente:</span>
+              <select
+                value={selectedEmployeeFilter}
+                onChange={(e) => setSelectedEmployeeFilter(e.target.value)}
+                className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-hidden"
+              >
+                <option value="all">Tutti i dipendenti</option>
+                {employees.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {monthRecords.length === 0 ? (

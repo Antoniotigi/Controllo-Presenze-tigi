@@ -29,6 +29,7 @@ import {
   isAfternoonShiftOvernight,
   timeToMinutes,
 } from '../utils/timeUtils';
+import { isWorkerUser } from '../utils/authConfig';
 
 interface EmployeeCardProps {
   employee: Employee;
@@ -96,17 +97,27 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
   const [overtimeAuthorized, setOvertimeAuthorized] = useState<boolean>(Boolean(record?.overtimeAuthorized));
   const [overtimeEventName, setOvertimeEventName] = useState<string>(record?.overtimeEventName || '');
 
-  // Admin password lock states
-  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
-  const [showPasswordInput, setShowPasswordInput] = useState(false);
-  const [passwordValue, setPasswordValue] = useState('');
-  const [passwordError, setPasswordError] = useState(false);
+  // User authorization for cartellini times editing: directly authorized for Giulia, no password required
+  const isGiulia = loggedInUsername?.toLowerCase() === 'giulia';
+  const canEditHours = isGiulia;
 
-  // Helper to allow both tigicongress and giulia (and unlocked admin) to perform operational tasks like Uscita Turno, Permessi, Notes, and Overtime
+  // Check if current user is a worker associated with this card
+  const isWorker = isWorkerUser(loggedInUsername || '');
+  const isWorkerOwnCard = isWorker && (
+    (loggedInUsername?.toLowerCase() === 'luca' && employee.id === 'emp-2') ||
+    (loggedInUsername?.toLowerCase() === 'andrea' && employee.id === 'emp-3') ||
+    (loggedInUsername?.toLowerCase() === 'dario' && employee.id === 'emp-4') ||
+    (loggedInUsername?.toLowerCase() === 'antonio' && employee.id === 'emp-1') ||
+    employee.name.toLowerCase().includes(loggedInUsername?.toLowerCase() || '---')
+  );
+
+  // Helper to allow operational tasks like Uscita Turno, Permessi, Notes, and Overtime
+  // Has the same operational modification settings as tigicongress for their own card
   const isAuthorizedToEditOperational = 
-    isAdminUnlocked || 
+    canEditHours || 
     loggedInUsername?.toLowerCase() === 'tigicongress' || 
-    loggedInUsername?.toLowerCase() === 'giulia';
+    loggedInUsername?.toLowerCase() === 'giulia' ||
+    isWorkerOwnCard;
 
   // Close clocking inputs verification state
   const [pendingStamp, setPendingStamp] = useState<{
@@ -151,23 +162,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     setPermessoHours(pH);
     setPermessoMinutes(pM);
     setLeaveHours(record?.leaveHours || 0);
-
-    // Reset lock when switching employee or date
-    setIsAdminUnlocked(false);
-    setShowPasswordInput(false);
-    setPasswordValue('');
-    setPasswordError(false);
   }, [record?.id, currentDate]);
-
-  // Lock back when card is collapsed
-  useEffect(() => {
-    if (!isExpanded) {
-      setIsAdminUnlocked(false);
-      setShowPasswordInput(false);
-      setPasswordValue('');
-      setPasswordError(false);
-    }
-  }, [isExpanded]);
 
   // 60 seconds auto-collapse timer on expansion
   useEffect(() => {
@@ -932,95 +927,6 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Admin Unlock Panel - Hidden for tigicongress */}
-              {loggedInUsername?.toLowerCase() === 'giulia' && (
-                <div className="bg-slate-50 border border-[#E2E8F0] rounded-xl p-3.5 shadow-2xs">
-                  {isAdminUnlocked ? (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-green-700 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></span>
-                        Modifica manuale sbloccata (Giulia)
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setIsAdminUnlocked(false)}
-                        className="text-xs font-bold text-rose-600 hover:text-rose-700 transition-colors cursor-pointer"
-                      >
-                        Blocca modifiche
-                      </button>
-                    </div>
-                  ) : !showPasswordInput ? (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-[#64748B]">
-                        L'inserimento orari manuale è disattivato.
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowPasswordInput(true)}
-                        className="text-xs font-bold text-[#0b5cd5] hover:underline cursor-pointer"
-                      >
-                        Sblocca manuale
-                      </button>
-                    </div>
-                  ) : (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (passwordValue === 'AmzvNi9Gb5SCLC9TYNQ3') {
-                          setIsAdminUnlocked(true);
-                          setPasswordError(false);
-                          setShowPasswordInput(false);
-                          setPasswordValue('');
-                        } else {
-                          setPasswordError(true);
-                        }
-                      }}
-                      className="flex flex-col gap-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#101B32]">Password di Giulia:</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowPasswordInput(false);
-                            setPasswordValue('');
-                            setPasswordError(false);
-                          }}
-                          className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase"
-                        >
-                          Annulla
-                        </button>
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="password"
-                          placeholder="password di sblocco"
-                          value={passwordValue}
-                          onChange={(e) => {
-                            setPasswordValue(e.target.value);
-                            if (passwordError) setPasswordError(false);
-                          }}
-                          className={`flex-1 bg-white border ${
-                            passwordError ? 'border-rose-500' : 'border-slate-200'
-                          } rounded-lg px-2.5 py-1.5 text-xs font-medium focus:ring-1 focus:ring-[#0b5cd5] focus:outline-none`}
-                          autoFocus
-                        />
-                        <button
-                          type="submit"
-                          className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                        >
-                          Sblocca
-                        </button>
-                      </div>
-                      {passwordError && (
-                        <span className="text-[10px] font-semibold text-rose-600">
-                          Password errata. Riprova con la password di Giulia.
-                        </span>
-                      )}
-                    </form>
-                  )}
-                </div>
-              )}
 
               {/* Overtime & Banca Ore Authorization Section - Available for both tigicongress and giulia */}
               {isAuthorizedToEditOperational && (calculation.overtimeMinutes > 0 || overtimeAuthorized || overtimeEventName) && (
@@ -1109,7 +1015,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           1ª Entrata
                         </label>
-                        {isToday && clockInMorning && isAdminUnlocked ? (
+                        {(isToday || canEditHours) && clockInMorning && canEditHours ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -1130,7 +1036,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           </button>
                         ) : null}
                       </div>
-                      {isAdminUnlocked ? (
+                      {canEditHours ? (
                         <input
                           id={`in-morn-${employee.id}`}
                           type="time"
@@ -1162,7 +1068,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           1ª Uscita
                         </label>
-                        {isToday && clockOutMorning && isAdminUnlocked ? (
+                        {(isToday || canEditHours) && clockOutMorning && canEditHours ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -1183,7 +1089,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           </button>
                         ) : null}
                       </div>
-                      {isAdminUnlocked ? (
+                      {canEditHours ? (
                         <input
                           id={`out-morn-${employee.id}`}
                           type="time"
@@ -1227,7 +1133,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           2ª Entrata
                         </label>
-                        {isToday && clockInAfternoon && isAdminUnlocked ? (
+                        {(isToday || canEditHours) && clockInAfternoon && canEditHours ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -1248,7 +1154,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           </button>
                         ) : null}
                       </div>
-                      {isAdminUnlocked ? (
+                      {canEditHours ? (
                         <input
                           id={`in-aft-${employee.id}`}
                           type="time"
@@ -1280,7 +1186,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                         >
                           2ª Uscita
                         </label>
-                        {isToday && clockOutAfternoon && isAdminUnlocked ? (
+                        {(isToday || canEditHours) && clockOutAfternoon && canEditHours ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -1301,7 +1207,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           </button>
                         ) : null}
                       </div>
-                      {isAdminUnlocked ? (
+                      {canEditHours ? (
                         <input
                           id={`out-aft-${employee.id}`}
                           type="time"
@@ -1351,7 +1257,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           </div>
                         )}
 
-                        {isAdminUnlocked && clockInAfternoon && clockOutAfternoon && (
+                        {canEditHours && clockInAfternoon && clockOutAfternoon && (
                           <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700">
                             <input
                               type="checkbox"
@@ -1573,9 +1479,9 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 <button
                   type="button"
                   onClick={toggleFerie}
-                  disabled={!isAdminUnlocked}
+                  disabled={!canEditHours}
                   className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
-                    !isAdminUnlocked
+                    !canEditHours
                       ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
                       : leaveType === 'ferie'
                       ? 'bg-rose-50 text-rose-700 border-rose-200 cursor-pointer'

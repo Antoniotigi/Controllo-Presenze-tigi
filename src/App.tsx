@@ -51,6 +51,7 @@ import { LeaveManagementView } from './components/LeaveManagementView';
 import { MonthlyReportView } from './components/MonthlyReportView';
 import { EditEmployeesModal } from './components/EditEmployeesModal';
 import { ClearAllConfirmModal } from './components/ClearAllConfirmModal';
+import { KioskAttendanceView } from './components/KioskAttendanceView';
 import {
   testConnection,
   subscribeToTimeRecords,
@@ -66,6 +67,14 @@ import {
   subscribeToBancaOreCarryOver,
   saveBancaOreCarryOverToFirestore,
 } from './firebase';
+import {
+  verifyCredentials,
+  isWorkerUser,
+  isKioskUser,
+  filterEmployeesForUser,
+  filterRecordsForUser,
+  filterLeavesForUser,
+} from './utils/authConfig';
 
 export default function App() {
   const [todayState, setTodayState] = useState<string>(getTodayDateString());
@@ -421,16 +430,9 @@ export default function App() {
     const userHash = await sha256(normalizedUsername);
     const passHash = await sha256(normalizedPassword);
 
-    const EXPECTED_USER_HASH = '40c731c40ed40ea5fc2c30e8538ae7c21efe6d19ff91b135647ad8e424a9f7d3'; // tigicongress
-    const EXPECTED_PASS_HASH = '2f11e88ddf3f5937c33ac10aad8001f9879d6b0390e7371ddd14cfd050bd7603'; // tigicongress
+    const matchedAccount = verifyCredentials(userHash, passHash);
 
-    const GIULIA_USER_HASH = 'e4c2eed8a6df0147265631e9ff25b70fd0e4b3a246896695b089584bf3ce8b90'; // giulia
-    const GIULIA_PASS_HASH = 'd6833bfa7579da6fa37e5d1713dba384fe2904996be920b92351f0e26b616d44'; // AmzvNi9Gb5SCLC9TYNQ3
-
-    const isTigi = (userHash === EXPECTED_USER_HASH && passHash === EXPECTED_PASS_HASH);
-    const isGiulia = (userHash === GIULIA_USER_HASH && passHash === GIULIA_PASS_HASH);
-
-    if (isTigi || isGiulia) {
+    if (matchedAccount) {
       // Credentials verified successfully! Now check Multi-Factor Authentication (TOTP)
       if (mfaEnabled) {
         if (!showMfaInput) {
@@ -447,13 +449,13 @@ export default function App() {
 
         if (mfaCode === code0 || mfaCode === codeMinus1 || mfaCode === codePlus1) {
           // Success! Complete login
-          proceedLogin(normalizedUsername);
+          proceedLogin(matchedAccount.username);
         } else {
           setLoginError('Codice di verifica TOTP non valido. Inserisci il codice corrente dall\'app Google Authenticator.');
         }
       } else {
         // No MFA enabled, complete login immediately
-        proceedLogin(normalizedUsername);
+        proceedLogin(matchedAccount.username);
       }
     } else {
       // Failed login attempt
@@ -750,10 +752,12 @@ export default function App() {
   };
 
   const handleClearAllCartellini = () => {
+    if (loggedInUsername?.toLowerCase() !== 'tigicongress') return;
     setIsClearModalOpen(true);
   };
 
   const handleConfirmClearAll = async () => {
+    if (loggedInUsername?.toLowerCase() !== 'tigicongress') return;
     const cleared = clearAllCartelliniTimes(records);
     setRecords(cleared);
     saveTimeRecords(cleared);
@@ -769,6 +773,24 @@ export default function App() {
     setPreselectedLeaveEmployee(employeeId);
     setActiveView('leaves');
   };
+
+  const isWorker = isWorkerUser(loggedInUsername);
+  const isKiosk = isKioskUser(loggedInUsername);
+  const visibleEmployees = filterEmployeesForUser(loggedInUsername, employees);
+  const visibleRecords = filterRecordsForUser(loggedInUsername, records, employees);
+  const visibleLeaves = filterLeavesForUser(loggedInUsername, leaves, employees);
+
+  // Kiosk mode: tigicongress is strictly locked to today's date and cards view
+  useEffect(() => {
+    if (isKiosk) {
+      if (currentDate !== today) {
+        setCurrentDate(today);
+      }
+      if (activeView !== 'cards') {
+        setActiveView('cards');
+      }
+    }
+  }, [isKiosk, currentDate, today, activeView]);
 
   const isToday = currentDate === today;
 
@@ -1008,7 +1030,7 @@ export default function App() {
         onOpenLeaves={() => setActiveView('leaves')}
         onOpenReport={() => setActiveView('report')}
         onSaveAll={handleSaveAllToday}
-        onClearAll={handleClearAllCartellini}
+        onClearAll={undefined}
         activeView={activeView}
         setActiveView={setActiveView}
         isCloudConnected={isCloudConnected}
@@ -1027,7 +1049,16 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col justify-between">
         {activeView === 'cards' && (
-          <div className="space-y-6 flex-1">
+          isKiosk ? (
+            <KioskAttendanceView
+              employees={visibleEmployees}
+              records={records}
+              currentDate={today}
+              onSaveRecord={handleSaveRecord}
+              loggedInUsername={loggedInUsername}
+            />
+          ) : (
+            <div className="space-y-6 flex-1">
             {/* Day Header Banner & Status Bar */}
             <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -1037,7 +1068,11 @@ export default function App() {
                 <div>
                   <div className="flex items-center gap-2.5">
                     <h2 className="text-xl font-bold text-[#101B32] tracking-tight">
-                      {isToday ? 'Presenze di oggi' : 'Presenze passate'}
+                      {isWorker
+                        ? 'Il tuo cartellino personale'
+                        : isToday
+                        ? 'Presenze di oggi'
+                        : 'Presenze passate'}
                     </h2>
                     {isToday ? (
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase tracking-wider">
@@ -1050,7 +1085,9 @@ export default function App() {
                     )}
                   </div>
                   <p className="text-xs text-[#64748B] mt-0.5">
-                    {formatDateIT(currentDate)} • Orario standard 8 ore giornaliere
+                    {isWorker && visibleEmployees[0]
+                      ? `${formatDateIT(currentDate)} • Visualizzazione personale riservata di ${visibleEmployees[0].name}`
+                      : `${formatDateIT(currentDate)} • Orario standard 8 ore giornaliere`}
                   </p>
                 </div>
               </div>
@@ -1116,14 +1153,16 @@ export default function App() {
                   </button>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="px-3.5 py-2 text-xs font-bold text-[#101B32] bg-white hover:bg-[#F4F7FA] rounded-lg border border-[#E2E8F0] transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                >
-                  <Settings2 className="w-4 h-4 text-[#64748B]" />
-                  <span>Gestisci dipendenti</span>
-                </button>
+                {!isWorker && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="px-3.5 py-2 text-xs font-bold text-[#101B32] bg-white hover:bg-[#F4F7FA] rounded-lg border border-[#E2E8F0] transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <Settings2 className="w-4 h-4 text-[#64748B]" />
+                    <span>Gestisci dipendenti</span>
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -1137,25 +1176,63 @@ export default function App() {
             </div>
 
             {/* Synthesis / Summary Panel */}
-            <div className="grid grid-cols-3 gap-4 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
-              <div className="flex flex-col justify-between">
-                <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">In servizio</span>
-                <span className="text-3xl font-black text-[#16a34a] mt-1">{countActiveNow}</span>
+            {isWorker && visibleEmployees[0] ? (
+              (() => {
+                const myRec = records.find(
+                  (r) => r.employeeId === visibleEmployees[0].id && r.date === currentDate
+                );
+                const myCalc = calculateRecord(myRec, systemTimeHHMM, isToday, visibleEmployees[0]);
+                const statusLabel = 
+                  myCalc.status === 'al_lavoro' ? 'In servizio' :
+                  myCalc.status === 'pausa' ? 'In pausa' :
+                  myCalc.status === 'completato' ? 'Turno completato' :
+                  myCalc.status === 'ferie' ? 'In ferie' :
+                  myCalc.status === 'permesso' ? 'In permesso' : 'Non ancora timbrato';
+                const statusColor = 
+                  myCalc.status === 'al_lavoro' ? 'text-[#16a34a]' :
+                  myCalc.status === 'pausa' ? 'text-amber-500' :
+                  myCalc.status === 'completato' ? 'text-indigo-600' : 'text-slate-700';
+
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                    <div className="flex flex-col justify-between">
+                      <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Il tuo stato oggi</span>
+                      <span className={`text-2xl font-black ${statusColor} mt-1`}>{statusLabel}</span>
+                    </div>
+                    <div className="flex flex-col justify-between border-t sm:border-t-0 sm:border-l border-[#E2E8F0] pt-3 sm:pt-0 sm:pl-4">
+                      <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Ore lavorate oggi</span>
+                      <span className="text-2xl font-black text-[#101B32] mt-1 font-mono">{myCalc.hoursWorkedFormatted}</span>
+                    </div>
+                    <div className="flex flex-col justify-between border-t sm:border-t-0 sm:border-l border-[#E2E8F0] pt-3 sm:pt-0 sm:pl-4">
+                      <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Straordinario / Saldo</span>
+                      <span className={`text-2xl font-black mt-1 font-mono ${myCalc.isOvertime ? 'text-emerald-600' : myCalc.isDeficit ? 'text-rose-600' : 'text-slate-600'}`}>
+                        {myCalc.isOvertime ? `+${myCalc.overtimeFormatted}` : myCalc.isDeficit ? `-${myCalc.deficitFormatted}` : 'In orario standard'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <div className="grid grid-cols-3 gap-4 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+                <div className="flex flex-col justify-between">
+                  <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">In servizio</span>
+                  <span className="text-3xl font-black text-[#16a34a] mt-1">{countActiveNow}</span>
+                </div>
+                <div className="flex flex-col justify-between border-l border-[#E2E8F0] pl-4">
+                  <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">In pausa</span>
+                  <span className="text-3xl font-black text-amber-500 mt-1">{countActiveNow > 0 ? dailySummary.filter((d) => d.calc.status === 'pausa').length : 0}</span>
+                </div>
+                <div className="flex flex-col justify-between border-l border-[#E2E8F0] pl-4">
+                  <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Assenti</span>
+                  <span className="text-3xl font-black text-[#101B32] mt-1">{dailySummary.filter((d) => d.calc.status === 'non_timbrato' || d.calc.status === 'ferie' || d.calc.status === 'permesso').length}</span>
+                </div>
               </div>
-              <div className="flex flex-col justify-between border-l border-[#E2E8F0] pl-4">
-                <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">In pausa</span>
-                <span className="text-3xl font-black text-amber-500 mt-1">{countActiveNow > 0 ? dailySummary.filter((d) => d.calc.status === 'pausa').length : 0}</span>
-              </div>
-              <div className="flex flex-col justify-between border-l border-[#E2E8F0] pl-4">
-                <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Assenti</span>
-                <span className="text-3xl font-black text-[#101B32] mt-1">{dailySummary.filter((d) => d.calc.status === 'non_timbrato' || d.calc.status === 'ferie' || d.calc.status === 'permesso').length}</span>
-              </div>
-            </div>
+            )}
 
             {/* Overnight Shift Notification Banner (Turno a cavallo di mezzanotte in corso da ieri sera) */}
             {(() => {
               const yesterdayDate = getYesterdayDateString(today);
-              const pendingOvernight = employees
+              const pendingOvernight = visibleEmployees
                 .map((emp) => {
                   const yestRec = records.find(
                     (r) => r.employeeId === emp.id && r.date === yesterdayDate
@@ -1222,9 +1299,9 @@ export default function App() {
               );
             })()}
 
-            {/* THE 4 EMPLOYEE CELLS (DEFAULT SCREEN) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {employees.map((employee, idx) => {
+            {/* THE EMPLOYEE CARDS */}
+            <div className={`grid grid-cols-1 ${visibleEmployees.length > 1 ? 'md:grid-cols-2' : 'max-w-2xl mx-auto'} gap-6`}>
+              {visibleEmployees.map((employee, idx) => {
                 const record = records.find(
                   (r) => r.employeeId === employee.id && r.date === currentDate
                 );
@@ -1262,27 +1339,28 @@ export default function App() {
                 Visualizza Riepilogo Mese ed Esporta →
               </button>
             </div>
-          </div>
+            </div>
+          )
         )}
 
-        {activeView === 'leaves' && (
+        {activeView === 'leaves' && !isKiosk && (
           <LeaveManagementView
-            employees={employees}
-            leaves={leaves}
-            records={records}
+            employees={visibleEmployees}
+            leaves={visibleLeaves}
+            records={visibleRecords}
             onAddLeave={handleAddLeave}
             onDeleteLeave={handleDeleteLeave}
-            preselectedEmployeeId={preselectedLeaveEmployee}
+            preselectedEmployeeId={visibleEmployees[0]?.id}
             onBackToCards={() => setActiveView('cards')}
             loggedInUsername={loggedInUsername}
           />
         )}
 
-        {activeView === 'report' && (
+        {activeView === 'report' && !isKiosk && (
           <MonthlyReportView
-            employees={employees}
-            records={records}
-            leaves={leaves}
+            employees={visibleEmployees}
+            records={visibleRecords}
+            leaves={visibleLeaves}
             currentDate={currentDate}
             onBackToCards={() => setActiveView('cards')}
             carryOverSettings={carryOverSettings}
@@ -1311,24 +1389,26 @@ export default function App() {
         </footer>
       </main>
 
-      {/* Edit Employees Modal */}
-      <EditEmployeesModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        employees={employees}
-        onSave={(updated) => {
-          setEmployees(updated);
-          saveEmployees(updated);
-          for (const emp of updated) {
-            saveEmployeeToFirestore(emp).catch(console.error);
-          }
-          showToast('Dati dei dipendenti aggiornati e sincronizzati sul Cloud!');
-        }}
-      />
+      {/* Edit Employees Modal - Only accessible to managers/superadmins, not on tablet kiosk */}
+      {!isWorker && !isKiosk && (
+        <EditEmployeesModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          employees={employees}
+          onSave={(updated) => {
+            setEmployees(updated);
+            saveEmployees(updated);
+            for (const emp of updated) {
+              saveEmployeeToFirestore(emp).catch(console.error);
+            }
+            showToast('Dati dei dipendenti aggiornati e sincronizzati sul Cloud!');
+          }}
+        />
+      )}
 
       {/* Security Password Protected Clear All Modal */}
       <ClearAllConfirmModal
-        isOpen={isClearModalOpen}
+        isOpen={false}
         onClose={() => setIsClearModalOpen(false)}
         onConfirm={handleConfirmClearAll}
       />

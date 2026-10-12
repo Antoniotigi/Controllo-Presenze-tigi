@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { Logo } from './Logo';
+import { findUserAccount, isKioskUser } from '../utils/authConfig';
 
 interface NavbarProps {
   currentDate: string;
@@ -44,6 +45,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  const currentUserAccount = findUserAccount(loggedInUsername || '');
+  const isKiosk = isKioskUser(loggedInUsername || '');
+  const userInitials = currentUserAccount?.initials || (loggedInUsername?.toLowerCase() === 'giulia' ? 'GL' : 'TG');
+  const userDisplayName = currentUserAccount?.displayName || (loggedInUsername?.toLowerCase() === 'giulia' ? 'Giulia (Admin)' : 'TigiCongress');
+  const userSubtitle = currentUserAccount?.subtitle || (loggedInUsername?.toLowerCase() === 'giulia' ? 'Accesso Completo' : isKiosk ? 'Pannello Presenze' : 'Accesso Lettura/Timbra');
+  const canClearCartellini = Boolean(onClearAll && currentUserAccount?.canClearCartellini);
 
   // Update clock every second, formatted as HH:MM to match the image
   useEffect(() => {
@@ -97,37 +105,41 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </button>
 
-          <button
-            id="nav-leaves"
-            onClick={() => {
-              onOpenLeaves();
-              setActiveView('leaves');
-            }}
-            className={`relative flex items-center justify-center h-[72px] px-1 text-sm font-semibold transition-colors cursor-pointer ${
-              activeView === 'leaves' ? 'text-[#0b5cd5]' : 'text-[#64748B] hover:text-[#101B32]'
-            }`}
-          >
-            <span>Ferie e permessi</span>
-            {activeView === 'leaves' && (
-              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#0b5cd5] rounded-t-full" />
-            )}
-          </button>
+          {!isKiosk && (
+            <>
+              <button
+                id="nav-leaves"
+                onClick={() => {
+                  onOpenLeaves();
+                  setActiveView('leaves');
+                }}
+                className={`relative flex items-center justify-center h-[72px] px-1 text-sm font-semibold transition-colors cursor-pointer ${
+                  activeView === 'leaves' ? 'text-[#0b5cd5]' : 'text-[#64748B] hover:text-[#101B32]'
+                }`}
+              >
+                <span>Ferie e permessi</span>
+                {activeView === 'leaves' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#0b5cd5] rounded-t-full" />
+                )}
+              </button>
 
-          <button
-            id="nav-report"
-            onClick={() => {
-              onOpenReport();
-              setActiveView('report');
-            }}
-            className={`relative flex items-center justify-center h-[72px] px-1 text-sm font-semibold transition-colors cursor-pointer ${
-              activeView === 'report' ? 'text-[#0b5cd5]' : 'text-[#64748B] hover:text-[#101B32]'
-            }`}
-          >
-            <span>Report</span>
-            {activeView === 'report' && (
-              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#0b5cd5] rounded-t-full" />
-            )}
-          </button>
+              <button
+                id="nav-report"
+                onClick={() => {
+                  onOpenReport();
+                  setActiveView('report');
+                }}
+                className={`relative flex items-center justify-center h-[72px] px-1 text-sm font-semibold transition-colors cursor-pointer ${
+                  activeView === 'report' ? 'text-[#0b5cd5]' : 'text-[#64748B] hover:text-[#101B32]'
+                }`}
+              >
+                <span>Report</span>
+                {activeView === 'report' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#0b5cd5] rounded-t-full" />
+                )}
+              </button>
+            </>
+          )}
         </nav>
 
         {/* Right Section: Sync, Time, Profile (Desktop Only) */}
@@ -159,7 +171,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-1 hover:opacity-85 transition-opacity cursor-pointer focus:outline-hidden"
             >
               <div className="w-8 h-8 rounded-full bg-[#E2E8F0] border border-slate-300 flex items-center justify-center text-xs font-bold text-[#101B32]">
-                {loggedInUsername?.toLowerCase() === 'giulia' ? 'GL' : 'TG'}
+                {userInitials}
               </div>
               <ChevronDown className="w-4 h-4 text-[#64748B]" />
             </button>
@@ -169,27 +181,28 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E2E8F0] rounded-2xl shadow-lg py-2 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="px-4 py-2 border-b border-[#E2E8F0] mb-1">
                   <p className="font-bold text-[#101B32]">
-                    {loggedInUsername?.toLowerCase() === 'giulia' ? 'Giulia (Admin)' : 'TigiCongress'}
+                    {userDisplayName}
                   </p>
                   <p className="text-[10px] text-[#64748B] truncate">
-                    {loggedInUsername?.toLowerCase() === 'giulia' ? 'Accesso Completo' : 'Accesso Lettura/Timbra'}
+                    {userSubtitle}
                   </p>
                 </div>
 
-                {onClearAll && loggedInUsername?.toLowerCase() === 'giulia' && (
-                  <button
-                    onClick={() => {
-                      setIsDropdownOpen(false);
-                      onClearAll();
-                    }}
-                    className="w-full text-left px-4 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors cursor-pointer"
-                  >
-                    <Eraser className="w-3.5 h-3.5 text-rose-500" />
-                    <span>Svuota cartellini</span>
-                  </button>
+                {canClearCartellini && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        onClearAll && onClearAll();
+                      }}
+                      className="w-full text-left px-4 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Eraser className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Svuota cartellini</span>
+                    </button>
+                    <div className="border-t border-[#E2E8F0] my-1" />
+                  </>
                 )}
-
-                <div className="border-t border-[#E2E8F0] my-1" />
 
                 {onLogout && (
                   <button
@@ -270,75 +283,90 @@ export const Navbar: React.FC<NavbarProps> = ({
               {activeView === 'cards' && <span className="w-2 h-2 rounded-full bg-[#0b5cd5]" />}
             </button>
 
-            <button
-              onClick={() => {
-                onOpenLeaves();
-                setActiveView('leaves');
-                setIsMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center justify-between p-3 rounded-xl font-bold transition-all text-sm cursor-pointer ${
-                activeView === 'leaves'
-                  ? 'bg-[#e6f0fa] text-[#0b5cd5]'
-                  : 'text-[#64748B] hover:bg-[#F4F7FA] hover:text-[#101B32]'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Palmtree className="w-5 h-5" />
-                <span>Ferie e permessi</span>
-              </div>
-              {activeView === 'leaves' && <span className="w-2 h-2 rounded-full bg-[#0b5cd5]" />}
-            </button>
+            {!isKiosk && (
+              <>
+                <button
+                  onClick={() => {
+                    onOpenLeaves();
+                    setActiveView('leaves');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between p-3 rounded-xl font-bold transition-all text-sm cursor-pointer ${
+                    activeView === 'leaves'
+                      ? 'bg-[#e6f0fa] text-[#0b5cd5]'
+                      : 'text-[#64748B] hover:bg-[#F4F7FA] hover:text-[#101B32]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Palmtree className="w-5 h-5" />
+                    <span>Ferie e permessi</span>
+                  </div>
+                  {activeView === 'leaves' && <span className="w-2 h-2 rounded-full bg-[#0b5cd5]" />}
+                </button>
 
-            <button
-              onClick={() => {
-                onOpenReport();
-                setActiveView('report');
-                setIsMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center justify-between p-3 rounded-xl font-bold transition-all text-sm cursor-pointer ${
-                activeView === 'report'
-                  ? 'bg-[#e6f0fa] text-[#0b5cd5]'
-                  : 'text-[#64748B] hover:bg-[#F4F7FA] hover:text-[#101B32]'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <FileSpreadsheet className="w-5 h-5 text-[#16a34a]" />
-                <span>Report</span>
-              </div>
-              {activeView === 'report' && <span className="w-2 h-2 rounded-full bg-[#0b5cd5]" />}
-            </button>
+                <button
+                  onClick={() => {
+                    onOpenReport();
+                    setActiveView('report');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between p-3 rounded-xl font-bold transition-all text-sm cursor-pointer ${
+                    activeView === 'report'
+                      ? 'bg-[#e6f0fa] text-[#0b5cd5]'
+                      : 'text-[#64748B] hover:bg-[#F4F7FA] hover:text-[#101B32]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <FileSpreadsheet className="w-5 h-5 text-[#16a34a]" />
+                    <span>Report</span>
+                  </div>
+                  {activeView === 'report' && <span className="w-2 h-2 rounded-full bg-[#0b5cd5]" />}
+                </button>
+              </>
+            )}
           </div>
 
           {/* Divider */}
           <div className="border-t border-[#E2E8F0] my-1" />
 
-          {/* Section: Admin Actions */}
+          {/* Section: Actions / Logout */}
           <div className="px-2 py-1">
-            <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-2 select-none">
-              Azioni Amministratore
-            </p>
-            
-            <div className="flex flex-col space-y-1">
-              {onClearAll && loggedInUsername?.toLowerCase() === 'giulia' && (
+            <div className="flex items-center gap-2.5 px-2 py-2 mb-2 bg-slate-50 border border-slate-200 rounded-xl">
+              <div className="w-8 h-8 rounded-full bg-[#E2E8F0] border border-slate-300 flex items-center justify-center text-xs font-bold text-[#101B32] shrink-0">
+                {userInitials}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-[#101B32] truncate">{userDisplayName}</p>
+                <p className="text-[10px] text-[#64748B] truncate">{userSubtitle}</p>
+              </div>
+            </div>
+
+            {canClearCartellini && (
+              <div className="mb-2">
+                <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider mb-2 select-none">
+                  Azioni Amministratore
+                </p>
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    onClearAll();
+                    onClearAll && onClearAll();
                   }}
                   className="w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                 >
                   <Eraser className="w-4 h-4 text-rose-500" />
                   <span>Svuota cartellini</span>
                 </button>
-              )}
+              </div>
+            )}
 
+            <div className="flex flex-col space-y-1">
               {onLogout && (
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     onLogout();
                   }}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-bold text-[#101B32] hover:bg-[#F4F7FA] transition-colors cursor-pointer border-t border-slate-100 mt-2 pt-2.5"
+                  className="w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-bold text-[#101B32] hover:bg-[#F4F7FA] transition-colors cursor-pointer border-t border-slate-100 mt-1 pt-2.5"
                 >
                   <LogOut className="w-4 h-4 text-slate-500" />
                   <span>Esci (Disconnetti)</span>
