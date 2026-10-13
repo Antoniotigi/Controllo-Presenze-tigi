@@ -521,10 +521,10 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
   }, [currentDate]);
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full flex flex-col justify-between overflow-hidden bg-[#F8FAFC] text-[#101B32] font-sans antialiased select-none px-3.5 pt-2 pb-2.5">
+    <div className="h-[100dvh] max-h-[100dvh] w-full flex flex-col justify-between overflow-hidden bg-[#F8FAFC] text-[#101B32] font-sans antialiased select-none px-3 pt-[max(0.35rem,env(safe-area-inset-top))] pb-[max(0.35rem,env(safe-area-inset-bottom))] gap-1">
       {/* Toast popup */}
       {feedbackToast && (
-        <div className="fixed top-3 left-4 right-4 z-50 bg-[#101B32] text-white px-3.5 py-2.5 rounded-2xl shadow-xl text-xs font-semibold flex items-center justify-between gap-2 border border-slate-700 animate-in fade-in slide-in-from-top-3 duration-150">
+        <div className="fixed top-3 left-4 right-4 z-50 bg-[#101B32] text-white px-3.5 py-2 rounded-xl shadow-xl text-xs font-semibold flex items-center justify-between gap-2 border border-slate-700 animate-in fade-in slide-in-from-top-3 duration-150">
           <div className="flex items-center gap-2 truncate">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span className="truncate">{feedbackToast}</span>
@@ -539,13 +539,13 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         </div>
       )}
 
-      {/* ZONE 1: TOP APP BAR (~40px) */}
-      <header className="flex items-center justify-between gap-2 shrink-0 h-10 border-b border-slate-200/80 pb-1.5">
+      {/* ZONE 1: TOP APP BAR (~34px) */}
+      <header className="flex items-center justify-between gap-2 shrink-0 h-8.5 border-b border-slate-200/80 pb-1">
         {/* Brand & User identity */}
-        <div className="flex items-center gap-2 min-w-0">
-          <Logo size={26} showText={false} />
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Logo size={22} showText={false} />
+          <div className="flex flex-col min-w-0 leading-none">
+            <div className="flex items-center gap-1">
               <span className="text-xs font-black text-slate-900 truncate tracking-tight">
                 {employee.name}
               </span>
@@ -553,42 +553,42 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
                 className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass}`}
               />
             </div>
-            <span className="text-[10px] text-slate-500 font-medium truncate">
+            <span className="text-[9px] text-slate-500 font-medium truncate mt-0.5">
               {statusLabel} • <span className="font-mono font-semibold">{systemTimeHHMM}</span>
             </span>
           </div>
         </div>
 
         {/* Action icons: Views, Cloud Sync, Logout */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={onOpenReport}
-            className="w-7.5 h-7.5 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:text-emerald-700 transition-colors shadow-2xs active:bg-slate-50 cursor-pointer"
+            className="w-6.5 h-6.5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:text-emerald-700 transition-colors shadow-2xs active:bg-slate-50 cursor-pointer"
             title="Report mensile"
             aria-label="Report mensile"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
           </button>
 
           <button
             type="button"
             onClick={onOpenLeaves}
-            className="w-7.5 h-7.5 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:text-rose-700 transition-colors shadow-2xs active:bg-slate-50 cursor-pointer"
+            className="w-6.5 h-6.5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:text-rose-700 transition-colors shadow-2xs active:bg-slate-50 cursor-pointer"
             title="Ferie e permessi"
             aria-label="Ferie e permessi"
           >
-            <Palmtree className="w-3.5 h-3.5 text-rose-500" />
+            <Palmtree className="w-3 h-3 text-rose-500" />
           </button>
 
           <div
-            className={`w-7.5 h-7.5 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs ${
+            className={`w-6.5 h-6.5 rounded-lg bg-white border border-slate-200 flex items-center justify-center shadow-2xs ${
               isCloudConnected ? 'text-emerald-600' : 'text-amber-500 animate-pulse'
             }`}
             title={isCloudConnected ? 'Cloud sincronizzato' : 'Connessione...'}
           >
             <span
-              className={`w-2 h-2 rounded-full ${
+              className={`w-1.5 h-1.5 rounded-full ${
                 isCloudConnected ? 'bg-emerald-500' : 'bg-amber-500'
               }`}
             />
@@ -598,50 +598,50 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
             <button
               type="button"
               onClick={onLogout}
-              className="w-7.5 h-7.5 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-rose-600 transition-colors shadow-2xs active:bg-slate-50 cursor-pointer"
+              className="w-6.5 h-6.5 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-rose-600 transition-colors shadow-2xs active:bg-slate-50 cursor-pointer"
               title="Esci"
               aria-label="Esci"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3 h-3" />
             </button>
           )}
         </div>
       </header>
 
-      {/* ZONE 2: MODERN DATE NAVIGATION & 7-DAY STRIP (~72px) */}
-      <div className="shrink-0 flex flex-col gap-1.5 py-0.5">
+      {/* ZONE 2: MODERN DATE NAVIGATION & 7-DAY STRIP (~58px) */}
+      <div className="shrink-0 flex flex-col gap-1 py-0.5">
         {/* Top Control Bar: Month, Date Sheet Trigger, Today Pill, Navigation Arrows */}
-        <div className="flex items-center justify-between gap-1.5">
+        <div className="flex items-center justify-between gap-1">
           <button
             type="button"
             onClick={() => setActiveSheet('datePicker')}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200/90 shadow-2xs text-left active:bg-slate-50 transition-colors group cursor-pointer"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs text-left active:bg-slate-50 transition-colors group cursor-pointer"
           >
-            <Calendar className="w-3.5 h-3.5 text-[#0b5cd5] shrink-0" />
-            <div className="flex items-baseline gap-1.5 leading-none">
-              <span className="text-xs font-black text-slate-900 flex items-center gap-1">
+            <Calendar className="w-3 h-3 text-[#0b5cd5] shrink-0" />
+            <div className="flex items-baseline gap-1 leading-none">
+              <span className="text-[11px] font-black text-slate-900 flex items-center gap-0.5">
                 {currentFormattedDay}
-                <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-transform" />
+                <ChevronDown className="w-2.5 h-2.5 text-slate-400 group-hover:text-slate-600 transition-transform" />
               </span>
-              <span className="text-[10px] text-slate-400 font-medium capitalize">
+              <span className="text-[9px] text-slate-400 font-medium capitalize">
                 • {currentMonthYear}
               </span>
             </div>
           </button>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {!isToday && (
               <button
                 type="button"
                 onClick={() => onDateChange(todayDateStr)}
-                className="px-2 py-0.5 text-[10px] font-bold text-[#0b5cd5] bg-blue-50 border border-blue-200/90 rounded-xl active:bg-blue-100 flex items-center gap-1 shadow-2xs cursor-pointer transition-all active:scale-95"
+                className="px-1.5 py-0.5 text-[9px] font-bold text-[#0b5cd5] bg-blue-50 border border-blue-200/90 rounded-lg active:bg-blue-100 flex items-center gap-1 shadow-2xs cursor-pointer transition-all active:scale-95"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-[#0b5cd5] animate-pulse" />
                 <span>Oggi</span>
               </button>
             )}
 
-            <div className="flex items-center bg-white border border-slate-200/90 rounded-xl shadow-2xs p-0.5">
+            <div className="flex items-center bg-white border border-slate-200/90 rounded-lg shadow-2xs p-0.5">
               <button
                 type="button"
                 onClick={() => {
@@ -652,11 +652,11 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
                   const d = prev.getDate().toString().padStart(2, '0');
                   onDateChange(`${y}-${m}-${d}`);
                 }}
-                className="w-6 h-6 rounded-lg flex items-center justify-center text-slate-600 active:bg-slate-100 transition-colors cursor-pointer"
+                className="w-5.5 h-5.5 rounded flex items-center justify-center text-slate-600 active:bg-slate-100 transition-colors cursor-pointer"
                 title="Giorno precedente"
                 aria-label="Giorno precedente"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="w-3 h-3" />
               </button>
               <button
                 type="button"
@@ -668,11 +668,11 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
                   const d = next.getDate().toString().padStart(2, '0');
                   onDateChange(`${y}-${m}-${d}`);
                 }}
-                className="w-6 h-6 rounded-lg flex items-center justify-center text-slate-600 active:bg-slate-100 transition-colors cursor-pointer"
+                className="w-5.5 h-5.5 rounded flex items-center justify-center text-slate-600 active:bg-slate-100 transition-colors cursor-pointer"
                 title="Giorno successivo"
                 aria-label="Giorno successivo"
               >
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3 h-3" />
               </button>
             </div>
           </div>
@@ -686,7 +686,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
                 key={day.dateStr}
                 type="button"
                 onClick={() => onDateChange(day.dateStr)}
-                className={`flex flex-col items-center justify-between py-1 px-0.5 rounded-xl transition-all cursor-pointer select-none ${
+                className={`flex flex-col items-center justify-between py-0.5 px-0.5 rounded-lg transition-all cursor-pointer select-none ${
                   day.isSelected
                     ? 'bg-[#101B32] text-white shadow-xs ring-1 ring-slate-900'
                     : day.isToday
@@ -695,7 +695,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
                 }`}
               >
                 <span
-                  className={`text-[9px] font-bold tracking-wider uppercase leading-none ${
+                  className={`text-[8px] font-bold tracking-wider uppercase leading-none ${
                     day.isSelected
                       ? 'text-slate-300'
                       : day.isToday
@@ -706,7 +706,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
                   {day.dayLabel}
                 </span>
                 <span
-                  className={`text-xs font-black font-mono leading-none my-0.5 ${
+                  className={`text-[11px] font-black font-mono leading-none my-0.5 ${
                     day.isSelected ? 'text-white' : 'text-slate-900'
                   }`}
                 >
@@ -737,12 +737,12 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
 
       {/* ZONE 3: OVERNIGHT ALERT BANNER (Only if pending from yesterday) */}
       {yesterdayShiftPending && (
-        <div className="bg-gradient-to-r from-indigo-900 to-slate-900 text-white rounded-xl p-2 shrink-0 flex items-center justify-between gap-2 shadow-xs border border-indigo-700/40">
-          <div className="flex items-center gap-2 min-w-0">
-            <Moon className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+        <div className="bg-gradient-to-r from-indigo-900 to-slate-900 text-white rounded-lg p-1.5 shrink-0 flex items-center justify-between gap-1.5 shadow-xs border border-indigo-700/40">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Moon className="w-3 h-3 text-indigo-400 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[10px] font-bold truncate">Turno notturno aperto ieri</p>
-              <p className="text-[9px] text-indigo-200 font-mono truncate">
+              <p className="text-[9px] font-bold truncate">Turno notturno aperto ieri</p>
+              <p className="text-[8px] text-indigo-200 font-mono truncate">
                 Iniziato alle {yesterdayShiftPending.rec.clockInAfternoon}
               </p>
             </div>
@@ -760,30 +760,30 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
               onSave(updatedRec);
               showToast(`Turno di ieri chiuso alle ${now} (+1 gg 🌙)`);
             }}
-            className="px-2 py-0.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg text-[10px] font-bold shrink-0 shadow-2xs flex items-center gap-1 cursor-pointer"
+            className="px-2 py-0.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-md text-[9px] font-bold shrink-0 shadow-2xs flex items-center gap-1 cursor-pointer"
           >
-            <Moon className="w-3 h-3" />
+            <Moon className="w-2.5 h-2.5" />
             <span>Chiudi Ora</span>
           </button>
         </div>
       )}
 
-      {/* ZONE 4: HERO METRIC CARD (~64px) */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-2.5 shadow-2xs shrink-0 flex flex-col justify-between gap-1.5">
+      {/* ZONE 4: HERO METRIC CARD (~50px) */}
+      <div className="bg-white border border-slate-200/90 rounded-xl p-2 shadow-2xs shrink-0 flex flex-col justify-between gap-1">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block">
               Ore Lavorate Oggi
             </span>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-xl font-black text-slate-900 font-mono tracking-tight">
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-black text-slate-900 font-mono tracking-tight leading-none">
                 {leaveType === 'ferie'
                   ? '8h 00m'
                   : calculation.status === 'non_timbrato'
                   ? '0h 00m'
                   : calculation.hoursWorkedFormatted}
               </span>
-              <span className="text-xs font-semibold text-slate-400">
+              <span className="text-[10px] font-semibold text-slate-400">
                 / {formatMinutesToHM(standardMinutesToday)}
               </span>
             </div>
@@ -791,12 +791,12 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
 
           <div className="text-right flex flex-col items-end gap-0.5">
             <span
-              className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border ${statusColorClass}`}
+              className={`px-1.5 py-0.2 rounded-md text-[9px] font-bold border ${statusColorClass}`}
             >
               {statusLabel}
             </span>
             <span
-              className={`text-xs font-mono font-bold ${
+              className={`text-[11px] font-mono font-bold ${
                 calculation.isOvertime
                   ? 'text-emerald-600'
                   : calculation.isDeficit
@@ -814,7 +814,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         </div>
 
         {/* Mini progress bar */}
-        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden flex">
+        <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden flex">
           <div
             className={`h-full rounded-full transition-all duration-300 ${
               calculation.status === 'al_lavoro'
@@ -828,7 +828,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         </div>
       </div>
 
-      {/* ZONE 5: THE 4 TIMESTAMPS GRID (~104px) */}
+      {/* ZONE 5: THE 4 TIMESTAMPS GRID (~86px) */}
       <div className="grid grid-cols-2 gap-1.5 shrink-0">
         {/* Slot 1: Mattina In */}
         <div
@@ -840,7 +840,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
               persistChanges({ clockInMorning: now, leaveType: 'none' }, `1ª Entrata: ${now}`);
             }
           }}
-          className={`bg-white border rounded-2xl p-2 flex flex-col justify-between transition-all shadow-2xs relative ${
+          className={`bg-white border rounded-xl p-1.5 flex flex-col justify-between transition-all shadow-2xs relative ${
             clockInMorning
               ? 'border-emerald-200/80 bg-emerald-50/20'
               : isToday && !clockInMorning
@@ -849,21 +849,21 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1 uppercase">
-              <Sun className="w-3 h-3 text-amber-500" />
+            <span className="text-[9px] font-bold text-amber-600 flex items-center gap-1 uppercase leading-none">
+              <Sun className="w-2.5 h-2.5 text-amber-500" />
               1ª Entrata
             </span>
             {isToday && !clockInMorning && (
-              <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded">
+              <span className="px-1 py-0.2 bg-emerald-100 text-emerald-800 text-[8px] font-bold rounded">
                 Ora
               </span>
             )}
           </div>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-base sm:text-lg font-black font-mono text-slate-900">
+          <div className="flex items-baseline justify-between mt-0.5">
+            <span className="text-sm sm:text-base font-black font-mono text-slate-900 leading-none">
               {clockInMorning || '--:--'}
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">Mattina</span>
+            <span className="text-[9px] text-slate-400 font-medium">Mattina</span>
           </div>
         </div>
 
@@ -876,7 +876,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
               persistChanges({ clockOutMorning: now }, `1ª Uscita (Pausa): ${now}`);
             }
           }}
-          className={`bg-white border rounded-2xl p-2 flex flex-col justify-between transition-all shadow-2xs relative ${
+          className={`bg-white border rounded-xl p-1.5 flex flex-col justify-between transition-all shadow-2xs relative ${
             clockOutMorning
               ? 'border-amber-200/80 bg-amber-50/20'
               : isToday && clockInMorning && !clockOutMorning
@@ -885,21 +885,21 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1 uppercase">
-              <Coffee className="w-3 h-3 text-amber-500" />
+            <span className="text-[9px] font-bold text-amber-600 flex items-center gap-1 uppercase leading-none">
+              <Coffee className="w-2.5 h-2.5 text-amber-500" />
               1ª Uscita
             </span>
             {isToday && clockInMorning && !clockOutMorning && (
-              <span className="px-1.5 py-0.2 bg-amber-100 text-amber-800 text-[9px] font-bold rounded">
+              <span className="px-1 py-0.2 bg-amber-100 text-amber-800 text-[8px] font-bold rounded">
                 Ora
               </span>
             )}
           </div>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-base sm:text-lg font-black font-mono text-slate-900">
+          <div className="flex items-baseline justify-between mt-0.5">
+            <span className="text-sm sm:text-base font-black font-mono text-slate-900 leading-none">
               {clockOutMorning || '--:--'}
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">Pausa</span>
+            <span className="text-[9px] text-slate-400 font-medium">Pausa</span>
           </div>
         </div>
 
@@ -913,7 +913,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
               persistChanges({ clockInAfternoon: now, leaveType: 'none' }, `2ª Entrata (Rientro): ${now}`);
             }
           }}
-          className={`bg-white border rounded-2xl p-2 flex flex-col justify-between transition-all shadow-2xs relative ${
+          className={`bg-white border rounded-xl p-1.5 flex flex-col justify-between transition-all shadow-2xs relative ${
             clockInAfternoon
               ? 'border-blue-200/80 bg-blue-50/20'
               : isToday && clockOutMorning && !clockInAfternoon
@@ -922,21 +922,21 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-blue-600 flex items-center gap-1 uppercase">
-              <Sunset className="w-3 h-3 text-blue-500" />
+            <span className="text-[9px] font-bold text-blue-600 flex items-center gap-1 uppercase leading-none">
+              <Sunset className="w-2.5 h-2.5 text-blue-500" />
               2ª Entrata
             </span>
             {isToday && clockOutMorning && !clockInAfternoon && (
-              <span className="px-1.5 py-0.2 bg-blue-100 text-blue-800 text-[9px] font-bold rounded">
+              <span className="px-1 py-0.2 bg-blue-100 text-blue-800 text-[8px] font-bold rounded">
                 Ora
               </span>
             )}
           </div>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-base sm:text-lg font-black font-mono text-slate-900">
+          <div className="flex items-baseline justify-between mt-0.5">
+            <span className="text-sm sm:text-base font-black font-mono text-slate-900 leading-none">
               {clockInAfternoon || '--:--'}
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">Rientro</span>
+            <span className="text-[9px] text-slate-400 font-medium">Rientro</span>
           </div>
         </div>
 
@@ -954,7 +954,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
               );
             }
           }}
-          className={`bg-white border rounded-2xl p-2 flex flex-col justify-between transition-all shadow-2xs relative ${
+          className={`bg-white border rounded-xl p-1.5 flex flex-col justify-between transition-all shadow-2xs relative ${
             clockOutAfternoon
               ? 'border-indigo-200/80 bg-indigo-50/20'
               : isToday && clockInAfternoon && !clockOutAfternoon
@@ -963,37 +963,37 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-indigo-600 flex items-center gap-1 uppercase">
-              <Moon className="w-3 h-3 text-indigo-500" />
+            <span className="text-[9px] font-bold text-indigo-600 flex items-center gap-1 uppercase leading-none">
+              <Moon className="w-2.5 h-2.5 text-indigo-500" />
               2ª Uscita
             </span>
             {isOvernightRecorded && (
-              <span className="px-1 py-0.2 bg-indigo-100 text-indigo-800 text-[9px] font-bold rounded">
+              <span className="px-1 py-0.2 bg-indigo-100 text-indigo-800 text-[8px] font-bold rounded">
                 +1gg 🌙
               </span>
             )}
             {isToday && clockInAfternoon && !clockOutAfternoon && !isOvernightRecorded && (
-              <span className="px-1.5 py-0.2 bg-rose-100 text-rose-800 text-[9px] font-bold rounded">
+              <span className="px-1.5 py-0.2 bg-rose-100 text-rose-800 text-[8px] font-bold rounded">
                 Ora
               </span>
             )}
           </div>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-base sm:text-lg font-black font-mono text-slate-900">
+          <div className="flex items-baseline justify-between mt-0.5">
+            <span className="text-sm sm:text-base font-black font-mono text-slate-900 leading-none">
               {clockOutAfternoon || '--:--'}
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">Fine</span>
+            <span className="text-[9px] text-slate-400 font-medium">Fine</span>
           </div>
         </div>
       </div>
 
-      {/* ZONE 6: ERGONOMIC PRIMARY THUMB ACTION BUTTON (~44px) */}
+      {/* ZONE 6: ERGONOMIC PRIMARY THUMB ACTION BUTTON (~38px) */}
       <div className="shrink-0">
         {nextSlot ? (
           <button
             type="button"
             onClick={nextSlot.action}
-            className={`w-full py-3 px-4 rounded-2xl font-black text-sm text-white shadow-md active:scale-[0.98] transition-all flex items-center justify-between cursor-pointer ${
+            className={`w-full py-2.5 px-3.5 rounded-xl font-black text-xs text-white shadow-sm active:scale-[0.98] transition-all flex items-center justify-between cursor-pointer ${
               nextSlot.type === 'entrata'
                 ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
                 : nextSlot.type === 'pausa'
@@ -1003,20 +1003,20 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
                 : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 shrink-0" />
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 shrink-0" />
               <span>{nextSlot.label}</span>
             </div>
-            <div className="flex items-center gap-1 font-mono text-xs opacity-90">
+            <div className="flex items-center gap-1 font-mono text-[11px] opacity-90">
               <span>{systemTimeHHMM}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3 h-3" />
             </div>
           </button>
         ) : (
-          <div className="w-full py-2.5 px-4 rounded-2xl font-bold text-xs bg-slate-100 text-slate-600 border border-slate-200/90 flex items-center justify-between">
+          <div className="w-full py-2 px-3 rounded-xl font-bold text-[11px] bg-slate-100 text-slate-600 border border-slate-200/90 flex items-center justify-between">
             <span className="flex items-center gap-1.5 font-semibold">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              Turno completato per questa giornata
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              Turno completato per oggi
             </span>
             <span className="font-mono text-slate-900 font-bold">
               {calculation.hoursWorkedFormatted}
@@ -1025,20 +1025,20 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         )}
       </div>
 
-      {/* ZONE 7: QUICK OPTIONS TOOLBAR (4 Compact iOS Tabs, ~40px) */}
-      <div className="grid grid-cols-4 gap-1.5 shrink-0">
+      {/* ZONE 7: QUICK OPTIONS TOOLBAR (4 Compact iOS Tabs, ~32px) */}
+      <div className="grid grid-cols-4 gap-1 shrink-0">
         {/* Permesso */}
         <button
           type="button"
           onClick={() => setActiveSheet('permesso')}
-          className={`py-2 px-1 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
+          className={`py-1.5 px-0.5 rounded-lg border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
             (permessoHours > 0 || permessoMinutes > 0 || leaveType === 'permesso')
               ? 'bg-purple-50 border-purple-200 text-purple-700 font-bold'
               : 'bg-white border-slate-200/90 text-slate-700'
           }`}
         >
-          <Clock className="w-3.5 h-3.5" />
-          <span className="text-[10px] font-bold leading-tight truncate w-full">
+          <Clock className="w-3 h-3" />
+          <span className="text-[9px] font-bold leading-tight truncate w-full">
             {permessoHours > 0 || permessoMinutes > 0
               ? `${permessoHours}h${permessoMinutes > 0 ? `${permessoMinutes}m` : ''}`
               : 'Permesso'}
@@ -1049,14 +1049,14 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         <button
           type="button"
           onClick={() => setActiveSheet('uscita')}
-          className={`py-2 px-1 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
+          className={`py-1.5 px-0.5 rounded-lg border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
             exitDuringTurnStart || exitDuringTurnEnd
               ? 'bg-amber-50 border-amber-200 text-amber-700 font-bold'
               : 'bg-white border-slate-200/90 text-slate-700'
           }`}
         >
-          <Coffee className="w-3.5 h-3.5" />
-          <span className="text-[10px] font-bold leading-tight truncate w-full">
+          <Coffee className="w-3 h-3" />
+          <span className="text-[9px] font-bold leading-tight truncate w-full">
             {exitDuringTurnStart ? `${exitDuringTurnStart}` : 'Uscita'}
           </span>
         </button>
@@ -1065,14 +1065,14 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         <button
           type="button"
           onClick={() => setActiveSheet('overtime')}
-          className={`py-2 px-1 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
+          className={`py-1.5 px-0.5 rounded-lg border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
             overtimeAuthorized || overtimeEventName || calculation.overtimeMinutes > 0
               ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-bold'
               : 'bg-white border-slate-200/90 text-slate-700'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span className="text-[10px] font-bold leading-tight truncate w-full">
+          <Sparkles className="w-3 h-3" />
+          <span className="text-[9px] font-bold leading-tight truncate w-full">
             {overtimeAuthorized ? 'Straord. ✓' : 'Straordin.'}
           </span>
         </button>
@@ -1081,27 +1081,27 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         <button
           type="button"
           onClick={() => setActiveSheet('notes')}
-          className={`py-2 px-1 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
+          className={`py-1.5 px-0.5 rounded-lg border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
             notes || leaveType === 'ferie'
               ? 'bg-rose-50 border-rose-200 text-rose-700 font-bold'
               : 'bg-white border-slate-200/90 text-slate-700'
           }`}
         >
-          <FileText className="w-3.5 h-3.5" />
-          <span className="text-[10px] font-bold leading-tight truncate w-full">
+          <FileText className="w-3 h-3" />
+          <span className="text-[9px] font-bold leading-tight truncate w-full">
             {leaveType === 'ferie' ? 'Ferie ✓' : notes ? 'Note ✓' : 'Note'}
           </span>
         </button>
       </div>
 
-      {/* ZONE 8: FOOTER CONTACT & SAFE AREA (~20px) */}
-      <footer className="shrink-0 flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-200/60">
+      {/* ZONE 8: FOOTER CONTACT & SAFE AREA (~18px) */}
+      <footer className="shrink-0 flex items-center justify-between text-[9px] text-slate-400 pt-0.5 border-t border-slate-200/60">
         <button
           type="button"
           onClick={() => setActiveSheet('info')}
           className="text-slate-500 hover:text-slate-800 flex items-center gap-1 font-semibold truncate cursor-pointer"
         >
-          <HelpCircle className="w-3 h-3 text-slate-400 shrink-0" />
+          <HelpCircle className="w-2.5 h-2.5 text-slate-400 shrink-0" />
           <span className="truncate">Omessa timbratura? Contatta Giulia</span>
         </button>
         <span className="font-mono text-slate-400 shrink-0">TIGi Mobile</span>

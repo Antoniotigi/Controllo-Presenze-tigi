@@ -1038,7 +1038,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F7FA] text-[#101B32] flex flex-col font-sans antialiased">
+    <div className={`${isWorkerCardsView ? 'h-[100dvh] max-h-[100dvh] overflow-hidden md:min-h-screen md:h-auto md:max-h-none' : 'min-h-screen'} bg-[#F4F7FA] text-[#101B32] flex flex-col font-sans antialiased overscroll-none`}>
       {/* Global Navbar - hidden on mobile when worker is on cards view */}
       <div className={isWorkerCardsView ? 'hidden md:block' : 'block'}>
         <Navbar
@@ -1068,7 +1068,7 @@ export default function App() {
       <main
         className={`flex-1 w-full mx-auto ${
           isWorkerCardsView
-            ? 'p-0 md:px-6 md:py-8 md:max-w-7xl'
+            ? 'p-0 md:px-6 md:py-8 md:max-w-5xl'
             : 'max-w-7xl px-4 sm:px-6 lg:px-8 py-8'
         } flex flex-col justify-between`}
       >
@@ -1085,7 +1085,7 @@ export default function App() {
             <>
               {/* MOBILE IPHONE VIEW for workers (antonio, andrea, luca, dario) - ZERO SCROLL ON IPHONE */}
               {isWorker && visibleEmployees[0] && (
-                <div className="block md:hidden w-full h-[100dvh] max-h-[100dvh] overflow-hidden">
+                <div className="block md:hidden fixed inset-0 z-20 w-full h-[100dvh] max-h-[100dvh] overflow-hidden bg-[#F8FAFC]">
                   <MobileWorkerAttendanceView
                     employee={visibleEmployees[0]}
                     record={records.find(
@@ -1110,7 +1110,7 @@ export default function App() {
 
               {/* STANDARD CARDS VIEW (Desktop for worker, All viewports for Manager/Admin) */}
               <div
-                className={`space-y-6 flex-1 ${
+                className={`space-y-6 flex-1 w-full ${
                   isWorker ? 'hidden md:block' : 'block'
                 }`}
               >
@@ -1355,7 +1355,7 @@ export default function App() {
             })()}
 
             {/* THE EMPLOYEE CARDS */}
-            <div className={`grid grid-cols-1 ${visibleEmployees.length > 1 ? 'md:grid-cols-2' : 'max-w-2xl mx-auto'} gap-6`}>
+            <div className={`grid grid-cols-1 ${visibleEmployees.length > 1 ? 'md:grid-cols-2' : 'w-full'} gap-6`}>
               {visibleEmployees.map((employee, idx) => {
                 const record = records.find(
                   (r) => r.employeeId === employee.id && r.date === currentDate
