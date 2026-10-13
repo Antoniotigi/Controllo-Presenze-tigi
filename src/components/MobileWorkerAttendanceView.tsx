@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Sun,
   Sunset,
@@ -10,6 +10,7 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Sparkles,
   Palmtree,
   FileSpreadsheet,
@@ -30,6 +31,7 @@ import {
   formatMinutesToHM,
   getRecordTimestamps,
   formatDateIT,
+  formatMonthIT,
   timeToMinutes,
   getMinutesBetweenTimes,
   isAfternoonShiftOvernight,
@@ -39,6 +41,7 @@ import { Logo } from './Logo';
 interface MobileWorkerAttendanceViewProps {
   employee: Employee;
   record?: TimeRecord;
+  records?: TimeRecord[];
   currentDate: string;
   isToday: boolean;
   systemTimeHHMM: string;
@@ -56,6 +59,7 @@ interface MobileWorkerAttendanceViewProps {
 export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProps> = ({
   employee,
   record,
+  records = [],
   currentDate,
   isToday,
   systemTimeHHMM,
@@ -454,8 +458,70 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
       ? 'bg-purple-500'
       : 'bg-slate-400';
 
+  // Week days for modern 7-day strip
+  const weekDays = useMemo(() => {
+    const [y, m, d] = currentDate.split('-').map(Number);
+    const curr = new Date(y, m - 1, d);
+    const dayOfWeek = curr.getDay(); // 0 is Sun, 1 is Mon...
+    const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+    const monday = new Date(curr);
+    monday.setDate(curr.getDate() + diffToMonday);
+
+    const dayLabels = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+    const list = [];
+
+    for (let i = 0; i < 7; i++) {
+      const dObj = new Date(monday);
+      dObj.setDate(monday.getDate() + i);
+      const yr = dObj.getFullYear();
+      const mo = (dObj.getMonth() + 1).toString().padStart(2, '0');
+      const da = dObj.getDate().toString().padStart(2, '0');
+      const dateStr = `${yr}-${mo}-${da}`;
+
+      // Check record status for this day
+      const dayRec = (records || []).find(
+        (r) => r.employeeId === employee.id && r.date === dateStr
+      );
+      let statusDot: string | null = null;
+      if (dayRec) {
+        if (dayRec.leaveType === 'ferie') {
+          statusDot = 'bg-rose-500';
+        } else if (
+          dayRec.leaveType === 'permesso' ||
+          Boolean(dayRec.permessoHours) ||
+          Boolean(dayRec.permessoMinutes)
+        ) {
+          statusDot = 'bg-purple-500';
+        } else if (dayRec.clockInMorning || dayRec.clockInAfternoon) {
+          statusDot = 'bg-emerald-500';
+        }
+      }
+
+      list.push({
+        dateStr,
+        dayNum: dObj.getDate(),
+        dayLabel: dayLabels[i],
+        isToday: dateStr === todayDateStr,
+        isSelected: dateStr === currentDate,
+        statusDot,
+      });
+    }
+    return list;
+  }, [currentDate, todayDateStr, records, employee.id]);
+
+  const currentMonthYear = formatMonthIT(currentDate.slice(0, 7));
+
+  const currentFormattedDay = useMemo(() => {
+    if (!currentDate) return '';
+    const [y, m, d] = currentDate.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    const weekday = dt.toLocaleDateString('it-IT', { weekday: 'long' });
+    const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+    return `${capitalizedWeekday} ${d}`;
+  }, [currentDate]);
+
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full flex flex-col justify-between overflow-hidden bg-[#F8FAFC] text-[#101B32] font-sans antialiased select-none px-3.5 pt-2 pb-3">
+    <div className="h-[100dvh] max-h-[100dvh] w-full flex flex-col justify-between overflow-hidden bg-[#F8FAFC] text-[#101B32] font-sans antialiased select-none px-3.5 pt-2 pb-2.5">
       {/* Toast popup */}
       {feedbackToast && (
         <div className="fixed top-3 left-4 right-4 z-50 bg-[#101B32] text-white px-3.5 py-2.5 rounded-2xl shadow-xl text-xs font-semibold flex items-center justify-between gap-2 border border-slate-700 animate-in fade-in slide-in-from-top-3 duration-150">
@@ -473,11 +539,11 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         </div>
       )}
 
-      {/* ZONE 1: TOP APP BAR (~44px) */}
-      <header className="flex items-center justify-between gap-2 shrink-0 h-11 border-b border-slate-200/80 pb-2">
+      {/* ZONE 1: TOP APP BAR (~40px) */}
+      <header className="flex items-center justify-between gap-2 shrink-0 h-10 border-b border-slate-200/80 pb-1.5">
         {/* Brand & User identity */}
         <div className="flex items-center gap-2 min-w-0">
-          <Logo size={28} showText={false} />
+          <Logo size={26} showText={false} />
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-black text-slate-900 truncate tracking-tight">
@@ -498,25 +564,25 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
           <button
             type="button"
             onClick={onOpenReport}
-            className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:text-emerald-700 transition-colors shadow-2xs"
+            className="w-7.5 h-7.5 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:text-emerald-700 transition-colors shadow-2xs active:bg-slate-50 cursor-pointer"
             title="Report mensile"
             aria-label="Report mensile"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
           </button>
 
           <button
             type="button"
             onClick={onOpenLeaves}
-            className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:text-rose-700 transition-colors shadow-2xs"
+            className="w-7.5 h-7.5 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 hover:text-rose-700 transition-colors shadow-2xs active:bg-slate-50 cursor-pointer"
             title="Ferie e permessi"
             aria-label="Ferie e permessi"
           >
-            <Palmtree className="w-4 h-4 text-rose-500" />
+            <Palmtree className="w-3.5 h-3.5 text-rose-500" />
           </button>
 
           <div
-            className={`w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs ${
+            className={`w-7.5 h-7.5 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs ${
               isCloudConnected ? 'text-emerald-600' : 'text-amber-500 animate-pulse'
             }`}
             title={isCloudConnected ? 'Cloud sincronizzato' : 'Connessione...'}
@@ -532,80 +598,151 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
             <button
               type="button"
               onClick={onLogout}
-              className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-rose-600 transition-colors shadow-2xs"
+              className="w-7.5 h-7.5 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-rose-600 transition-colors shadow-2xs active:bg-slate-50 cursor-pointer"
               title="Esci"
               aria-label="Esci"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
       </header>
 
-      {/* ZONE 2: DATE NAVIGATION BAR (~36px) */}
-      <div className="flex items-center justify-between gap-2 shrink-0 py-1">
-        <button
-          type="button"
-          onClick={() => {
-            const prev = new Date(currentDate);
-            prev.setDate(prev.getDate() - 1);
-            const y = prev.getFullYear();
-            const m = (prev.getMonth() + 1).toString().padStart(2, '0');
-            const d = prev.getDate().toString().padStart(2, '0');
-            onDateChange(`${y}-${m}-${d}`);
-          }}
-          className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 active:bg-slate-100 transition-colors shadow-2xs"
-          title="Giorno precedente"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-
-        <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0">
+      {/* ZONE 2: MODERN DATE NAVIGATION & 7-DAY STRIP (~72px) */}
+      <div className="shrink-0 flex flex-col gap-1.5 py-0.5">
+        {/* Top Control Bar: Month, Date Sheet Trigger, Today Pill, Navigation Arrows */}
+        <div className="flex items-center justify-between gap-1.5">
           <button
             type="button"
             onClick={() => setActiveSheet('datePicker')}
-            className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 shadow-2xs active:bg-slate-50 truncate"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200/90 shadow-2xs text-left active:bg-slate-50 transition-colors group cursor-pointer"
           >
             <Calendar className="w-3.5 h-3.5 text-[#0b5cd5] shrink-0" />
-            <span className="truncate">{formatDateIT(currentDate)}</span>
+            <div className="flex items-baseline gap-1.5 leading-none">
+              <span className="text-xs font-black text-slate-900 flex items-center gap-1">
+                {currentFormattedDay}
+                <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-transform" />
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium capitalize">
+                • {currentMonthYear}
+              </span>
+            </div>
           </button>
 
-          {!isToday && (
-            <button
-              type="button"
-              onClick={() => onDateChange(todayDateStr)}
-              className="px-2 py-1 text-[11px] font-bold text-[#0b5cd5] bg-blue-50 border border-blue-200 rounded-xl active:bg-blue-100 shrink-0"
-            >
-              Oggi
-            </button>
-          )}
+          <div className="flex items-center gap-1.5">
+            {!isToday && (
+              <button
+                type="button"
+                onClick={() => onDateChange(todayDateStr)}
+                className="px-2 py-0.5 text-[10px] font-bold text-[#0b5cd5] bg-blue-50 border border-blue-200/90 rounded-xl active:bg-blue-100 flex items-center gap-1 shadow-2xs cursor-pointer transition-all active:scale-95"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0b5cd5] animate-pulse" />
+                <span>Oggi</span>
+              </button>
+            )}
+
+            <div className="flex items-center bg-white border border-slate-200/90 rounded-xl shadow-2xs p-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const prev = new Date(currentDate);
+                  prev.setDate(prev.getDate() - 1);
+                  const y = prev.getFullYear();
+                  const m = (prev.getMonth() + 1).toString().padStart(2, '0');
+                  const d = prev.getDate().toString().padStart(2, '0');
+                  onDateChange(`${y}-${m}-${d}`);
+                }}
+                className="w-6 h-6 rounded-lg flex items-center justify-center text-slate-600 active:bg-slate-100 transition-colors cursor-pointer"
+                title="Giorno precedente"
+                aria-label="Giorno precedente"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = new Date(currentDate);
+                  next.setDate(next.getDate() + 1);
+                  const y = next.getFullYear();
+                  const m = (next.getMonth() + 1).toString().padStart(2, '0');
+                  const d = next.getDate().toString().padStart(2, '0');
+                  onDateChange(`${y}-${m}-${d}`);
+                }}
+                className="w-6 h-6 rounded-lg flex items-center justify-center text-slate-600 active:bg-slate-100 transition-colors cursor-pointer"
+                title="Giorno successivo"
+                aria-label="Giorno successivo"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            const next = new Date(currentDate);
-            next.setDate(next.getDate() + 1);
-            const y = next.getFullYear();
-            const m = (next.getMonth() + 1).toString().padStart(2, '0');
-            const d = next.getDate().toString().padStart(2, '0');
-            onDateChange(`${y}-${m}-${d}`);
-          }}
-          className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 active:bg-slate-100 transition-colors shadow-2xs"
-          title="Giorno successivo"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
+        {/* 7-Day Interactive Weekday Strip */}
+        <div className="grid grid-cols-7 gap-1">
+          {weekDays.map((day) => {
+            return (
+              <button
+                key={day.dateStr}
+                type="button"
+                onClick={() => onDateChange(day.dateStr)}
+                className={`flex flex-col items-center justify-between py-1 px-0.5 rounded-xl transition-all cursor-pointer select-none ${
+                  day.isSelected
+                    ? 'bg-[#101B32] text-white shadow-xs ring-1 ring-slate-900'
+                    : day.isToday
+                    ? 'bg-blue-50/90 border border-blue-300 text-blue-900 font-semibold'
+                    : 'bg-white border border-slate-200/90 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span
+                  className={`text-[9px] font-bold tracking-wider uppercase leading-none ${
+                    day.isSelected
+                      ? 'text-slate-300'
+                      : day.isToday
+                      ? 'text-blue-700'
+                      : 'text-slate-400'
+                  }`}
+                >
+                  {day.dayLabel}
+                </span>
+                <span
+                  className={`text-xs font-black font-mono leading-none my-0.5 ${
+                    day.isSelected ? 'text-white' : 'text-slate-900'
+                  }`}
+                >
+                  {day.dayNum}
+                </span>
+                <div className="h-1 flex items-center justify-center">
+                  {day.statusDot ? (
+                    <span
+                      className={`w-1 h-1 rounded-full ${
+                        day.isSelected ? 'bg-white' : day.statusDot
+                      }`}
+                    />
+                  ) : day.isToday ? (
+                    <span
+                      className={`w-1 h-1 rounded-full ${
+                        day.isSelected ? 'bg-blue-300' : 'bg-blue-500'
+                      }`}
+                    />
+                  ) : (
+                    <span className="w-1 h-1" />
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ZONE 3: OVERNIGHT ALERT BANNER (Only if pending from yesterday) */}
       {yesterdayShiftPending && (
-        <div className="bg-gradient-to-r from-indigo-900 to-slate-900 text-white rounded-xl p-2.5 shrink-0 flex items-center justify-between gap-2 shadow-xs border border-indigo-700/40">
+        <div className="bg-gradient-to-r from-indigo-900 to-slate-900 text-white rounded-xl p-2 shrink-0 flex items-center justify-between gap-2 shadow-xs border border-indigo-700/40">
           <div className="flex items-center gap-2 min-w-0">
-            <Moon className="w-4 h-4 text-indigo-400 shrink-0" />
+            <Moon className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[11px] font-bold truncate">Turno notturno aperto ieri</p>
-              <p className="text-[10px] text-indigo-200 font-mono truncate">
+              <p className="text-[10px] font-bold truncate">Turno notturno aperto ieri</p>
+              <p className="text-[9px] text-indigo-200 font-mono truncate">
                 Iniziato alle {yesterdayShiftPending.rec.clockInAfternoon}
               </p>
             </div>
@@ -623,36 +760,36 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
               onSave(updatedRec);
               showToast(`Turno di ieri chiuso alle ${now} (+1 gg 🌙)`);
             }}
-            className="px-2.5 py-1 bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg text-[10px] font-bold shrink-0 shadow-2xs flex items-center gap-1 cursor-pointer"
+            className="px-2 py-0.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg text-[10px] font-bold shrink-0 shadow-2xs flex items-center gap-1 cursor-pointer"
           >
             <Moon className="w-3 h-3" />
-            <span>Chiudi Ora ({systemTimeHHMM})</span>
+            <span>Chiudi Ora</span>
           </button>
         </div>
       )}
 
-      {/* ZONE 4: HERO METRIC CARD (~72px) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-2xs shrink-0 flex flex-col justify-between gap-1.5">
+      {/* ZONE 4: HERO METRIC CARD (~64px) */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-2.5 shadow-2xs shrink-0 flex flex-col justify-between gap-1.5">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
               Ore Lavorate Oggi
             </span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900 font-mono tracking-tight">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-black text-slate-900 font-mono tracking-tight">
                 {leaveType === 'ferie'
                   ? '8h 00m'
                   : calculation.status === 'non_timbrato'
                   ? '0h 00m'
                   : calculation.hoursWorkedFormatted}
               </span>
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-semibold text-slate-400">
                 / {formatMinutesToHM(standardMinutesToday)}
               </span>
             </div>
           </div>
 
-          <div className="text-right flex flex-col items-end gap-1">
+          <div className="text-right flex flex-col items-end gap-0.5">
             <span
               className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border ${statusColorClass}`}
             >
@@ -691,8 +828,8 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         </div>
       </div>
 
-      {/* ZONE 5: THE 4 TIMESTAMPS GRID (~116px) */}
-      <div className="grid grid-cols-2 gap-2 shrink-0">
+      {/* ZONE 5: THE 4 TIMESTAMPS GRID (~104px) */}
+      <div className="grid grid-cols-2 gap-1.5 shrink-0">
         {/* Slot 1: Mattina In */}
         <div
           onClick={() => {
@@ -703,12 +840,12 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
               persistChanges({ clockInMorning: now, leaveType: 'none' }, `1ª Entrata: ${now}`);
             }
           }}
-          className={`bg-white border rounded-2xl p-2.5 flex flex-col justify-between transition-all shadow-2xs relative ${
+          className={`bg-white border rounded-2xl p-2 flex flex-col justify-between transition-all shadow-2xs relative ${
             clockInMorning
               ? 'border-emerald-200/80 bg-emerald-50/20'
               : isToday && !clockInMorning
               ? 'border-blue-300 ring-1 ring-blue-500/20 cursor-pointer active:bg-blue-50/30'
-              : 'border-slate-200'
+              : 'border-slate-200/90'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -723,7 +860,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
             )}
           </div>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-lg font-black font-mono text-slate-900">
+            <span className="text-base sm:text-lg font-black font-mono text-slate-900">
               {clockInMorning || '--:--'}
             </span>
             <span className="text-[10px] text-slate-400 font-medium">Mattina</span>
@@ -739,12 +876,12 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
               persistChanges({ clockOutMorning: now }, `1ª Uscita (Pausa): ${now}`);
             }
           }}
-          className={`bg-white border rounded-2xl p-2.5 flex flex-col justify-between transition-all shadow-2xs relative ${
+          className={`bg-white border rounded-2xl p-2 flex flex-col justify-between transition-all shadow-2xs relative ${
             clockOutMorning
               ? 'border-amber-200/80 bg-amber-50/20'
               : isToday && clockInMorning && !clockOutMorning
               ? 'border-amber-300 ring-1 ring-amber-500/20 cursor-pointer active:bg-amber-50/30'
-              : 'border-slate-200'
+              : 'border-slate-200/90'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -759,7 +896,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
             )}
           </div>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-lg font-black font-mono text-slate-900">
+            <span className="text-base sm:text-lg font-black font-mono text-slate-900">
               {clockOutMorning || '--:--'}
             </span>
             <span className="text-[10px] text-slate-400 font-medium">Pausa</span>
@@ -776,12 +913,12 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
               persistChanges({ clockInAfternoon: now, leaveType: 'none' }, `2ª Entrata (Rientro): ${now}`);
             }
           }}
-          className={`bg-white border rounded-2xl p-2.5 flex flex-col justify-between transition-all shadow-2xs relative ${
+          className={`bg-white border rounded-2xl p-2 flex flex-col justify-between transition-all shadow-2xs relative ${
             clockInAfternoon
               ? 'border-blue-200/80 bg-blue-50/20'
               : isToday && clockOutMorning && !clockInAfternoon
               ? 'border-blue-300 ring-1 ring-blue-500/20 cursor-pointer active:bg-blue-50/30'
-              : 'border-slate-200'
+              : 'border-slate-200/90'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -796,7 +933,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
             )}
           </div>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-lg font-black font-mono text-slate-900">
+            <span className="text-base sm:text-lg font-black font-mono text-slate-900">
               {clockInAfternoon || '--:--'}
             </span>
             <span className="text-[10px] text-slate-400 font-medium">Rientro</span>
@@ -817,12 +954,12 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
               );
             }
           }}
-          className={`bg-white border rounded-2xl p-2.5 flex flex-col justify-between transition-all shadow-2xs relative ${
+          className={`bg-white border rounded-2xl p-2 flex flex-col justify-between transition-all shadow-2xs relative ${
             clockOutAfternoon
               ? 'border-indigo-200/80 bg-indigo-50/20'
               : isToday && clockInAfternoon && !clockOutAfternoon
               ? 'border-rose-300 ring-1 ring-rose-500/20 cursor-pointer active:bg-rose-50/30'
-              : 'border-slate-200'
+              : 'border-slate-200/90'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -842,7 +979,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
             )}
           </div>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-lg font-black font-mono text-slate-900">
+            <span className="text-base sm:text-lg font-black font-mono text-slate-900">
               {clockOutAfternoon || '--:--'}
             </span>
             <span className="text-[10px] text-slate-400 font-medium">Fine</span>
@@ -850,13 +987,13 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         </div>
       </div>
 
-      {/* ZONE 6: ERGONOMIC PRIMARY THUMB ACTION BUTTON (~48px) */}
+      {/* ZONE 6: ERGONOMIC PRIMARY THUMB ACTION BUTTON (~44px) */}
       <div className="shrink-0">
         {nextSlot ? (
           <button
             type="button"
             onClick={nextSlot.action}
-            className={`w-full py-3.5 px-4 rounded-2xl font-black text-sm text-white shadow-md active:scale-[0.98] transition-all flex items-center justify-between cursor-pointer ${
+            className={`w-full py-3 px-4 rounded-2xl font-black text-sm text-white shadow-md active:scale-[0.98] transition-all flex items-center justify-between cursor-pointer ${
               nextSlot.type === 'entrata'
                 ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
                 : nextSlot.type === 'pausa'
@@ -876,7 +1013,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
             </div>
           </button>
         ) : (
-          <div className="w-full py-3 px-4 rounded-2xl font-bold text-xs bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-between">
+          <div className="w-full py-2.5 px-4 rounded-2xl font-bold text-xs bg-slate-100 text-slate-600 border border-slate-200/90 flex items-center justify-between">
             <span className="flex items-center gap-1.5 font-semibold">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               Turno completato per questa giornata
@@ -888,16 +1025,16 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         )}
       </div>
 
-      {/* ZONE 7: QUICK OPTIONS TOOLBAR (4 Compact iOS Tabs, ~42px) */}
+      {/* ZONE 7: QUICK OPTIONS TOOLBAR (4 Compact iOS Tabs, ~40px) */}
       <div className="grid grid-cols-4 gap-1.5 shrink-0">
         {/* Permesso */}
         <button
           type="button"
           onClick={() => setActiveSheet('permesso')}
-          className={`p-2 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 ${
+          className={`py-2 px-1 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
             (permessoHours > 0 || permessoMinutes > 0 || leaveType === 'permesso')
               ? 'bg-purple-50 border-purple-200 text-purple-700 font-bold'
-              : 'bg-white border-slate-200 text-slate-700'
+              : 'bg-white border-slate-200/90 text-slate-700'
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
@@ -912,10 +1049,10 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         <button
           type="button"
           onClick={() => setActiveSheet('uscita')}
-          className={`p-2 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 ${
+          className={`py-2 px-1 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
             exitDuringTurnStart || exitDuringTurnEnd
               ? 'bg-amber-50 border-amber-200 text-amber-700 font-bold'
-              : 'bg-white border-slate-200 text-slate-700'
+              : 'bg-white border-slate-200/90 text-slate-700'
           }`}
         >
           <Coffee className="w-3.5 h-3.5" />
@@ -928,10 +1065,10 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         <button
           type="button"
           onClick={() => setActiveSheet('overtime')}
-          className={`p-2 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 ${
+          className={`py-2 px-1 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
             overtimeAuthorized || overtimeEventName || calculation.overtimeMinutes > 0
               ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-bold'
-              : 'bg-white border-slate-200 text-slate-700'
+              : 'bg-white border-slate-200/90 text-slate-700'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -944,10 +1081,10 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         <button
           type="button"
           onClick={() => setActiveSheet('notes')}
-          className={`p-2 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 ${
+          className={`py-2 px-1 rounded-xl border text-center flex flex-col items-center justify-center gap-0.5 transition-all shadow-2xs active:bg-slate-100 cursor-pointer ${
             notes || leaveType === 'ferie'
               ? 'bg-rose-50 border-rose-200 text-rose-700 font-bold'
-              : 'bg-white border-slate-200 text-slate-700'
+              : 'bg-white border-slate-200/90 text-slate-700'
           }`}
         >
           <FileText className="w-3.5 h-3.5" />
@@ -957,8 +1094,8 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         </button>
       </div>
 
-      {/* ZONE 8: FOOTER CONTACT & SAFE AREA (~22px) */}
-      <footer className="shrink-0 flex items-center justify-between text-[10px] text-slate-400 pt-0.5 border-t border-slate-100">
+      {/* ZONE 8: FOOTER CONTACT & SAFE AREA (~20px) */}
+      <footer className="shrink-0 flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-200/60">
         <button
           type="button"
           onClick={() => setActiveSheet('info')}

@@ -91,7 +91,6 @@ export default function App() {
   const [preselectedLeaveEmployee, setPreselectedLeaveEmployee] = useState<string | undefined>();
   const [isCloudConnected, setIsCloudConnected] = useState<boolean>(false);
   const [carryOverSettings, setCarryOverSettings] = useState<BancaOreCarryOverSetting[]>([]);
-  const [isForceMobileView, setIsForceMobileView] = useState<boolean>(false);
 
   // Secure Cryptographic Helpers (Pure JS SHA-256 fallback for secure/non-secure contexts and iFrame limits)
   const sha256Pure = (ascii: string): string => {
@@ -1041,7 +1040,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F4F7FA] text-[#101B32] flex flex-col font-sans antialiased">
       {/* Global Navbar - hidden on mobile when worker is on cards view */}
-      <div className={isWorkerCardsView ? (isForceMobileView ? 'hidden' : 'hidden md:block') : 'block'}>
+      <div className={isWorkerCardsView ? 'hidden md:block' : 'block'}>
         <Navbar
           currentDate={currentDate}
           onDateChange={setCurrentDate}
@@ -1068,10 +1067,8 @@ export default function App() {
       {/* Main Content Area */}
       <main
         className={`flex-1 w-full mx-auto ${
-          isWorkerCardsView && !isForceMobileView
+          isWorkerCardsView
             ? 'p-0 md:px-6 md:py-8 md:max-w-7xl'
-            : isForceMobileView
-            ? 'p-0 max-w-md'
             : 'max-w-7xl px-4 sm:px-6 lg:px-8 py-8'
         } flex flex-col justify-between`}
       >
@@ -1088,54 +1085,33 @@ export default function App() {
             <>
               {/* MOBILE IPHONE VIEW for workers (antonio, andrea, luca, dario) - ZERO SCROLL ON IPHONE */}
               {isWorker && visibleEmployees[0] && (
-                <div className={isForceMobileView ? 'block my-3 px-2' : 'block md:hidden'}>
-                  {isForceMobileView && (
-                    <div className="mb-2 p-2.5 bg-slate-900 text-white rounded-2xl text-xs flex items-center justify-between shadow-lg">
-                      <span className="font-bold flex items-center gap-1.5">
-                        <span>📱</span> Anteprima iPhone
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setIsForceMobileView(false)}
-                        className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold cursor-pointer"
-                      >
-                        Torna a Desktop
-                      </button>
-                    </div>
-                  )}
-                  <div
-                    className={
-                      isForceMobileView
-                        ? 'border-4 border-slate-900 rounded-[32px] overflow-hidden shadow-2xl h-[844px] max-w-[390px] mx-auto bg-[#F8FAFC]'
-                        : 'w-full h-[100dvh] max-h-[100dvh] overflow-hidden'
-                    }
-                  >
-                    <MobileWorkerAttendanceView
-                      employee={visibleEmployees[0]}
-                      record={records.find(
-                        (r) => r.employeeId === visibleEmployees[0].id && r.date === currentDate
-                      )}
-                      currentDate={currentDate}
-                      isToday={isToday}
-                      systemTimeHHMM={systemTimeHHMM}
-                      todayDateStr={today}
-                      onSave={handleSaveRecord}
-                      onDateChange={setCurrentDate}
-                      onOpenLeaves={() => setActiveView('leaves')}
-                      onOpenReport={() => setActiveView('report')}
-                      onLogout={handleLogout}
-                      isCloudConnected={isCloudConnected}
-                      loggedInUsername={loggedInUsername}
-                      yesterdayShiftPending={pendingOvernightWorker}
-                    />
-                  </div>
+                <div className="block md:hidden w-full h-[100dvh] max-h-[100dvh] overflow-hidden">
+                  <MobileWorkerAttendanceView
+                    employee={visibleEmployees[0]}
+                    record={records.find(
+                      (r) => r.employeeId === visibleEmployees[0].id && r.date === currentDate
+                    )}
+                    currentDate={currentDate}
+                    isToday={isToday}
+                    systemTimeHHMM={systemTimeHHMM}
+                    todayDateStr={today}
+                    records={records}
+                    onSave={handleSaveRecord}
+                    onDateChange={setCurrentDate}
+                    onOpenLeaves={() => setActiveView('leaves')}
+                    onOpenReport={() => setActiveView('report')}
+                    onLogout={handleLogout}
+                    isCloudConnected={isCloudConnected}
+                    loggedInUsername={loggedInUsername}
+                    yesterdayShiftPending={pendingOvernightWorker}
+                  />
                 </div>
               )}
 
               {/* STANDARD CARDS VIEW (Desktop for worker, All viewports for Manager/Admin) */}
               <div
                 className={`space-y-6 flex-1 ${
-                  isWorker ? (isForceMobileView ? 'hidden' : 'hidden md:block') : 'block'
+                  isWorker ? 'hidden md:block' : 'block'
                 }`}
               >
             {/* Day Header Banner & Status Bar */}
@@ -1251,16 +1227,6 @@ export default function App() {
                   <FileSpreadsheet className="w-4 h-4 text-[#16a34a]" />
                   <span>Report mensile</span>
                 </button>
-
-                {isWorker && (
-                  <button
-                    type="button"
-                    onClick={() => setIsForceMobileView(!isForceMobileView)}
-                    className="px-3.5 py-2 text-xs font-bold text-[#0b5cd5] bg-[#e6f0fa] hover:bg-[#d2e5f7] rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                  >
-                    <span>{isForceMobileView ? '🖥️ Vista Desktop' : '📱 Anteprima iPhone'}</span>
-                  </button>
-                )}
               </div>
             </div>
 
@@ -1468,7 +1434,7 @@ export default function App() {
 
         {/* Sleek Interface Footer */}
         <footer className={`mt-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-[#E2E8F0] ${
-          isWorkerCardsView ? (isForceMobileView ? 'hidden' : 'hidden md:flex') : 'flex'
+          isWorkerCardsView ? 'hidden md:flex' : 'flex'
         }`}>
           <div className="text-xs text-[#64748B] font-semibold">
             <span>TIGi Presenze • Pannello Rilevazione Presenze</span>
