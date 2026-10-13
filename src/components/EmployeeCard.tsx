@@ -1026,14 +1026,6 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           >
                             Cancella
                           </button>
-                        ) : isToday && !clockInMorning ? (
-                          <button
-                            type="button"
-                            onClick={setInMorningNow}
-                            className="text-[10px] font-bold text-green-600 hover:text-green-700 hover:underline cursor-pointer"
-                          >
-                            Ora
-                          </button>
                         ) : null}
                       </div>
                       {canEditHours ? (
@@ -1078,14 +1070,6 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                             className="text-[10px] font-semibold text-rose-600 hover:underline cursor-pointer"
                           >
                             Cancella
-                          </button>
-                        ) : isToday && !clockOutMorning ? (
-                          <button
-                            type="button"
-                            onClick={setOutMorningNow}
-                            className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
-                          >
-                            Ora
                           </button>
                         ) : null}
                       </div>
@@ -1144,14 +1128,6 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                           >
                             Cancella
                           </button>
-                        ) : isToday && !clockInAfternoon ? (
-                          <button
-                            type="button"
-                            onClick={setInAfternoonNow}
-                            className="text-[10px] font-bold text-green-600 hover:text-green-700 hover:underline cursor-pointer"
-                          >
-                            Ora
-                          </button>
                         ) : null}
                       </div>
                       {canEditHours ? (
@@ -1196,14 +1172,6 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                             className="text-[10px] font-semibold text-rose-600 hover:underline cursor-pointer"
                           >
                             Cancella
-                          </button>
-                        ) : isToday && !clockOutAfternoon ? (
-                          <button
-                            type="button"
-                            onClick={setOutAfternoonNow}
-                            className="text-[10px] font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
-                          >
-                            Ora
                           </button>
                         ) : null}
                       </div>

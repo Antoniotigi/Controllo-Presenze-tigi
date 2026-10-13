@@ -844,23 +844,15 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
         </div>
       </div>
 
-      {/* ZONE 5: THE 4 TIMESTAMPS GRID (Soft Accent Pill Cards) */}
+      {/* ZONE 5: THE 4 TIMESTAMPS GRID (Soft Accent Pill Cards - Display only, non-clickable) */}
       <div className="grid grid-cols-2 gap-1.5 shrink-0">
         {/* Slot 1: Mattina In */}
         <div
-          onClick={() => {
-            if (isToday && !clockInMorning) {
-              const now = getCurrentTimeHHMM();
-              setClockInMorning(now);
-              if (leaveType !== 'none') setLeaveType('none');
-              persistChanges({ clockInMorning: now, leaveType: 'none' }, `1ª Entrata: ${now}`);
-            }
-          }}
-          className={`rounded-[18px] p-2 sm:p-2.5 flex flex-col justify-between transition-all relative border backdrop-blur-md ${
+          className={`rounded-[18px] p-2 sm:p-2.5 flex flex-col justify-between transition-all relative border backdrop-blur-md select-none ${
             clockInMorning
               ? 'border-amber-300/60 bg-gradient-to-br from-amber-50/90 via-amber-100/35 to-orange-50/60 text-slate-900 shadow-[0_4px_16px_rgba(245,158,11,0.08)]'
               : isToday && !clockInMorning
-              ? 'border-amber-400/80 bg-gradient-to-br from-amber-50/70 to-orange-50/40 ring-2 ring-amber-400/30 shadow-[0_4px_16px_rgba(245,158,11,0.12)] cursor-pointer active:scale-[0.98]'
+              ? 'border-amber-300/60 bg-gradient-to-br from-amber-50/70 to-orange-50/40 shadow-[0_4px_16px_rgba(245,158,11,0.06)]'
               : 'border-white/80 bg-white/60 shadow-[0_4px_16px_rgba(15,23,42,0.04)]'
           }`}
         >
@@ -885,18 +877,11 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
 
         {/* Slot 2: Mattina Out / Pausa */}
         <div
-          onClick={() => {
-            if (isToday && clockInMorning && !clockOutMorning) {
-              const now = getCurrentTimeHHMM();
-              setClockOutMorning(now);
-              persistChanges({ clockOutMorning: now }, `1ª Uscita (Pausa): ${now}`);
-            }
-          }}
-          className={`rounded-[18px] p-2 sm:p-2.5 flex flex-col justify-between transition-all relative border backdrop-blur-md ${
+          className={`rounded-[18px] p-2 sm:p-2.5 flex flex-col justify-between transition-all relative border backdrop-blur-md select-none ${
             clockOutMorning
               ? 'border-orange-300/60 bg-gradient-to-br from-orange-50/90 via-amber-100/35 to-yellow-50/60 text-slate-900 shadow-[0_4px_16px_rgba(249,115,22,0.08)]'
               : isToday && clockInMorning && !clockOutMorning
-              ? 'border-orange-400/80 bg-gradient-to-br from-orange-50/70 to-amber-50/40 ring-2 ring-orange-400/30 shadow-[0_4px_16px_rgba(249,115,22,0.12)] cursor-pointer active:scale-[0.98]'
+              ? 'border-orange-300/60 bg-gradient-to-br from-orange-50/70 to-amber-50/40 shadow-[0_4px_16px_rgba(249,115,22,0.06)]'
               : 'border-white/80 bg-white/60 shadow-[0_4px_16px_rgba(15,23,42,0.04)]'
           }`}
         >
@@ -921,19 +906,11 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
 
         {/* Slot 3: Pomeriggio In / Rientro */}
         <div
-          onClick={() => {
-            if (isToday && clockOutMorning && !clockInAfternoon) {
-              const now = getCurrentTimeHHMM();
-              setClockInAfternoon(now);
-              if (leaveType !== 'none') setLeaveType('none');
-              persistChanges({ clockInAfternoon: now, leaveType: 'none' }, `2ª Entrata (Rientro): ${now}`);
-            }
-          }}
-          className={`rounded-[18px] p-2 sm:p-2.5 flex flex-col justify-between transition-all relative border backdrop-blur-md ${
+          className={`rounded-[18px] p-2 sm:p-2.5 flex flex-col justify-between transition-all relative border backdrop-blur-md select-none ${
             clockInAfternoon
               ? 'border-blue-300/60 bg-gradient-to-br from-blue-50/90 via-sky-100/35 to-indigo-50/60 text-slate-900 shadow-[0_4px_16px_rgba(59,130,246,0.08)]'
               : isToday && clockOutMorning && !clockInAfternoon
-              ? 'border-blue-400/80 bg-gradient-to-br from-blue-50/70 to-sky-50/40 ring-2 ring-blue-400/30 shadow-[0_4px_16px_rgba(59,130,246,0.12)] cursor-pointer active:scale-[0.98]'
+              ? 'border-blue-300/60 bg-gradient-to-br from-blue-50/70 to-sky-50/40 shadow-[0_4px_16px_rgba(59,130,246,0.06)]'
               : 'border-white/80 bg-white/60 shadow-[0_4px_16px_rgba(15,23,42,0.04)]'
           }`}
         >
@@ -958,23 +935,11 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
 
         {/* Slot 4: Pomeriggio Out / Uscita Fine Turno */}
         <div
-          onClick={() => {
-            if (isToday && clockInAfternoon && !clockOutAfternoon) {
-              const now = getCurrentTimeHHMM();
-              const isOvernight = timeToMinutes(now) <= timeToMinutes(clockInAfternoon);
-              setClockOutAfternoon(now);
-              setClockOutAfternoonNextDay(isOvernight);
-              persistChanges(
-                { clockOutAfternoon: now, clockOutAfternoonNextDay: isOvernight },
-                `2ª Uscita: ${now}${isOvernight ? ' (+1 gg 🌙)' : ''}`
-              );
-            }
-          }}
-          className={`rounded-[18px] p-2 sm:p-2.5 flex flex-col justify-between transition-all relative border backdrop-blur-md ${
+          className={`rounded-[18px] p-2 sm:p-2.5 flex flex-col justify-between transition-all relative border backdrop-blur-md select-none ${
             clockOutAfternoon
               ? 'border-rose-300/60 bg-gradient-to-br from-rose-50/90 via-pink-100/35 to-purple-50/60 text-slate-900 shadow-[0_4px_16px_rgba(244,63,94,0.08)]'
               : isToday && clockInAfternoon && !clockOutAfternoon
-              ? 'border-rose-400/80 bg-gradient-to-br from-rose-50/70 to-pink-50/40 ring-2 ring-rose-400/30 shadow-[0_4px_16px_rgba(244,63,94,0.12)] cursor-pointer active:scale-[0.98]'
+              ? 'border-rose-300/60 bg-gradient-to-br from-rose-50/70 to-pink-50/40 shadow-[0_4px_16px_rgba(244,63,94,0.06)]'
               : 'border-white/80 bg-white/60 shadow-[0_4px_16px_rgba(15,23,42,0.04)]'
           }`}
         >
@@ -998,7 +963,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
             <span className="text-base sm:text-lg font-black font-mono text-slate-900 leading-none">
               {clockOutAfternoon || '--:--'}
             </span>
-            <span className="text-[9px] sm:text-[10px] text-rose-700/70 font-semibold">Fine</span>
+            <span className="text-[9px] sm:text-[10px] text-rose-700/70 font-semibold">Uscita</span>
           </div>
         </div>
       </div>
