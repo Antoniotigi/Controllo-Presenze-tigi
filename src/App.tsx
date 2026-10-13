@@ -1038,7 +1038,7 @@ export default function App() {
   }
 
   return (
-    <div className={`${isWorkerCardsView ? 'h-[100dvh] max-h-[100dvh] overflow-hidden md:min-h-screen md:h-auto md:max-h-none' : 'min-h-screen'} bg-[#F4F7FA] text-[#101B32] flex flex-col font-sans antialiased overscroll-none`}>
+    <div className={`${isWorkerCardsView ? 'h-[100dvh] max-h-[100dvh] overflow-hidden md:min-h-screen md:h-auto md:max-h-none' : 'min-h-screen'} bg-gradient-to-br from-[#EEF2F6] via-[#E6EDF5] to-[#DFE7F2] text-[#101B32] flex flex-col font-sans antialiased overscroll-none`}>
       {/* Global Navbar - hidden on mobile when worker is on cards view */}
       <div className={isWorkerCardsView ? 'hidden md:block' : 'block'}>
         <Navbar
