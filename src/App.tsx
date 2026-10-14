@@ -1080,6 +1080,7 @@ export default function App() {
               currentDate={today}
               onSaveRecord={handleSaveRecord}
               loggedInUsername={loggedInUsername}
+              systemTimeHHMM={systemTimeHHMM}
             />
           ) : (
             <>

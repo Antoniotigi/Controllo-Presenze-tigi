@@ -8,8 +8,15 @@ import {
   Search,
   Check,
 } from 'lucide-react';
-import { Employee, TimeRecord } from '../types';
-import { getCurrentTimeHHMM, getRecordTimestamps } from '../utils/timeUtils';
+import { Employee, TimeRecord, DayCalculation } from '../types';
+import {
+  getCurrentTimeHHMM,
+  getRecordTimestamps,
+  calculateRecord,
+  getStandardMinutesForDay,
+  formatMinutesToHM,
+  isAfternoonShiftOvernight,
+} from '../utils/timeUtils';
 
 interface KioskAttendanceViewProps {
   employees: Employee[];
@@ -17,6 +24,7 @@ interface KioskAttendanceViewProps {
   currentDate: string; // Guaranteed to be today
   onSaveRecord: (record: TimeRecord) => void;
   loggedInUsername?: string;
+  systemTimeHHMM?: string;
 }
 
 interface StampFeedback {
@@ -31,6 +39,7 @@ export const KioskAttendanceView: React.FC<KioskAttendanceViewProps> = ({
   records,
   currentDate,
   onSaveRecord,
+  systemTimeHHMM,
 }) => {
   // Live seconds clock
   const [liveTime, setLiveTime] = useState<string>('');
@@ -107,6 +116,18 @@ export const KioskAttendanceView: React.FC<KioskAttendanceViewProps> = ({
 
   // Determine current active slot to stamp
   const getNextAction = (record?: TimeRecord) => {
+    if (record?.leaveType === 'ferie') {
+      return {
+        key: null,
+        label: 'Dipendente in Ferie',
+        shortLabel: 'In Ferie',
+        icon: CheckCircle2,
+        colorClass: 'bg-rose-100 text-rose-700 cursor-default',
+        badge: 'In Ferie',
+        badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
+        greeting: 'Dipendente registrato in ferie per la giornata odierna.',
+      };
+    }
     const times = getRecordTimestamps(record);
     if (!times.clockInMorning) {
       return {
@@ -294,6 +315,45 @@ export const KioskAttendanceView: React.FC<KioskAttendanceViewProps> = ({
           const nextAction = getNextAction(record);
           const avatarTheme = avatarThemes[idx % avatarThemes.length];
 
+          const effectiveTime = systemTimeHHMM || (liveTime ? liveTime.slice(0, 5) : getCurrentTimeHHMM());
+          const calculation: DayCalculation = calculateRecord(record, effectiveTime, true, employee);
+          const standardMinutesToday = getStandardMinutesForDay(currentDate, employee);
+          const progressPct =
+            standardMinutesToday > 0
+              ? Math.min(100, Math.round((calculation.minutesWorked / standardMinutesToday) * 100))
+              : calculation.minutesWorked > 0
+              ? 100
+              : 0;
+
+          const minutesLeft = standardMinutesToday - calculation.minutesWorked;
+
+          const formatMinutesLeft = (mins: number) => {
+            const absMins = Math.abs(mins);
+            const h = Math.floor(absMins / 60);
+            const m = absMins % 60;
+            if (h > 0) {
+              return `${h}h${m > 0 ? ' ' + m.toString().padStart(2, '0') + 'm' : ' 00m'}`;
+            }
+            return `${m} min`;
+          };
+
+          const progressBarColor = (() => {
+            if (calculation.status === 'al_lavoro') return 'bg-emerald-500';
+            if (calculation.status === 'pausa') return 'bg-amber-400';
+            if (calculation.status === 'completato' || progressPct >= 100) return 'bg-[#0b5cd5]';
+            if (calculation.status === 'ferie') return 'bg-rose-400';
+            if (calculation.status === 'permesso') return 'bg-purple-500';
+            return 'bg-slate-300';
+          })();
+
+          const isOvernight = isAfternoonShiftOvernight(
+            times.clockInAfternoon,
+            times.clockOutAfternoon,
+            times.clockOutAfternoonNextDay,
+            times.clockInMorning,
+            times.clockOutMorning
+          );
+
           return (
             <div
               key={employee.id}
@@ -318,12 +378,116 @@ export const KioskAttendanceView: React.FC<KioskAttendanceViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Status Badge */}
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold border ${nextAction.badgeColor}`}
-                  >
-                    {nextAction.badge}
-                  </span>
+                  {/* Status Badge & Worked Time */}
+                  <div className="flex flex-col items-end gap-1">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold border ${nextAction.badgeColor}`}
+                    >
+                      {nextAction.badge}
+                    </span>
+                    <div className="text-right mt-0.5">
+                      <span className="text-xl sm:text-2xl font-black text-[#101B32] font-mono leading-none">
+                        {calculation.status === 'ferie'
+                          ? '8h 00m'
+                          : calculation.status === 'non_timbrato'
+                          ? '0h 00m'
+                          : calculation.hoursWorkedFormatted}
+                      </span>
+                      <span className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider block">
+                        Ore Lavorate
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Daily Working Hours Progress Bar & Missing Time Section */}
+                <div className="mt-4 p-4 bg-slate-50/90 rounded-2xl border border-slate-200/70 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs font-semibold text-[#64748B]">
+                    <span className="flex items-center gap-1.5">
+                      <span>Orario giornaliero:</span>
+                      <span className="font-bold text-[#101B32]">
+                        {calculation.status === 'ferie'
+                          ? '8h 00m'
+                          : calculation.status === 'non_timbrato'
+                          ? '0h 00m'
+                          : calculation.hoursWorkedFormatted}
+                      </span>
+                      <span className="text-slate-400 font-normal">
+                        / {formatMinutesToHM(standardMinutesToday)} previste
+                      </span>
+                    </span>
+                    <span className="text-[#101B32] font-black font-mono text-sm">
+                      {progressPct}%
+                    </span>
+                  </div>
+
+                  {/* Barra di avanzamento */}
+                  <div className="w-full bg-[#E2E8F0] h-2.5 rounded-full overflow-hidden">
+                    <div
+                      className={`${progressBarColor} h-full rounded-full transition-all duration-300`}
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+
+                  {/* Ore e minuti mancanti o straordinario */}
+                  <div className="flex items-center justify-between text-xs pt-0.5">
+                    <div>
+                      {standardMinutesToday > 0 ? (
+                        minutesLeft > 0 ? (
+                          <span className="font-bold text-amber-800 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 shadow-2xs">
+                            <Clock className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Mancano {formatMinutesLeft(minutesLeft)}</span>
+                          </span>
+                        ) : minutesLeft < 0 ? (
+                          <span className="font-bold text-[#0b5cd5] bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 shadow-2xs">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#0b5cd5]" />
+                            <span>+ {formatMinutesLeft(minutesLeft)} straordinario</span>
+                          </span>
+                        ) : (
+                          <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 shadow-2xs">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Orario giornaliero completato</span>
+                          </span>
+                        )
+                      ) : calculation.minutesWorked > 0 ? (
+                        <span className="font-bold text-[#0b5cd5] bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 shadow-2xs">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#0b5cd5]" />
+                          <span>+ {formatMinutesLeft(calculation.minutesWorked)} straordinario</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs font-semibold text-[#64748B]">
+                          Nessun orario previsto
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-[11px] font-semibold text-[#64748B]">
+                      {calculation.status === 'al_lavoro' && (
+                        <span className="text-emerald-700 font-bold flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          In servizio
+                        </span>
+                      )}
+                      {calculation.status === 'pausa' && (
+                        <span className="text-amber-700 font-bold flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-amber-500" />
+                          In pausa pranzo
+                        </span>
+                      )}
+                      {calculation.status === 'completato' && (
+                        <span className="text-slate-600 font-bold">Turno concluso</span>
+                      )}
+                      {calculation.status === 'ferie' && (
+                        <span className="text-rose-600 font-bold">In ferie</span>
+                      )}
+                      {calculation.status === 'permesso' && (
+                        <span className="text-purple-600 font-bold">In permesso</span>
+                      )}
+                      {calculation.status === 'non_timbrato' && (
+                        <span className="text-slate-400 font-normal">Da iniziare</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Today's 4 Punch Slots */}
@@ -415,8 +579,13 @@ export const KioskAttendanceView: React.FC<KioskAttendanceViewProps> = ({
                     >
                       {times.clockOutAfternoon || '—'}
                     </div>
-                    <div className="text-[9px] font-medium text-slate-400 mt-0.5">
-                      Fine turno
+                    <div className="text-[9px] font-medium text-slate-400 mt-0.5 flex items-center justify-center gap-1">
+                      <span>Fine turno</span>
+                      {isOvernight && (
+                        <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1 rounded">
+                          +1 gg 🌙
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
