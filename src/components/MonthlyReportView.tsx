@@ -476,9 +476,9 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   let dailyBankAccumulated = 0;
 
                   if (isAuthorized) {
-                    dailyPaidOt = totalOt;
+                    // Se sono presenti ore di notturni vanno scalate dalle ore di straordinario pagate perchè già conteggiate come notturni
+                    dailyPaidOt = Math.max(0, totalOt - otNotturni - otFestivi);
                   } else {
-                    dailyPaidOt = otFestivi + otNotturni;
                     dailyBankAccumulated = otDiurni;
                   }
 

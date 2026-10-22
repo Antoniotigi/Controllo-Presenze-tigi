@@ -219,9 +219,9 @@ export function computeMonthlyStats(
         const totalOt = calc.overtimeMinutes || 0;
 
         if (isAuthorized) {
-          totalPaidOvertimeMinutes += totalOt;
+          // Se sono presenti ore di notturni (o festivi) vanno scalate dalle ore di straordinario pagate perchè conteggiate già nei totali dedicati
+          totalPaidOvertimeMinutes += Math.max(0, totalOt - otNotturni - otFestivi);
         } else {
-          totalPaidOvertimeMinutes += (otFestivi + otNotturni);
           totalBancaOreAccumulated += otDiurni;
         }
 
@@ -336,9 +336,9 @@ export function exportToExcel(
     let dailyBankAccumulated = 0;
 
     if (isAuthorized) {
-      dailyPaidOt = totalOt;
+      // Se sono presenti ore di notturni vanno scalate dalle ore di straordinario pagate perchè già conteggiate come notturni
+      dailyPaidOt = Math.max(0, totalOt - otNotturni - otFestivi);
     } else {
-      dailyPaidOt = otFestivi + otNotturni;
       dailyBankAccumulated = otDiurni;
     }
 
@@ -544,9 +544,9 @@ export function exportToPDF(
       let dailyBankAccumulated = 0;
 
       if (isAuthorized) {
-        dailyPaidOt = totalOt;
+        // Se sono presenti ore di notturni vanno scalate dalle ore di straordinario pagate perchè già conteggiate come notturni
+        dailyPaidOt = Math.max(0, totalOt - otNotturni - otFestivi);
       } else {
-        dailyPaidOt = otFestivi + otNotturni;
         dailyBankAccumulated = otDiurni;
       }
 

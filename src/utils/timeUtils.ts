@@ -693,6 +693,14 @@ export function calculateRecord(
     }
   }
 
+  const isAuthorized = Boolean(
+    record?.overtimeAuthorized || (record?.overtimeEventName && record.overtimeEventName.trim() !== '')
+  );
+  const paidOvertimeMinutes = isAuthorized
+    ? Math.max(0, overtimeMinutes - overtimeNotturniMinutes - overtimeFestiviMinutes)
+    : 0;
+  const bancaOreAccumulated = isAuthorized ? 0 : overtimeDiurniMinutes;
+
   return {
     minutesWorked: netWorked,
     hoursWorkedFormatted: formatMinutesToHM(netWorked),
@@ -711,6 +719,8 @@ export function calculateRecord(
     overtimeDiurniMinutes,
     overtimeNotturniMinutes,
     overtimeFestiviMinutes,
+    paidOvertimeMinutes,
+    bancaOreAccumulated,
   };
 }
 
