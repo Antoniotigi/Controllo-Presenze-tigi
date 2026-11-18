@@ -436,6 +436,26 @@ export function calculateRecord(
     };
   }
 
+  // Check if Malattia (giustifica l'assenza senza generare deficit)
+  if (record.leaveType === 'malattia') {
+    return {
+      minutesWorked: standardMins,
+      hoursWorkedFormatted: `${formatMinutesToHM(standardMins)} (Malattia)`,
+      morningMinutes: Math.floor(standardMins / 2),
+      afternoonMinutes: standardMins - Math.floor(standardMins / 2),
+      isOvertime: false,
+      overtimeMinutes: 0,
+      overtimeFormatted: '+0h 00m',
+      isDeficit: false,
+      deficitMinutes: 0,
+      deficitFormatted: '-0h 00m',
+      isLive: false,
+      status: 'malattia',
+      effectiveMinutesWorked: standardMins,
+      effectiveHoursFormatted: formatMinutesToHM(standardMins),
+    };
+  }
+
   const { clockInMorning, clockOutMorning, clockInAfternoon, clockOutAfternoon, clockOutAfternoonNextDay } =
     getRecordTimestamps(record);
   const permMins = getPermessoMinutes(record);

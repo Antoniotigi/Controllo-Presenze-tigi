@@ -63,7 +63,7 @@ export interface DayCalculation {
   deficitMinutes: number;
   deficitFormatted: string;
   isLive: boolean; // clock in set, clock out not set
-  status: 'al_lavoro' | 'pausa' | 'completato' | 'non_timbrato' | 'ferie' | 'permesso';
+  status: 'al_lavoro' | 'pausa' | 'completato' | 'non_timbrato' | 'ferie' | 'permesso' | 'malattia';
   effectiveMinutesWorked?: number;
   effectiveHoursFormatted?: string;
   overtimeDiurniMinutes?: number;

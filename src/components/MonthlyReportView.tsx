@@ -276,6 +276,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                 <th className="py-2.5 px-3 text-right text-amber-600 font-bold">Banca Ore (-)</th>
                 <th className="py-2.5 px-3 text-right text-slate-900 font-black bg-slate-100 rounded-t-lg">Saldo Banca Ore</th>
                 <th className="py-2.5 px-3 text-center">Ferie</th>
+                <th className="py-2.5 px-3 text-center">Malattia</th>
                 <th className="py-2.5 px-3 text-center">Permessi</th>
               </tr>
             </thead>
@@ -377,6 +378,13 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   <td className="py-3 px-3 text-center text-slate-700">
                     {s.ferieDays > 0 ? (
                       <span className="font-semibold text-amber-800">{s.ferieDays} gg</span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td className="py-3 px-3 text-center text-slate-700">
+                    {s.malattiaDays > 0 ? (
+                      <span className="font-semibold text-red-600">{s.malattiaDays} gg</span>
                     ) : (
                       '—'
                     )}
@@ -553,6 +561,11 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                             Ferie
                           </span>
                         )}
+                        {r.leaveType === 'malattia' && (
+                          <span className="px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-semibold">
+                            Malattia
+                          </span>
+                        )}
                         {r.leaveType === 'permesso' && (
                           <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200 font-medium">
                             Permesso ({(() => {
@@ -567,9 +580,14 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                             })()})
                           </span>
                         )}
-                        {r.notes && (
-                          <span className="ml-1 text-slate-500 text-[11px]">{r.notes}</span>
-                        )}
+                        {(() => {
+                          const cleanNote = (r.notes || '')
+                            .replace(/\bPermesso retribuito\b/gi, '')
+                            .trim();
+                          return cleanNote ? (
+                            <span className="ml-1 text-slate-500 text-[11px]">{cleanNote}</span>
+                          ) : null;
+                        })()}
                       </td>
                     </tr>
                   );

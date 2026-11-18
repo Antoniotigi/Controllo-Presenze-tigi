@@ -27,6 +27,7 @@ export interface MonthlyStatsPerEmployee {
   totalDeficitMinutes: number;
   netBalanceMinutes: number;
   ferieDays: number;
+  malattiaDays: number;
   permessiHours: number;
   permessiMinutes: number;
   // Banca Ore and Paid Overtime fields
@@ -160,6 +161,7 @@ export function computeMonthlyStats(
     let totalOvertimeFestiviMinutes = 0;
     let totalDeficitMinutes = 0;
     let ferieDays = 0;
+    let malattiaDays = 0;
     let permessiHours = 0;
     let permessiMinutes = 0;
 
@@ -193,6 +195,8 @@ export function computeMonthlyStats(
       if (shouldCount) {
         if (r.leaveType === 'ferie') {
           ferieDays += 1;
+        } else if (r.leaveType === 'malattia') {
+          malattiaDays += 1;
         } else if (r.leaveType === 'permesso') {
           const permMins = getPermessoMinutes(r);
           const mins = permMins || Math.round((r.leaveHours || 8) * 60);
@@ -246,6 +250,7 @@ export function computeMonthlyStats(
       totalDeficitMinutes,
       netBalanceMinutes,
       ferieDays,
+      malattiaDays,
       permessiHours,
       permessiMinutes,
       totalBancaOreAccumulated,
@@ -285,6 +290,7 @@ export function exportToExcel(
     'Banca Ore (-)': s.totalBancaOreCompensated > 0 ? formatMinutesToHM(s.totalBancaOreCompensated) : '—',
     'Saldo Banca Ore': (s.bancaOreBalance >= 0 ? '+' : '') + formatMinutesToHM(s.bancaOreBalance),
     'Ferie Fruite (gg)': s.ferieDays,
+    'Malattia (gg)': s.malattiaDays,
     'Permessi Fruiti': s.permessiMinutes > 0 ? formatMinutesToHM(s.permessiMinutes) : '—',
   }));
 
@@ -306,6 +312,7 @@ export function exportToExcel(
     { wch: 16 }, // Banca Ore (-)
     { wch: 18 }, // Saldo Banca Ore
     { wch: 16 }, // Ferie
+    { wch: 15 }, // Malattia
     { wch: 18 }, // Permessi
   ];
 
@@ -354,7 +361,8 @@ export function exportToExcel(
       const pm = getPermessoMinutes(r);
       noteText = noteText ? `${noteText} - Permesso (${formatMinutesToHM(pm)})` : `Permesso (${formatMinutesToHM(pm)})`;
     }
-    if (r.notes) noteText = noteText ? `${noteText} - ${r.notes}` : r.notes;
+    const cleanNote = (r.notes || '').replace(/\bPermesso retribuito\b/gi, '').trim();
+    if (cleanNote) noteText = noteText ? `${noteText} - ${cleanNote}` : cleanNote;
 
     return {
       'Data': dateFormatted,
@@ -456,7 +464,7 @@ export function exportToPDF(
   doc.text('Riepilogo Mensile per Dipendente', 14, 32);
 
   const summaryHead = [
-    ['Dipendente', 'Gg Lav.', 'Ore Lavorate', 'Str. Notturni', 'Str. Festivi', 'Str. Pagati', 'Banca Ore (+)', 'Banca Ore (-)', 'Saldo Banca', 'Ferie', 'Permessi']
+    ['Dipendente', 'Gg Lav.', 'Ore Lavorate', 'Str. Notturni', 'Str. Festivi', 'Str. Pagati', 'Banca Ore (+)', 'Banca Ore (-)', 'Saldo Banca', 'Ferie', 'Malattia', 'Permessi']
   ];
 
   const summaryBody = stats.map((s) => [
@@ -470,6 +478,7 @@ export function exportToPDF(
     s.totalBancaOreCompensated > 0 ? `-${formatMinutesToHM(s.totalBancaOreCompensated)}` : '0h 00m',
     (s.bancaOreBalance >= 0 ? '+' : '') + formatMinutesToHM(s.bancaOreBalance),
     `${s.ferieDays} gg`,
+    s.malattiaDays > 0 ? `${s.malattiaDays} gg` : '—',
     s.permessiMinutes > 0 ? formatMinutesToHM(s.permessiMinutes) : '—',
   ]);
 
@@ -491,17 +500,18 @@ export function exportToPDF(
       halign: 'center',
     },
     columnStyles: {
-      0: { halign: 'left', fontStyle: 'bold', cellWidth: 42 },
-      1: { cellWidth: 16 },
-      2: { cellWidth: 22, fontStyle: 'bold' },
-      3: { cellWidth: 22, textColor: [23, 37, 84], fontStyle: 'bold' }, // Notturni
-      4: { cellWidth: 22, textColor: [153, 27, 27], fontStyle: 'bold' }, // Festivi
-      5: { cellWidth: 22, textColor: [16, 185, 129], fontStyle: 'bold' }, // Str. Pagati (Emerald)
-      6: { cellWidth: 22, textColor: [79, 70, 229] }, // Banca Ore (+)
-      7: { cellWidth: 22, textColor: [217, 119, 6] }, // Banca Ore (-)
-      8: { cellWidth: 24, fontStyle: 'bold', textColor: [79, 70, 229] }, // Saldo
-      9: { cellWidth: 18 },
-      10: { cellWidth: 18 },
+      0: { halign: 'left', fontStyle: 'bold', cellWidth: 40 },
+      1: { cellWidth: 15 },
+      2: { cellWidth: 21, fontStyle: 'bold' },
+      3: { cellWidth: 21, textColor: [23, 37, 84], fontStyle: 'bold' }, // Notturni
+      4: { cellWidth: 21, textColor: [153, 27, 27], fontStyle: 'bold' }, // Festivi
+      5: { cellWidth: 21, textColor: [16, 185, 129], fontStyle: 'bold' }, // Str. Pagati (Emerald)
+      6: { cellWidth: 21, textColor: [79, 70, 229] }, // Banca Ore (+)
+      7: { cellWidth: 21, textColor: [217, 119, 6] }, // Banca Ore (-)
+      8: { cellWidth: 22, fontStyle: 'bold', textColor: [79, 70, 229] }, // Saldo
+      9: { cellWidth: 16 }, // Ferie
+      10: { cellWidth: 16 }, // Malattia
+      11: { cellWidth: 17 }, // Permessi
     },
     styles: {
       cellPadding: 2,
@@ -572,8 +582,9 @@ export function exportToPDF(
         }
       }
 
-      if (r.notes) {
-        noteCol = noteCol ? `${noteCol} - ${r.notes}` : r.notes;
+      const cleanNote = (r.notes || '').replace(/\bPermesso retribuito\b/gi, '').trim();
+      if (cleanNote) {
+        noteCol = noteCol ? `${noteCol} - ${cleanNote}` : cleanNote;
       }
 
       return [

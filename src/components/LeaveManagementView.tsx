@@ -12,7 +12,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Employee, LeaveRequest, TimeRecord } from '../types';
-import { getTodayDateString, formatDateIT } from '../utils/timeUtils';
+import { getTodayDateString, formatDateIT, getStandardMinutesForDay } from '../utils/timeUtils';
 import { isWorkerUser } from '../utils/authConfig';
 
 interface LeaveManagementViewProps {
@@ -83,13 +83,24 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
     e.preventDefault();
     if (!startDate) return;
 
+    const selectedEmp = employees.find((emp) => emp.id === employeeId);
+    const stdMins = getStandardMinutesForDay(startDate, selectedEmp);
+    const computedHours =
+      type === 'ferie'
+        ? 8
+        : type === 'malattia'
+        ? stdMins > 0
+          ? Number((stdMins / 60).toFixed(2))
+          : 8
+        : hoursPerDay;
+
     const newLeave: LeaveRequest = {
       id: `leave-${Date.now()}`,
       employeeId,
       type,
       startDate,
       endDate: endDate || startDate,
-      hoursPerDay: type === 'ferie' ? 8 : hoursPerDay,
+      hoursPerDay: computedHours,
       notes,
       status: 'approvato',
       createdAt: new Date().toISOString(),
@@ -311,11 +322,11 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                   onClick={() => setType('malattia')}
                   className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     type === 'malattia'
-                      ? 'border-rose-400 bg-rose-50 text-rose-900 font-bold ring-2 ring-rose-200'
+                      ? 'border-red-400 bg-red-50 text-red-900 font-bold ring-2 ring-red-200'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-700 font-medium'
                   }`}
                 >
-                  <HeartPulse className="w-3.5 h-3.5 text-rose-600" />
+                  <HeartPulse className="w-3.5 h-3.5 text-red-600" />
                   <span>Malattia</span>
                 </button>
 
@@ -457,8 +468,8 @@ export const LeaveManagementView: React.FC<LeaveManagementViewProps> = ({
                             </span>
                           )}
                           {l.type === 'malattia' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium bg-rose-50 text-rose-800 border border-rose-200">
-                              <HeartPulse className="w-3 h-3 text-rose-600" /> Malattia
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium bg-red-50 text-red-800 border border-red-200">
+                              <HeartPulse className="w-3 h-3 text-red-600" /> Malattia
                             </span>
                           )}
                           {l.type === 'congedo' && (

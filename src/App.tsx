@@ -43,6 +43,7 @@ import {
   formatDateIT,
   calculateRecord,
   formatMinutesToHM,
+  getStandardMinutesForDay,
 } from './utils/timeUtils';
 import { Navbar } from './components/Navbar';
 import { Logo } from './components/Logo';
@@ -694,8 +695,9 @@ export default function App() {
 
     if (applyToTimesheet) {
       // Loop through date range (single or multi days)
-      const start = new Date(leave.startDate);
-      const end = new Date(leave.endDate);
+      const start = new Date(`${leave.startDate}T12:00:00`);
+      const end = new Date(`${(leave.endDate || leave.startDate)}T12:00:00`);
+      const emp = employees.find((e) => e.id === leave.employeeId);
       const updatedRecords = [...records];
       const affectedRecords: TimeRecord[] = [];
 
@@ -709,30 +711,84 @@ export default function App() {
           (r) => r.employeeId === leave.employeeId && r.date === dateStr
         );
 
-        const newRec: TimeRecord = {
-          id: `rec-${leave.employeeId}-${dateStr}`,
-          employeeId: leave.employeeId,
-          date: dateStr,
-          clockInMorning: '',
-          clockOutMorning: '',
-          clockInAfternoon: '',
-          clockOutAfternoon: '',
-          leaveType: leave.type === 'ferie' ? 'ferie' : leave.type === 'permesso' ? 'permesso' : 'none',
-          leaveHours: leave.hoursPerDay,
-          notes: leave.notes || (leave.type === 'ferie' ? 'Ferie programmate' : 'Permesso retribuito'),
-          updatedAt: new Date().toISOString(),
-        };
+        const stdMins = getStandardMinutesForDay(dateStr, emp);
+        const mappedLeaveType: TimeRecord['leaveType'] =
+          leave.type === 'ferie'
+            ? 'ferie'
+            : leave.type === 'permesso'
+            ? 'permesso'
+            : leave.type === 'malattia'
+            ? 'malattia'
+            : 'none';
+
+        const dailyLeaveHours =
+          mappedLeaveType === 'malattia'
+            ? stdMins > 0
+              ? Number((stdMins / 60).toFixed(2))
+              : 8
+            : mappedLeaveType === 'ferie'
+            ? 8
+            : leave.hoursPerDay;
+
+        const cleanNotes =
+          leave.notes?.trim() || (leave.type === 'ferie' ? 'Ferie programmate' : '');
+
+        const clearsAttendanceStamps =
+          mappedLeaveType === 'malattia' || mappedLeaveType === 'ferie';
 
         if (existingIdx >= 0) {
+          const existing = updatedRecords[existingIdx];
           updatedRecords[existingIdx] = {
-            ...updatedRecords[existingIdx],
-            leaveType: newRec.leaveType,
-            leaveHours: newRec.leaveHours,
-            notes: newRec.notes,
+            ...existing,
+            ...(clearsAttendanceStamps
+              ? {
+                  clockInMorning: '',
+                  clockOutMorning: '',
+                  clockInAfternoon: '',
+                  clockOutAfternoon: '',
+                  clockOutAfternoonNextDay: false,
+                  clockIn: '',
+                  clockOut: '',
+                  permessoHours: 0,
+                  permessoMinutes: 0,
+                  permessoStart: '',
+                  permessoEnd: '',
+                  exitDuringTurnStart: '',
+                  exitDuringTurnEnd: '',
+                }
+              : mappedLeaveType === 'permesso'
+              ? {
+                  permessoHours: Math.floor(dailyLeaveHours),
+                  permessoMinutes: Math.round((dailyLeaveHours % 1) * 60),
+                }
+              : {}),
+            leaveType: mappedLeaveType,
+            leaveHours: dailyLeaveHours,
+            notes: cleanNotes,
             updatedAt: new Date().toISOString(),
           };
           affectedRecords.push(updatedRecords[existingIdx]);
         } else {
+          const newRec: TimeRecord = {
+            id: `rec-${leave.employeeId}-${dateStr}`,
+            employeeId: leave.employeeId,
+            date: dateStr,
+            clockInMorning: '',
+            clockOutMorning: '',
+            clockInAfternoon: '',
+            clockOutAfternoon: '',
+            clockOutAfternoonNextDay: false,
+            leaveType: mappedLeaveType,
+            leaveHours: dailyLeaveHours,
+            ...(mappedLeaveType === 'permesso'
+              ? {
+                  permessoHours: Math.floor(dailyLeaveHours),
+                  permessoMinutes: Math.round((dailyLeaveHours % 1) * 60),
+                }
+              : {}),
+            notes: cleanNotes,
+            updatedAt: new Date().toISOString(),
+          };
           updatedRecords.push(newRec);
           affectedRecords.push(newRec);
         }
@@ -819,7 +875,7 @@ export default function App() {
 
   const countActiveNow = dailySummary.filter((d) => d.calc.status === 'al_lavoro').length;
   const countCompleted = dailySummary.filter((d) => d.calc.status === 'completato').length;
-  const countLeaves = dailySummary.filter((d) => d.calc.status === 'ferie' || d.calc.status === 'permesso').length;
+  const countLeaves = dailySummary.filter((d) => d.calc.status === 'ferie' || d.calc.status === 'permesso' || d.calc.status === 'malattia').length;
 
   if (!isAuthenticated) {
     return (
@@ -1243,6 +1299,7 @@ export default function App() {
                   myCalc.status === 'pausa' ? 'In pausa' :
                   myCalc.status === 'completato' ? 'Turno completato' :
                   myCalc.status === 'ferie' ? 'In ferie' :
+                  myCalc.status === 'malattia' ? 'In malattia' :
                   myCalc.status === 'permesso' ? 'In permesso' : 'Non ancora timbrato';
                 const statusColor = 
                   myCalc.status === 'al_lavoro' ? 'text-[#16a34a]' :
@@ -1280,7 +1337,7 @@ export default function App() {
                 </div>
                 <div className="flex flex-col justify-between border-l border-[#E2E8F0] pl-4">
                   <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Assenti</span>
-                  <span className="text-3xl font-black text-[#101B32] mt-1">{dailySummary.filter((d) => d.calc.status === 'non_timbrato' || d.calc.status === 'ferie' || d.calc.status === 'permesso').length}</span>
+                  <span className="text-3xl font-black text-[#101B32] mt-1">{dailySummary.filter((d) => d.calc.status === 'non_timbrato' || d.calc.status === 'ferie' || d.calc.status === 'permesso' || d.calc.status === 'malattia').length}</span>
                 </div>
               </div>
             )}

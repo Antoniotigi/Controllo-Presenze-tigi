@@ -17,6 +17,7 @@ import {
   Calendar,
   Clock,
   Moon,
+  HeartPulse,
 } from 'lucide-react';
 import { Employee, TimeRecord, DayCalculation } from '../types';
 import {
@@ -534,6 +535,30 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
     }
   };
 
+  const toggleMalattia = () => {
+    if (leaveType === 'malattia') {
+      setLeaveType('none');
+      setLeaveHours(0);
+      persistChanges({ leaveType: 'none', leaveHours: 0 });
+    } else {
+      const stdHours = Number((standardMinutes / 60).toFixed(2)) || 8;
+      setLeaveType('malattia');
+      setLeaveHours(stdHours);
+      setClockInMorning('');
+      setClockOutMorning('');
+      setClockInAfternoon('');
+      setClockOutAfternoon('');
+      persistChanges({
+        leaveType: 'malattia',
+        leaveHours: stdHours,
+        clockInMorning: '',
+        clockOutMorning: '',
+        clockInAfternoon: '',
+        clockOutAfternoon: '',
+      });
+    }
+  };
+
   const togglePermesso = () => {
     if (leaveType === 'permesso') {
       setLeaveType('none');
@@ -595,7 +620,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
 
   // Next logical slot for system-time clock-in/out
   const nextSlot = (() => {
-    if (leaveType === 'ferie') return null;
+    if (leaveType === 'ferie' || leaveType === 'malattia') return null;
     if (!clockInMorning) {
       return { key: 'clockInMorning', label: 'Timbra Ingresso', type: 'entrata' as const };
     }
@@ -691,6 +716,12 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                   In ferie
                 </span>
               )}
+              {calculation.status === 'malattia' && (
+                <span className="text-xs font-semibold text-red-600 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  In malattia
+                </span>
+              )}
               {calculation.status === 'permesso' && (
                 <span className="text-xs font-semibold text-purple-600 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-purple-500"></span>
@@ -711,8 +742,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
         <div className="flex items-center gap-2.5">
           <div className="text-right">
             <div className="text-2xl font-bold text-[#101B32] font-sans">
-              {calculation.status === 'ferie'
-                ? '8h 00m'
+              {calculation.status === 'ferie' || calculation.status === 'malattia'
+                ? formatMinutesToHM(standardMinutesToday)
                 : calculation.status === 'non_timbrato'
                 ? '0h 00m'
                 : calculation.hoursWorkedFormatted}
@@ -841,6 +872,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 <span className="text-xs text-[#64748B] italic">
                   {leaveType === 'ferie'
                     ? 'Ferie registrate per la giornata'
+                    : leaveType === 'malattia'
+                    ? 'Malattia registrata per la giornata'
                     : leaveType === 'permesso'
                     ? 'Permesso registrato per la giornata'
                     : 'Nessuna timbratura registrata oggi'}
@@ -922,6 +955,30 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                   className="mt-3 text-xs font-bold underline text-rose-800 hover:text-rose-900 cursor-pointer"
                 >
                   Annulla Ferie e ripristina timbrature standard
+                </button>
+              )}
+            </div>
+          ) : leaveType === 'malattia' ? (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col items-center text-center">
+              <HeartPulse className="w-7 h-7 text-red-600 mb-1" />
+              <p className="text-red-700 font-bold text-sm">Dipendente in MALATTIA</p>
+              <p className="text-red-600 text-xs mt-1">
+                Assenza giustificata per malattia nel cartellino ({formatMinutesToHM(standardMinutesToday)} standard)
+              </p>
+              {loggedInUsername?.toLowerCase() === 'giulia' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeaveType('none');
+                    setLeaveHours(0);
+                    persistChanges({
+                      leaveType: 'none',
+                      leaveHours: 0,
+                    });
+                  }}
+                  className="mt-3 text-xs font-bold underline text-red-800 hover:text-red-950 cursor-pointer"
+                >
+                  Annulla Malattia
                 </button>
               )}
             </div>
@@ -1440,24 +1497,41 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({
                     : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA] cursor-pointer'
                 }`}
               >
-                {leaveType === 'permesso' ? 'In Permesso' : 'Segna Permesso'}
+                {leaveType === 'permesso' ? 'In Permesso' : 'Permesso'}
               </button>
 
               {loggedInUsername?.toLowerCase() === 'giulia' && (
-                <button
-                  type="button"
-                  onClick={toggleFerie}
-                  disabled={!canEditHours}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
-                    !canEditHours
-                      ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                      : leaveType === 'ferie'
-                      ? 'bg-rose-50 text-rose-700 border-rose-200 cursor-pointer'
-                      : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA] cursor-pointer'
-                  }`}
-                >
-                  {leaveType === 'ferie' ? 'In Ferie' : 'Segna Ferie'}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={toggleFerie}
+                    disabled={!canEditHours}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
+                      !canEditHours
+                        ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                        : leaveType === 'ferie'
+                        ? 'bg-rose-50 text-rose-700 border-rose-200 cursor-pointer'
+                        : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA] cursor-pointer'
+                    }`}
+                  >
+                    {leaveType === 'ferie' ? 'In Ferie' : 'Ferie'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleMalattia}
+                    disabled={!canEditHours}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors shadow-2xs ${
+                      !canEditHours
+                        ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                        : leaveType === 'malattia'
+                        ? 'bg-red-50 text-red-700 border-red-200 cursor-pointer'
+                        : 'bg-white text-slate-700 border-[#E2E8F0] hover:bg-[#F4F7FA] cursor-pointer'
+                    }`}
+                  >
+                    {leaveType === 'malattia' ? 'In Malattia' : 'Malattia'}
+                  </button>
+                </>
               )}
             </div>
           </div>

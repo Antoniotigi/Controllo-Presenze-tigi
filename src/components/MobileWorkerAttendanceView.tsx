@@ -273,7 +273,7 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
 
   // Next slot logic for primary CTA
   const nextSlot = (() => {
-    if (leaveType === 'ferie') return null;
+    if (leaveType === 'ferie' || leaveType === 'malattia') return null;
     if (!clockInMorning) {
       return {
         key: 'clockInMorning' as const,
@@ -429,6 +429,8 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
       ? 'Turno completato'
       : calculation.status === 'ferie'
       ? 'In ferie'
+      : calculation.status === 'malattia'
+      ? 'In malattia'
       : calculation.status === 'permesso'
       ? 'In permesso'
       : 'Non timbrato';
@@ -442,6 +444,8 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
       ? 'bg-indigo-50/90 text-indigo-800 border-indigo-300/70 shadow-xs'
       : calculation.status === 'ferie'
       ? 'bg-rose-50/90 text-rose-800 border-rose-300/70 shadow-xs'
+      : calculation.status === 'malattia'
+      ? 'bg-red-50/90 text-red-800 border-red-300/70 shadow-xs'
       : calculation.status === 'permesso'
       ? 'bg-purple-50/90 text-purple-800 border-purple-300/70 shadow-xs'
       : 'bg-white/75 text-slate-600 border-white/80 shadow-xs';
@@ -455,6 +459,8 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
       ? 'bg-indigo-500'
       : calculation.status === 'ferie'
       ? 'bg-rose-500'
+      : calculation.status === 'malattia'
+      ? 'bg-red-500'
       : calculation.status === 'permesso'
       ? 'bg-purple-500'
       : 'bg-slate-400';
@@ -487,6 +493,8 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
       if (dayRec) {
         if (dayRec.leaveType === 'ferie') {
           statusDot = 'bg-rose-500';
+        } else if (dayRec.leaveType === 'malattia') {
+          statusDot = 'bg-red-500';
         } else if (
           dayRec.leaveType === 'permesso' ||
           Boolean(dayRec.permessoHours) ||
@@ -779,8 +787,8 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
             </span>
             <div className="flex items-baseline gap-1.5 mt-0.5">
               <span className="text-2xl sm:text-3xl font-black text-slate-900 font-mono tracking-tight leading-none">
-                {leaveType === 'ferie'
-                  ? '8h 00m'
+                {leaveType === 'ferie' || leaveType === 'malattia'
+                  ? formatMinutesToHM(standardMinutesToday)
                   : calculation.status === 'non_timbrato'
                   ? '0h 00m'
                   : calculation.hoursWorkedFormatted}
@@ -1063,14 +1071,16 @@ export const MobileWorkerAttendanceView: React.FC<MobileWorkerAttendanceViewProp
           type="button"
           onClick={() => setActiveSheet('notes')}
           className={`py-2 px-1 rounded-[16px] border text-center flex flex-col items-center justify-center gap-0.5 transition-all active:scale-95 cursor-pointer backdrop-blur-md ${
-            notes || leaveType === 'ferie'
+            leaveType === 'malattia'
+              ? 'bg-red-100/80 border-red-300/80 text-red-800 font-bold shadow-[0_4px_16px_rgba(239,68,68,0.15)]'
+              : notes || leaveType === 'ferie'
               ? 'bg-rose-100/80 border-rose-300/80 text-rose-800 font-bold shadow-[0_4px_16px_rgba(244,63,94,0.15)]'
               : 'bg-white/70 border-white/80 text-slate-700 shadow-[0_4px_16px_rgba(15,23,42,0.04)] hover:bg-white/85'
           }`}
         >
           <FileText className="w-3 h-3" />
           <span className="text-[9px] sm:text-[10px] font-bold leading-tight truncate w-full">
-            {leaveType === 'ferie' ? 'Ferie ✓' : notes ? 'Note ✓' : 'Note'}
+            {leaveType === 'ferie' ? 'Ferie ✓' : leaveType === 'malattia' ? 'Malattia ✓' : notes ? 'Note ✓' : 'Note'}
           </span>
         </button>
       </div>

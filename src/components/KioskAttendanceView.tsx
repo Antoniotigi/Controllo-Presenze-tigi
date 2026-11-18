@@ -128,6 +128,18 @@ export const KioskAttendanceView: React.FC<KioskAttendanceViewProps> = ({
         greeting: 'Dipendente registrato in ferie per la giornata odierna.',
       };
     }
+    if (record?.leaveType === 'malattia') {
+      return {
+        key: null,
+        label: 'Dipendente in Malattia',
+        shortLabel: 'In Malattia',
+        icon: CheckCircle2,
+        colorClass: 'bg-red-100 text-red-700 cursor-default',
+        badge: 'In Malattia',
+        badgeColor: 'bg-red-50 text-red-700 border-red-200',
+        greeting: 'Dipendente registrato in malattia per la giornata odierna.',
+      };
+    }
     const times = getRecordTimestamps(record);
     if (!times.clockInMorning) {
       return {
@@ -342,6 +354,7 @@ export const KioskAttendanceView: React.FC<KioskAttendanceViewProps> = ({
             if (calculation.status === 'pausa') return 'bg-amber-400';
             if (calculation.status === 'completato' || progressPct >= 100) return 'bg-[#0b5cd5]';
             if (calculation.status === 'ferie') return 'bg-rose-400';
+            if (calculation.status === 'malattia') return 'bg-red-500';
             if (calculation.status === 'permesso') return 'bg-purple-500';
             return 'bg-slate-300';
           })();
@@ -387,8 +400,8 @@ export const KioskAttendanceView: React.FC<KioskAttendanceViewProps> = ({
                     </span>
                     <div className="text-right mt-0.5">
                       <span className="text-xl sm:text-2xl font-black text-[#101B32] font-mono leading-none">
-                        {calculation.status === 'ferie'
-                          ? '8h 00m'
+                        {calculation.status === 'ferie' || calculation.status === 'malattia'
+                          ? formatMinutesToHM(standardMinutesToday)
                           : calculation.status === 'non_timbrato'
                           ? '0h 00m'
                           : calculation.hoursWorkedFormatted}
@@ -406,8 +419,8 @@ export const KioskAttendanceView: React.FC<KioskAttendanceViewProps> = ({
                     <span className="flex items-center gap-1.5">
                       <span>Orario giornaliero:</span>
                       <span className="font-bold text-[#101B32]">
-                        {calculation.status === 'ferie'
-                          ? '8h 00m'
+                        {calculation.status === 'ferie' || calculation.status === 'malattia'
+                          ? formatMinutesToHM(standardMinutesToday)
                           : calculation.status === 'non_timbrato'
                           ? '0h 00m'
                           : calculation.hoursWorkedFormatted}
@@ -479,6 +492,9 @@ export const KioskAttendanceView: React.FC<KioskAttendanceViewProps> = ({
                       )}
                       {calculation.status === 'ferie' && (
                         <span className="text-rose-600 font-bold">In ferie</span>
+                      )}
+                      {calculation.status === 'malattia' && (
+                        <span className="text-red-600 font-bold">In malattia</span>
                       )}
                       {calculation.status === 'permesso' && (
                         <span className="text-purple-600 font-bold">In permesso</span>
